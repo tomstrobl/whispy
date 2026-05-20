@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from whispy.gui import InfoWindow
+from whispy.utils import read_config
+
+import os
 from dataclasses import dataclass
 import string
 from typing import Dict, List, Optional
@@ -19,22 +23,24 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from whispy.gui import InfoWindow
+# Directory containing this file.
+# Required for loading the default configs
+FILEPATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class MushraLike2D(QMainWindow):
 
     def __init__(
         self,
-        task: str = "Rate the\n**Quality**\n",
+        task: Optional[str] = "Rate the\n**Quality**\n",
+        description: Optional[str] = "The overall quality",
+        values: Optional[List[float]] = [0, .25, .5, 1],
+        labels: Optional[List[Optional[str]]] = ['identical', None, None, 'very different'],
+        neutral_value: float = 0,
+        mushra_like_2d: Optional[Dict] = None,
         task_fontsize: int = 16,
         task_spacing: int = 0,
         fontsize: int = 12,
-        description: str = "Add description here",
-        labels: Optional[List[Optional[str]]] = None,
-        neutral_value: float = 0,
-        values: Optional[List[float]] = None,
         reference: bool = True,
         autoplay_reference: bool = True,
         autoplay_delay: float = 0.25,
@@ -55,6 +61,11 @@ class MushraLike2D(QMainWindow):
 
         super().__init__()
         self._verbose = bool(verbose)
+
+        if mushra_like_2d is None:
+            mushra_like_2d = read_config(os.path.join(
+                FILEPATH, '..', '..', 'configs', 'mushra_like_2d.yml'
+            ))
 
         if not isinstance(window_size, tuple) or len(window_size) != 2:
             raise ValueError("window_size must be a (width, height) tuple")
@@ -920,16 +931,9 @@ class _DraggableTile(QGraphicsObject):
 if __name__ == "__main__":
     app = QApplication([])
 
-    task = "Rate the\n**Tone colour bright-dark**\n with respect to the reference **R**"
-    description = ("Timbral impression which is determined by the ratio of\n"
-                   "high to low frequency components.")
-
-    labels = ["darker", None, "neutral", None, "brighter"]
-
     reference = True
 
     neutral_value = 0
-    values = [-1, -.5, 0, .5, 1]
 
     task_fontsize = 16
     task_spacing = 24
@@ -956,14 +960,9 @@ if __name__ == "__main__":
     button_spacing = 8
 
     window = MushraLike2D(
-        task=task,
         task_fontsize=task_fontsize,
         task_spacing=task_spacing,
         fontsize=fontsize,
-        description=description,
-        labels=labels,
-        neutral_value=neutral_value,
-        values=values,
         reference=reference,
         autoplay_reference=autoplay_reference,
         autoplay_delay=autoplay_delay,
