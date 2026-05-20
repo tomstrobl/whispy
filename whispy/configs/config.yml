@@ -1,0 +1,55 @@
+# Global settings
+global:
+  test: saqi
+  playback_engine: sounddevice
+  screen_randomization: per attribute
+  test_condition_randomization: per screen
+
+# Define attributes
+# (not all defined attributes must be used)
+attributes:
+  difference:
+    task: |
+      Rate the
+      **Difference**
+    definition: Existence of a noticeable difference.
+    labels: [none, null, null, null, very large]
+    values: [0, .25, .5, .75, 1]
+    neutral_value: 0
+
+  coloration:
+    task: |
+      Rate the
+      **Tone colour bright-dark**
+    definition: Timbral impression which is determined by the ratio of high to low frequency components
+    labels: [darker, null, null, null, brighter]
+    values: [-1, -.5, 0, .5, 1]
+    neutral_value: 0
+
+# Define stimuli
+# (Not all defined stimuli must be used)
+stimuli:
+  1:
+    file: stimuli/test_1.wav
+  2:
+    file: stimuli/test_2.wav
+  3:
+    file: stimuli/test_3.wav
+
+# Define the experiment
+# - each 'screen' defines one rating screen
+# - 'attribute' must match one of the attributes above
+# - 'reference' and 'test' must match the stimuli above
+experiment:
+  - screen:
+      attribute: coloration
+      reference: 1
+      test:
+        - 2
+        - 3
+  - screen:
+      attribute: coloration
+      reference: 4
+      test:
+        - 5
+        - 6

@@ -1,0 +1,29 @@
+[project]
+name = "whispy"
+version = "0.1.0"
+description = "Listening tests in Python."
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.11"
+authors = [
+    { name = "The whispy developers"},
+]
+keywords = [
+    "MUSHRA-like",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "PyQt6",
+    "pyfar>=0.8.0",
+    "pyyaml",
+]
