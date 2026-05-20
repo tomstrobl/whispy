@@ -23,7 +23,8 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "PyQt6",
     "pyfar>=0.8.0",
+    "PyQt6",
     "pyyaml",
+    "sounddevice",
 ]

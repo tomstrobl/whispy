@@ -18,4 +18,3 @@ class SounddeviceHandler:
                     "All stimuli must have the same sampling rate")
 
             stimuli[stimulus]["signal"] = signal
-

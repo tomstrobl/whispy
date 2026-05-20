@@ -1,4 +1,4 @@
-from sounddevice_handler import SounddeviceHandler
+from .sounddevice_handler import SounddeviceHandler
 
 __all__ = [
     'SounddeviceHandler',

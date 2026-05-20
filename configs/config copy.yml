@@ -1,0 +1,18 @@
+# Define the experiment
+# - each 'screen' defines one rating screen
+# - 'attribute' must match attributes.yml
+# - 'reference' and 'test' must match the stimuli.yml
+
+- screen:
+    attribute: coloration
+    reference: 1
+    test:
+      - 2
+      - 3
+
+- screen:
+    attribute: coloration
+    reference: 4
+    test:
+      - 5
+      - 6

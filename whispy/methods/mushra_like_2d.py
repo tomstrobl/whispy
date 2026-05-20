@@ -920,20 +920,21 @@ class _DraggableTile(QGraphicsObject):
 if __name__ == "__main__":
     app = QApplication([])
 
-    task = "Rate the\n**Tone colour bright-dark**"
-    task_fontsize = 16
-    task_spacing = 24
-    fontsize = 12
-
+    task = "Rate the\n**Tone colour bright-dark**\n with respect to the reference **R**"
     description = ("Timbral impression which is determined by the ratio of\n"
                    "high to low frequency components.")
 
     labels = ["darker", None, "neutral", None, "brighter"]
 
+    reference = True
+
     neutral_value = 0
     values = [-1, -.5, 0, .5, 1]
 
-    reference = True
+    task_fontsize = 16
+    task_spacing = 24
+    fontsize = 12
+
     autoplay_reference = True
     autoplay_delay = .5
 

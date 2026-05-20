@@ -1,0 +1,24 @@
+# Define attributes
+# (not all defined attributes must be used in a test)
+# task: Is displayed on top of the rating GUI
+# definition: gives additional information for the task
+# labels & values: define the rating scale
+# neutral_value: The value origin of the rating scale
+
+difference:
+  task: |
+    Rate the
+    **Difference**
+  definition: Existence of a noticeable difference.
+  labels: [none, null, null, null, very large]
+  values: [0, .25, .5, .75, 1]
+  neutral_value: 0
+
+coloration:
+  task: |
+    Rate the
+    **Tone colour bright-dark**
+  definition: Timbral impression which is determined by the ratio of high to low frequency components
+  labels: [darker, null, null, null, brighter]
+  values: [-1, -.5, 0, .5, 1]
+  neutral_value: 0

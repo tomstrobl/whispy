@@ -1,0 +1,35 @@
+# Window size in pixels and verbosity
+window_size: (1100, 550)
+verbose: True
+
+# overall color theme
+fontcolor: "#e8eaed"
+window_background_color: "#2b2b2b"
+rating_area_background_color: "#f6f7f9"
+edge_color: "#d7dbe0"
+
+# color theme for the rating buttons
+button_color_initial: "#ffffff"
+button_color_clicked: "#d9dde3"
+button_color_active: "#a5d6a7"
+
+# look of rating buttons
+button_number: 4
+button_size: 40
+button_fontsize: 16
+button_spacing: 8
+
+# Specify if the reference should be played
+# automatically, after the test conditions
+# and the delay of the auto play in seconds
+autoplay_reference: True
+autoplay_delay: .5
+
+# The task is a string displayed on top of the GUI
+# This defines the fontsize and the space between
+# the task and the rating interface in pixel
+task_fontsize: 16
+task_spacing: 24
+
+# Size for all other text
+fontsize: 12
