@@ -2,8 +2,8 @@
 # (Not all defined stimuli must be used)
 
 1:
-  file: stimuli/stimulus_1.wav
+  file: stimulus_1.wav
 2:
-  file: stimuli/stimulus_2.wav
+  file: stimulus_2.wav
 3:
-  file: stimuli/stimulus_3.wav
+  file: stimulus_3.wav
