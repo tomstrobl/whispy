@@ -2,12 +2,11 @@
 import whispy
 from pprint import pprint
 
-config = whispy.utils.read_config("configs/config.yml")
+config = whispy.utils.read_config("configs/mushra_like_2d.yml")
 
-pprint(config["stimuli"])
+type(config["window_size"])
 
 # %%
-with open("whispy/configs/config.yml", "r") as f:
-    config = yaml.safe_load(f)
+import whispy
 
-pprint(config["stimuli"])
+whispy.methods.MushraLike2D()

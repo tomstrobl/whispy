@@ -4,6 +4,7 @@ from whispy.gui import InfoWindow
 from whispy.utils import read_config
 
 import os
+import sys
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
@@ -26,6 +27,11 @@ from PyQt6.QtWidgets import (
 # Required for loading the default configs
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
 
+# Module-level QApplication reference — kept alive for the process lifetime so
+# that constructing and destroying MushraLike2D windows multiple times (e.g.
+# in a notebook) never leaves Qt without an application instance.
+_qapp: Optional[QApplication] = None
+
 
 class MushraLike2D(QMainWindow):
 
@@ -42,6 +48,22 @@ class MushraLike2D(QMainWindow):
         reference: bool = True,
         num_buttons: int = 6,
     ) -> None:
+
+        # QApplication must exist before any QWidget is constructed.
+        # sys.argv[:1] avoids passing Jupyter/IPython kernel arguments to Qt.
+        global _qapp
+        if QApplication.instance() is None:
+            _qapp = QApplication(sys.argv[:1])
+
+        # When running inside an IPython kernel (e.g. VS Code interactive
+        # window) enable Qt6 GUI integration so the event loop is active.
+        try:
+            from IPython import get_ipython
+            ip = get_ipython()
+            if ip is not None:
+                ip.enable_gui('qt6')
+        except Exception:
+            pass
 
         super().__init__()
 
@@ -88,6 +110,7 @@ class MushraLike2D(QMainWindow):
         self.drag_area.tileReleased.connect(self._on_tile_released)
         self.drag_area.tileClicked.connect(self._on_tile_clicked)
         self.drag_area.stopClicked.connect(self._on_stop_clicked)
+        self.show()
         self.drag_area.continueClicked.connect(self._on_continue_clicked)
 
     def _on_tile_pressed(self, tile_name: str, pos: QPointF) -> None:
@@ -900,14 +923,5 @@ class _DraggableTile(QGraphicsObject):
 
 
 if __name__ == "__main__":
-    app = QApplication([])
-
-    reference = True
-    neutral_value = 0
-
-    window = MushraLike2D(
-        reference=reference,
-        neutral_value=neutral_value,
-    )
-    window.show()
-    app.exec()
+    window = MushraLike2D()
+    sys.exit(QApplication.instance().exec())
