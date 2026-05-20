@@ -2,7 +2,6 @@ from whispy.utils import read_config
 
 import pyfar as pf
 import sounddevice as sd
-import yaml
 import os
 
 # Directory containing this file.
