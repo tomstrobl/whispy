@@ -77,9 +77,13 @@ class MushraLike2D(QMainWindow):
                     "attribute": "difference",
                     "name": None}
 
+        self.screen = screen
+
         # initialize default audio handler if it was not passed
         if stimuli_handler is None:
             stimuli_handler = SounddeviceHandler()
+
+        self.stimuli_handler = stimuli_handler
 
         # initialize attributes if they were not passed
         if attributes is None:
@@ -135,7 +139,7 @@ class MushraLike2D(QMainWindow):
         layout = QVBoxLayout(container)
         layout.setContentsMargins(22, 22, 22, 22)
 
-        # add main rating window
+        # initialize main rating window ---------------------------------------
         self.drag_area = _MainWindow(
             num_buttons=num_buttons,
             reference=reference,
@@ -184,21 +188,37 @@ class MushraLike2D(QMainWindow):
             print(f"clicked: {tile_name} at ({pos.x():.2f}, {pos.y()})")
 
     def _on_tile_activated(self, tile_name: str) -> None:
+        stimulus_name = self._get_stimulus_name(tile_name)
+        self.stimuli_handler.play(stimulus_name)
         if self._verbose:
-            print(f"activated: {tile_name}")
+            print(f"activated: {tile_name}, playing: {stimulus_name}")
 
     def _on_tile_deactivated(self, tile_name: str) -> None:
+        stimulus_name = self._get_stimulus_name(tile_name)
+        self.stimuli_handler.stop(stimulus_name)
         if self._verbose:
-            print(f"deactivated: {tile_name}")
+            print(f"deactivated: {tile_name}, stopped: {stimulus_name}")
 
     def _on_stop_clicked(self) -> None:
         if self._verbose:
             print("Stop clicked")
 
+    def _get_stimulus_name(self, tile_name):
+        if tile_name == "R":
+            stimulus_name = self.screen["reference"]
+        else:
+            stimulus_name = self.screen["test"][int(tile_name) - 1]
+
+        return stimulus_name
+
     def _on_continue_clicked(self) -> None:
         if self.drag_area.view.all_tiles_activated_once():
             self.drag_area.view.deactivate_active_button()
             self.close()
+
+            if self._verbose:
+                print(self.get_values())
+
             return
 
         self._continue_info_window = InfoWindow(
