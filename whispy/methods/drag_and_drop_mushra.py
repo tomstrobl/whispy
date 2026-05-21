@@ -31,12 +31,12 @@ from PyQt6.QtWidgets import (
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
 
 # Module-level QApplication reference — kept alive for the process lifetime so
-# that constructing and destroying MushraLike2D windows multiple times (e.g.
-# in a notebook) never leaves Qt without an application instance.
+# that constructing and destroying DragAndDropMUSHRA windows multiple times
+# (e.g. in a notebook) never leaves Qt without an application instance.
 _qapp: Optional[QApplication] = None
 
 
-class MushraLike2D(QMainWindow):
+class DragAndDropMUSHRA(QMainWindow):
 
     def __init__(
         self,
@@ -1118,8 +1118,3 @@ class _DraggableTile(QGraphicsObject):
         clamped_x = min(max(new_pos.x(), max(bounds.left(), self._min_x)), max_x)
         clamped_y = min(max(new_pos.y(), bounds.top()), max_y)
         self.setPos(clamped_x, clamped_y)
-
-
-if __name__ == "__main__":
-    window = MushraLike2D()
-    sys.exit(QApplication.instance().exec())

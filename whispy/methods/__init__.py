@@ -1,5 +1,5 @@
-from .mushra_like_2d import MushraLike2D
+from .drag_and_drop_mushra import DragAndDropMUSHRA
 
 __all__ = [
-    'MushraLike2D',
+    'DragAndDropMUSHRA',
 ]
