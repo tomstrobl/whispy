@@ -118,6 +118,11 @@ class DragAndDropMUSHRA(QMainWindow):
         # initialize QT parameters --------------------------------------------
         # set global parameters
         self._debug = debug
+        # In non-debug mode, window close actions are blocked until Continue.
+        self._allow_close = bool(debug)
+
+        if not self._debug:
+            self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
 
         # set window size
         window_size = drag_and_drop_mushra["window_size"]
@@ -218,6 +223,7 @@ class DragAndDropMUSHRA(QMainWindow):
     def _on_continue_clicked(self) -> None:
         if self.drag_area.view.all_tiles_activated_once():
             self.drag_area.view.deactivate_active_button()
+            self._allow_close = True
             self.close()
 
             if self._debug:
@@ -272,6 +278,9 @@ class DragAndDropMUSHRA(QMainWindow):
         self._wait_loop.exec()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        if not self._allow_close:
+            event.ignore()
+            return
         if self._wait_loop is not None and self._wait_loop.isRunning():
             self._wait_loop.quit()
         super().closeEvent(event)
