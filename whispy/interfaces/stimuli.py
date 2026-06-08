@@ -19,10 +19,24 @@ class StimuliHandler(ABC):
     """Abstract base class for all StimuliHandler."""
     @abstractmethod
     def play(self, stimulus: str) -> None:
+        """Play a configured stimulus.
+
+        Parameters
+        ----------
+        stimulus : str
+            Stimulus identifier as defined in the handler configuration.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def stop(self, stimulus: Optional[str] = None) -> None:
+        """Stop playback.
+
+        Parameters
+        ----------
+        stimulus : str or None, optional
+            Optional stimulus identifier for handlers that require it.
+        """
         raise NotImplementedError
 
 

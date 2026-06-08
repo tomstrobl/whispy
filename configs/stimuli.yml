@@ -14,6 +14,8 @@ SoundDevice:
     file: stimulus_2.wav
   3:
     file: stimulus_3.wav
+  4:
+    file: stimulus_4.wav
 
 OSCHandler:
   1:
@@ -22,3 +24,5 @@ OSCHandler:
     messages: [/select 2, /play]
   3:
     messages: [/select 3, /play]
+  4:
+    messages: [/select 4, /play]
