@@ -1,19 +1,26 @@
 # N-AFC UI and test defaults
 ui:
+  # window defaults
   window_size: [1100, 550]
   fontcolor: "#e8eaed"
-  window_background_color: "#2b2b2b"
-  button_size: 56
+  window_background_color: "#94b1ff" # perano
+  # choice-button defaults
+  button_size: 80
   button_fontsize: 16
-  button_spacing: 8
-  button_background_color: "#3c4043"
+  button_spacing: 16
+  button_background_color: "#5E72A3"
   button_text_color: "#ffffff"
-  button_selected_background_color: "#8ab4f8"
+  button_selected_background_color: "#BACDFF"
   button_selected_text_color: "#202124"
   task_fontsize: 16
   task_spacing: 16
-  submit_hint: "Bitte einen Stimulus anhoeren, auswaehlen und dann abschicken."
-  submit_button_text: "Auswahl abschicken"
+  submit_hint: "Bitte einen Stimulus anhören, auswählen und dann bestätigen."
+  # submit-button defaults
+  submit_button_text: "Auswahl bestätigen"
+  submit_button_background_color: "#94b1ff"
+  submit_button_text_color: "#BACDFF"
+  submit_button_enabled_background_color: "#BACDFF"
+  submit_button_enabled_text_color: "#202124"
 
 # test-specific defaults
 test:

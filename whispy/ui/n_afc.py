@@ -206,18 +206,21 @@ class NAFC(QMainWindow):
 
         layout.addWidget(buttons_row, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        submit_label = QLabel(str(self._ui_cfg.get("submit_hint", "Bitte einen Stimulus anhoeren, auswaehlen und dann abschicken.")), self)
+        submit_label = QLabel(str(self._ui_cfg.get("submit_hint", "Bitte einen Stimulus anhören, auswählen und dann bestätigen.")), self)
         submit_label.setWordWrap(True)
         submit_label.setStyleSheet(f"color: {self._ui_cfg.get('fontcolor', '#e8eaed')};")
         submit_label.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("task_fontsize", 16) - 1))))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        self._submit_button = QPushButton(str(self._ui_cfg.get("submit_button_text", "Auswahl abschicken")), self)
+        self._submit_button = QPushButton(str(self._ui_cfg.get("submit_button_text", "Auswahl bestätigen")), self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self._submit_button.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("button_fontsize", 14)))))
         self._submit_button.setEnabled(False)
+        
         self._submit_button.clicked.connect(self._on_submit_clicked)
         layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+                
+        self._apply_submit_button_styles()  
 
         self.setCentralWidget(container)
 
@@ -260,6 +263,7 @@ class NAFC(QMainWindow):
             self._selected = stim_id
             self._selected_button = button
             self._submit_button.setEnabled(True)
+            self._apply_submit_button_styles()
             self._apply_choice_button_styles()
             if self._debug:
                 # log the value and its type to help debugging mismatched keys
@@ -299,6 +303,31 @@ class NAFC(QMainWindow):
 
         self._allow_close = True
         self.close()
+
+    def _apply_submit_button_styles(self) -> None:
+        """Apply submit button colors from the UI config."""
+        default_bg = str(self._ui_cfg.get("submit_button_background_color", "#94b1ff"))
+        default_fg = str(self._ui_cfg.get("submit_button_text_color", "#ff0000"))
+        enabled_bg = str(self._ui_cfg.get("submit_button_enabled_background_color", default_bg))
+        enabled_fg = str(self._ui_cfg.get("submit_button_enabled_text_color", default_fg))
+
+        if self._submit_button.isEnabled():
+            bg = enabled_bg 
+        else:
+            bg = default_bg
+
+        if self._submit_button.isEnabled():
+            fg = enabled_fg
+        else:
+            fg = default_fg
+
+        print("enabled:", self._submit_button.isEnabled())
+        print("bg:", bg)
+        print("fg:", fg)
+
+        self._submit_button.setStyleSheet(
+            f"background-color: {bg}; color: {fg}; border: 1px solid #d0d7de; border-radius: 4px; padding: 6px 12px;"
+        )
 
     def _apply_choice_button_styles(self) -> None:
         """Apply default/selected color styles to all choice buttons."""
