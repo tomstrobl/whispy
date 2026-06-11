@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+from .base import _BaseUIWindow
 from .info_window import InfoWindow
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import read_config
+from whispy.utils._utils import format_markdown
 
 import pandas
 import os
-import sys
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-from PyQt6.QtCore import QEventLoop, QPointF, QRectF, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QCloseEvent, QFont, QPainter, QPen
+from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QPainter, QPen
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -30,13 +31,7 @@ from PyQt6.QtWidgets import (
 # Required for loading the default configs
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
 
-# Module-level QApplication reference — kept alive for the process lifetime so
-# that constructing and destroying DragAndDropMUSHRA windows multiple times
-# (e.g. in a notebook) never leaves Qt without an application instance.
-_qapp: Optional[QApplication] = None
-
-
-class DragAndDropMUSHRA(QMainWindow):
+class DragAndDropMUSHRA(_BaseUIWindow):
 
     def __init__(
         self,
@@ -46,26 +41,10 @@ class DragAndDropMUSHRA(QMainWindow):
         attributes: Optional[str] = None,
         drag_and_drop_mushra: Optional[str] = None,
         blocking: Optional[bool] = True,
-        debug: Optional[bool] = False
+        debug: Optional[bool] = False,
+        parent: Optional[QMainWindow] = None,
     ) -> None:
-
-        # QApplication must exist before any QWidget is constructed.
-        # sys.argv[:1] avoids passing Jupyter/IPython kernel arguments to Qt.
-        global _qapp
-        if QApplication.instance() is None:
-            _qapp = QApplication(sys.argv[:1])
-
-        # When running inside an IPython kernel (e.g. VS Code interactive
-        # window) enable Qt6 GUI integration so the event loop is active.
-        try:
-            from IPython import get_ipython
-            ip = get_ipython()
-            if ip is not None:
-                ip.enable_gui("qt6")
-        except Exception:
-            pass
-
-        super().__init__()
+        super().__init__(blocking=bool(blocking), debug=bool(debug), parent=parent)
 
         # initialize experimental parameters ----------------------------------
         # initialize rating screen if it was not passed
@@ -117,31 +96,24 @@ class DragAndDropMUSHRA(QMainWindow):
 
         # initialize QT parameters --------------------------------------------
         # set global parameters
-        self._debug = debug
         # In non-debug mode, window close actions are blocked until Continue.
-        self._allow_close = bool(debug)
-
-        if not self._debug:
-            self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
+        if parent is None and not self._debug:
+            self.disable_close_button()
 
         # set window size
         window_size = drag_and_drop_mushra["window_size"]
-        fullscreen = isinstance(window_size, str) and \
-            window_size.strip().lower() == "fullscreen"
-
+        window_width, window_height, fullscreen = self._resolve_window_size(
+            window_size,
+            fallback=(1000, 700),
+        )
         if fullscreen:
-            geo = QApplication.primaryScreen().availableGeometry()
             # Shallow-copy the config so the caller's dict is not mutated.
             drag_and_drop_mushra = dict(drag_and_drop_mushra)
-            drag_and_drop_mushra["window_size"] = [geo.width(), geo.height()]
-        else:
-            self.resize(int(drag_and_drop_mushra["window_size"][0]),
-                        int(drag_and_drop_mushra["window_size"][1]))
+            drag_and_drop_mushra["window_size"] = [window_width, window_height]
 
         self._continue_info_window: Optional[InfoWindow] = None
-        self._wait_loop: Optional[QEventLoop] = None
 
-        container = QWidget(self)
+        container = QWidget()
         container.setStyleSheet(
             f"background-color: {drag_and_drop_mushra['window_background_color']};"
         )
@@ -162,7 +134,7 @@ class DragAndDropMUSHRA(QMainWindow):
         )
         layout.addWidget(self.drag_area)
 
-        self.setCentralWidget(container)
+        self._host.setCentralWidget(container)
 
         self.drag_area.tilePressed.connect(self._on_tile_pressed)
         self.drag_area.tileReleased.connect(self._on_tile_released)
@@ -171,16 +143,16 @@ class DragAndDropMUSHRA(QMainWindow):
         self.drag_area.tileDeactivated.connect(self._on_tile_deactivated)
         self.drag_area.stopClicked.connect(self._on_stop_clicked)
 
-        # show window in front of all other windows
-        if fullscreen:
-            self.showFullScreen()
-        else:
-            self.show()
-        self.raise_()
-        self.activateWindow()
+        if parent is None:
+            # show window in front of all other windows
+            self._show_host_window(
+                width=window_width,
+                height=window_height,
+                fullscreen=fullscreen,
+            )
 
         self.drag_area.continueClicked.connect(self._on_continue_clicked)
-        # Block code execution outside this class until the window is closed
+        # Block code execution outside this class until Continue is clicked
         if blocking:
             self.wait_until_closed()
 
@@ -221,21 +193,17 @@ class DragAndDropMUSHRA(QMainWindow):
         return stimulus_name
 
     def _on_continue_clicked(self) -> None:
-        if self.drag_area.view.all_tiles_activated_once():
+        if self.drag_area.view.all_tiles_activated_once() or self._debug:
+
             self.drag_area.view.deactivate_active_button()
-            self._allow_close = True
-            self.close()
 
-            if self._debug:
-                print(self.get_results())
-
+            # Quit the blocking loop so the caller regains control.
+            # The window stays open; caller must call .close() explicitly.
+            self.unblock()
             return
 
         self._continue_info_window = InfoWindow(
-            info_text=(
-                "Please activate all buttons before continuing.\n"
-                "Click each tile at least once, then press Continue again."
-            ),
+            info_text="You have to listen to each sound at least once.",
             fontsize=self.drag_area._fontsize,
             fontcolor=self.drag_area._fontcolor,
             blocking=False,
@@ -267,24 +235,6 @@ class DragAndDropMUSHRA(QMainWindow):
             results.loc[len(results)] = row
 
         return results
-
-    def wait_until_closed(self) -> None:
-        if not self.isVisible():
-            return
-
-        if self._wait_loop is None:
-            self._wait_loop = QEventLoop(self)
-
-        self._wait_loop.exec()
-
-    def closeEvent(self, event: QCloseEvent) -> None:
-        if not self._allow_close:
-            event.ignore()
-            return
-        if self._wait_loop is not None and self._wait_loop.isRunning():
-            self._wait_loop.quit()
-        super().closeEvent(event)
-
 
 class _MainWindow(QWidget):
     tilePressed = pyqtSignal(str, QPointF)
@@ -332,7 +282,7 @@ class _MainWindow(QWidget):
         task_row.setContentsMargins(0, 0, 0, 0)
         task_row.setSpacing(8)
 
-        self.task_label = QLabel(task.replace("\n", "  \n"), self)
+        self.task_label = QLabel(format_markdown(task), self)
         self.task_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
         self.task_label.setWordWrap(True)
         self.task_label.setTextFormat(Qt.TextFormat.MarkdownText)

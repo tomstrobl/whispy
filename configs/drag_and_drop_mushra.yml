@@ -1,11 +1,11 @@
 # ---------------------------------- Look ----------------------------------- #
 # Window size. Either [pixels_x, pixels_y] or "fullscreen"
-window_size: [1100, 550]
+window_size: fullscreen
 
 # Rating area size.
 # Percentage with respect to window size.
 # Use 100% for maximally possible size.
-rating_area_size: [100, 100]
+rating_area_size: [75, 50]
 
 # overall color theme
 fontcolor: "#e8eaed"

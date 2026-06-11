@@ -9,7 +9,8 @@ authors = [
     { name = "The whispy developers"},
 ]
 keywords = [
-    "MUSHRA-like",
+    "Listening experiment",
+    "Drag and drop Mushra",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -24,9 +25,11 @@ classifiers = [
 ]
 
 dependencies = [
+    "ipykernel",
     "pandas",
     "pyfar>=0.8.0",
     "PyQt6",
+    "pytest",
     "pyyaml",
     "sounddevice",
 ]

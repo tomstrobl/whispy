@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import os
-import sys
 from dataclasses import dataclass
 from typing import Any, Optional
 
 import pandas
-from PyQt6.QtCore import QEventLoop, Qt, pyqtSignal
-from PyQt6.QtGui import QCloseEvent, QColor, QDoubleValidator, QFont, QFontMetrics
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QDoubleValidator, QFont, QFontMetrics
 from PyQt6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -26,11 +25,10 @@ from PyQt6.QtWidgets import (
 )
 
 from whispy.utils import read_config
+from whispy.utils._utils import format_markdown
 
+from .base import _BaseUIWindow
 from .info_window import InfoWindow
-
-
-_qapp: Optional[QApplication] = None
 
 # Directory containing this file.
 # Required for loading the default questionnaire config.
@@ -43,7 +41,7 @@ class _QuestionEntry:
     widget: _BaseQuestionWidget
 
 
-class Questionnaire(QMainWindow):
+class Questionnaire(_BaseUIWindow):
     """Config-driven questionnaire UI.
 
     Parameters
@@ -63,21 +61,9 @@ class Questionnaire(QMainWindow):
                  *,
                  questionnaire: Optional[str] = None,
                  blocking: Optional[bool] = True,
-                 debug: Optional[bool] = False) -> None:
-        global _qapp
-        if QApplication.instance() is None:
-            _qapp = QApplication(sys.argv[:1])
-
-        try:
-            from IPython import get_ipython
-
-            ip = get_ipython()
-            if ip is not None:
-                ip.enable_gui("qt6")
-        except Exception:
-            pass
-
-        super().__init__()
+                 debug: Optional[bool] = False,
+                 parent: Optional[QMainWindow] = None) -> None:
+        super().__init__(blocking=bool(blocking), debug=bool(debug), parent=parent)
 
         if questionnaire is None:
             questionnaire = os.path.join(
@@ -92,16 +78,14 @@ class Questionnaire(QMainWindow):
         if not isinstance(self._questionnaire_cfg, list):
             raise ValueError("The 'questionnaire' key must be a list.")
 
-        self._wait_loop: Optional[QEventLoop] = None
         self._continue_info_window: Optional[InfoWindow] = None
-        self._debug = debug
-        self._allow_close = bool(debug)
-        self.setWindowTitle("")
 
-        if not self._debug:
-            self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
+        if parent is None:
+            self.setWindowTitle("")
+            if not debug:
+                self.disable_close_button()
 
-        container = QWidget(self)
+        container = QWidget()
         container.setStyleSheet(
             f"background-color: {self._ui_cfg['window_background_color']};"
         )
@@ -113,37 +97,28 @@ class Questionnaire(QMainWindow):
         self.main.continueClicked.connect(self._on_continue_clicked)
         layout.addWidget(self.main, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        self.setCentralWidget(container)
+        self._host.setCentralWidget(container)
 
-        self._apply_window_size()
-        self.show()
-        self.raise_()
-        self.activateWindow()
+        window_width, window_height, fullscreen = self._apply_window_size()
+        if parent is None:
+            self._show_host_window(
+                width=window_width,
+                height=window_height,
+                fullscreen=fullscreen,
+            )
 
         if blocking:
             self.wait_until_closed()
 
-    def _apply_window_size(self) -> None:
+    def _apply_window_size(self) -> tuple[int, int, bool]:
         window_size = self._ui_cfg["window_size"]
-
-        fullscreen = isinstance(window_size, str) and window_size.strip().lower() == "fullscreen"
-        if fullscreen:
-            geo = QApplication.primaryScreen().availableGeometry()
-            self._apply_questionnaire_size(geo.width(), geo.height())
-            self.showFullScreen()
-            return
-
-        if isinstance(window_size, list) and len(window_size) == 2:
-            try:
-                width = int(window_size[0])
-                height = int(window_size[1])
-            except (TypeError, ValueError):
-                width, height = 1000, 700
-        else:
-            width, height = 1000, 700
-
-        self.resize(max(400, width), max(300, height))
+        width, height, fullscreen = self._resolve_window_size(
+            window_size,
+            fallback=(1000, 700),
+            minimum_size=(400, 300),
+        )
         self._apply_questionnaire_size(width, height)
+        return width, height, fullscreen
 
     def _apply_questionnaire_size(self, window_width: int, window_height: int) -> None:
         questionnaire_size = self._ui_cfg["questionnaire_size"]
@@ -162,8 +137,11 @@ class Questionnaire(QMainWindow):
         self.main.setFixedSize(target_w, target_h)
 
     def _on_continue_clicked(self) -> None:
+
+        # check if questionnaire is complete
         missing = self.main.get_missing_required_labels()
-        if missing:
+
+        if missing and not self._debug:
             font_size = max(1, int(self._ui_cfg["question_fontsize"]))
             font_color = str(self._ui_cfg["fontcolor"])
             preview = "\n".join(f"- {label}" for label in missing[:8])
@@ -180,8 +158,9 @@ class Questionnaire(QMainWindow):
             )
             return
 
-        self._allow_close = True
-        self.close()
+        # Quit the blocking loop so the caller regains control.
+        # The window stays open; caller must call .close() explicitly.
+        self.unblock()
 
     def get_results(self) -> pandas.DataFrame:
         """Return the questionnaire responses as a data frame.
@@ -193,39 +172,6 @@ class Questionnaire(QMainWindow):
             question identifier, prompt, type, required flag, and answer.
         """
         return self.main.collect_results()
-
-    def wait_until_closed(self) -> None:
-        """Block until the questionnaire window is closed.
-
-        Notes
-        -----
-        This method is intended for interactive use, mirroring the blocking
-        behavior of the other GUI classes in the package.
-        """
-        if not self.isVisible():
-            return
-
-        if self._wait_loop is None:
-            self._wait_loop = QEventLoop(self)
-
-        self._wait_loop.exec()
-
-    def closeEvent(self, event: QCloseEvent) -> None:
-        """Handle the window close event.
-
-        Parameters
-        ----------
-        event : QCloseEvent
-            The close event generated by Qt.
-        """
-        if not self._allow_close:
-            event.ignore()
-            return
-
-        if self._wait_loop is not None and self._wait_loop.isRunning():
-            self._wait_loop.quit()
-        super().closeEvent(event)
-
 
 class _QuestionnaireMain(QWidget):
     continueClicked = pyqtSignal()
@@ -270,6 +216,8 @@ class _QuestionnaireMain(QWidget):
             section_label = QLabel(section_label_text, content)
             section_label.setFont(section_font)
             section_label.setWordWrap(True)
+            section_label.setTextFormat(Qt.TextFormat.MarkdownText)
+            section_label.setText(format_markdown(section_label_text))
             section_label.setStyleSheet(f"color: {font_color};")
             form_layout.addWidget(section_label)
 
@@ -360,6 +308,8 @@ class _BaseQuestionWidget(QWidget):
 
         self.prompt_label = QLabel(self.prompt, self)
         self.prompt_label.setWordWrap(True)
+        self.prompt_label.setTextFormat(Qt.TextFormat.MarkdownText)
+        self.prompt_label.setText(format_markdown(self.prompt))
         self.prompt_label.setStyleSheet(f"color: {font_color};")
         self.prompt_label.setFont(QFont("Helvetica", question_font_size))
         layout.addWidget(self.prompt_label)

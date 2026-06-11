@@ -1,11 +1,11 @@
 # ---------------------------------- Look ----------------------------------- #
 ui:
 # Window size. Either [pixels_x, pixels_y] or "fullscreen"
-  window_size: [1100, 550]
+  window_size: fullscreen
   # Questionnaire size.
   # Percentage with respect to window size.
   # Use 100% for maximally possible size.
-  questionnaire_size: [100, 100]
+  questionnaire_size: [50, 85]
   # If True Sections and questions are enumerated
   enumerate: True
   # Spacing between sections and questions in pixel
