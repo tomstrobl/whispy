@@ -4,6 +4,9 @@ ui:
   window_size: [1100, 550]
   fontcolor: "#e8eaed"
   window_background_color: "#94b1ff" # perano
+  # task instruction defaults
+  task_fontsize: 20
+  task_spacing: 16
   # choice-button defaults
   button_size: 80
   button_fontsize: 16
@@ -12,9 +15,10 @@ ui:
   button_text_color: "#ffffff"
   button_selected_background_color: "#BACDFF"
   button_selected_text_color: "#202124"
-  task_fontsize: 16
-  task_spacing: 16
+  # submit-hint defaults
   submit_hint: "Bitte einen Stimulus anhören, auswählen und dann bestätigen."
+  submit_hint_fontsize: 14
+  submit_hint_text_color: "#e8eaed"
   # submit-button defaults
   submit_button_text: "Auswahl bestätigen"
   submit_button_background_color: "#94b1ff"
