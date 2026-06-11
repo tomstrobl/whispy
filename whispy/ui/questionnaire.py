@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
 from whispy.utils import read_config
 from whispy.utils._utils import format_markdown
 
-from .base import _BaseUIWindow
+from .base import _BaseUIWindow, style_qpushbutton
 from .info_window import InfoWindow
 
 # Directory containing this file.
@@ -252,10 +252,8 @@ class _QuestionnaireMain(QWidget):
         controls = QHBoxLayout()
         controls.addStretch(1)
         self.continue_button = QPushButton("Continue", self)
-        self.continue_button.setStyleSheet(
-            f"background-color: {ui_cfg['window_background_color']};"
-            f"color: {ui_cfg['fontcolor']};"
-        )
+        style_qpushbutton(self.continue_button, question_font_size,
+                          ui_cfg['fontcolor'], ui_cfg['window_background_color'])
         self.continue_button.clicked.connect(self.continueClicked)
         controls.addWidget(self.continue_button)
         root_layout.addLayout(controls)

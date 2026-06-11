@@ -5,8 +5,8 @@ import os
 from typing import Optional
 
 from PyQt6.QtCore import QEventLoop, Qt, QTimer
-from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtGui import QCloseEvent, QFont
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton
 
 
 # Module-level QApplication reference kept alive for the process lifetime so
@@ -49,6 +49,24 @@ def ensure_qapplication() -> QApplication:
 
     _enable_qt_gui_in_ipython()
     return app
+
+
+
+def style_qpushbutton(
+    button: QPushButton, button_fontsize: int,
+    button_fontcolor: str, button_background_color: str) -> None:
+    font_size = max(1, int(button_fontsize))
+    font = QFont("Helvetica", font_size, QFont.Weight.Normal)
+    button.setFont(font)
+    # Use the widget's style-aware size hint, then add a small safety margin.
+    hint = button.sizeHint()
+    width = hint.width() + max(6, int(font_size * 0.5))
+    height = hint.height() + max(4, int(font_size * 0.3))
+    button.setFixedSize(width, height)
+    button.setStyleSheet(
+        f"background-color: {button_background_color};"
+        f"color: {button_fontcolor};"
+    )
 
 
 class _BaseUIWindow(QMainWindow):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .base import _BaseUIWindow
+from .base import _BaseUIWindow, style_qpushbutton
 from .info_window import InfoWindow
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import read_config
@@ -340,10 +340,10 @@ class _MainWindow(QWidget):
         self.stop_button = QPushButton("Stop", self)
         self.continue_button = QPushButton("Continue", self)
 
-        self._setup_control_button(self.stop_button, button_fontsize,
-                                   fontcolor, window_background_color)
-        self._setup_control_button(self.continue_button, button_fontsize,
-                                   fontcolor, window_background_color)
+        style_qpushbutton(self.stop_button, button_fontsize,
+                          fontcolor, window_background_color)
+        style_qpushbutton(self.continue_button, button_fontsize,
+                          fontcolor, window_background_color)
 
         self.stop_button.clicked.connect(self._on_stop_button_clicked)
         self.continue_button.clicked.connect(self.continueClicked)
@@ -371,23 +371,6 @@ class _MainWindow(QWidget):
     def _on_stop_button_clicked(self) -> None:
         self.view.deactivate_active_button()
         self.stopClicked.emit()
-
-    @staticmethod
-    def _setup_control_button(
-        button: QPushButton, button_fontsize: int,
-        button_fontcolor: str, button_background_color: str) -> None:
-        font_size = max(1, int(button_fontsize))
-        font = QFont("Helvetica", font_size, QFont.Weight.Normal)
-        button.setFont(font)
-        # Use the widget's style-aware size hint, then add a small safety margin.
-        hint = button.sizeHint()
-        width = hint.width() + max(6, int(font_size * 0.5))
-        height = hint.height() + max(4, int(font_size * 0.3))
-        button.setFixedSize(width, height)
-        button.setStyleSheet(
-            f"background-color: {button_background_color};"
-            f"color: {button_fontcolor};"
-        )
 
 
 class _RatingArea(QGraphicsView):

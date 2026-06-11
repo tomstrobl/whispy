@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from whispy.utils._utils import format_markdown
-from .base import _BaseUIWindow
+from .base import _BaseUIWindow, style_qpushbutton
 
 import math
 from typing import Optional
@@ -130,11 +130,8 @@ class InfoWindow(_BaseUIWindow):
         controls_layout.addStretch(1)
 
         self.continue_button = QPushButton("Continue")
-        self.continue_button.setStyleSheet(
-            f"background-color: {window_background_color};"
-            f"color: {fontcolor};"
-        )
-        self._setup_control_button(self.continue_button, self._fontsize)
+        style_qpushbutton(self.continue_button, fontsize,
+                          fontcolor, window_background_color)
         self.continue_button.clicked.connect(self._on_continue_clicked)
 
         controls_layout.addWidget(self.continue_button)
@@ -242,13 +239,3 @@ class InfoWindow(_BaseUIWindow):
         if self in _orphaned_windows:
             _orphaned_windows.remove(self)
         super().closeEvent(event)
-
-    @staticmethod
-    def _setup_control_button(button: QPushButton, button_fontsize: int) -> None:
-        font_size = max(1, int(button_fontsize))
-        font = QFont("Helvetica", font_size, QFont.Weight.Normal)
-        button.setFont(font)
-        hint = button.sizeHint()
-        width = hint.width() + max(6, int(font_size * 0.5))
-        height = hint.height() + max(4, int(font_size * 0.3))
-        button.setFixedSize(width, height)
