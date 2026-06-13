@@ -94,8 +94,12 @@ class InfoWindow(QWidget):
 
         self._content_widget = QWidget(self)
         self._content_widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        self.setStyleSheet(f"background-color: {background_color};")
-        
+        effective_background = background_color or "#94b1ff"
+        self.setStyleSheet(f"background-color: {effective_background};")
+        self._content_widget.setStyleSheet(
+            f"background-color: {effective_background};"
+        )
+
         content_layout = QVBoxLayout(self._content_widget)
         content_layout.setContentsMargins(10, 10, 10, 10)
         content_layout.setSpacing(10)

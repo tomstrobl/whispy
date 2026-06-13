@@ -238,7 +238,6 @@ class DragAndDropMUSHRA(QMainWindow):
             ),
             fontsize=self.drag_area._fontsize,
             fontcolor=self.drag_area._fontcolor,
-            background_color=self.drag_area._window_background_color,
             blocking=False,
         )
 
@@ -415,7 +414,6 @@ class _MainWindow(QWidget):
             info_text=self._description,
             fontsize=self._fontsize,
             fontcolor=self._fontcolor,
-            background_color=self._window_background_color,
             blocking=False,
         )
 
@@ -1034,8 +1032,8 @@ class _DraggableTile(QGraphicsObject):
 
         use_initial_style = self._switch_style_on_first_click and not self._was_clicked
         border = QPen(self._edge_color, 1.2)
-        if use_initial_style and not self._is_active:
-            border.setStyle(Qt.PenStyle.DotLine)
+        # if use_initial_style and not self._is_active:
+        #     border.setStyle(Qt.PenStyle.DotLine)
         painter.setPen(border)
         if self._is_active:
             fill = self._active_color

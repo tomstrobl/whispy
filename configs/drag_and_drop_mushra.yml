@@ -14,7 +14,7 @@ rating_area_background_color: "#D3DFFF"
 edge_color: "#454545"
 
 # color theme for the rating buttons
-button_color_initial: "#5E72A3"
+button_color_initial: "#768ECC"
 button_color_clicked: "#BACDFF"
 button_color_active: "#a5d6a7"
 button_fontcolor_initial: "#ffffff"
