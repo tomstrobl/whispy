@@ -9,14 +9,15 @@ rating_area_size: [100, 100]
 
 # overall color theme
 fontcolor: "#e8eaed"
-window_background_color: "#2b2b2b"
-rating_area_background_color: "#f6f7f9"
+window_background_color: "#94b1ff"
+rating_area_background_color: "#D3DFFF"
 edge_color: "#454545"
 
 # color theme for the rating buttons
-button_color_initial: "#ffffff"
-button_color_clicked: "#d9dde3"
+button_color_initial: "#5E72A3"
+button_color_clicked: "#BACDFF"
 button_color_active: "#a5d6a7"
+button_fontcolor_initial: "#ffffff"
 button_fontcolor: "#2b2b2b"
 
 # look of rating buttons

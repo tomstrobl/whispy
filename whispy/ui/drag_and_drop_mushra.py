@@ -238,6 +238,7 @@ class DragAndDropMUSHRA(QMainWindow):
             ),
             fontsize=self.drag_area._fontsize,
             fontcolor=self.drag_area._fontcolor,
+            background_color=self.drag_area._window_background_color,
             blocking=False,
         )
 
@@ -316,10 +317,12 @@ class _MainWindow(QWidget):
         fontsize = drag_and_drop_mushra["fontsize"]
         button_fontsize = drag_and_drop_mushra["button_fontsize"]
         fontcolor = drag_and_drop_mushra["fontcolor"]
+        background_color = drag_and_drop_mushra["window_background_color"]
 
         self._description = description
         self._fontsize = max(1, int(fontsize))
         self._fontcolor = fontcolor
+        self._window_background_color = background_color
         self._info_window: Optional[InfoWindow] = None
 
         layout = QVBoxLayout(self)
@@ -412,6 +415,7 @@ class _MainWindow(QWidget):
             info_text=self._description,
             fontsize=self._fontsize,
             fontcolor=self._fontcolor,
+            background_color=self._window_background_color,
             blocking=False,
         )
 
@@ -463,6 +467,7 @@ class _RatingArea(QGraphicsView):
         button_color_initial = drag_and_drop_mushra["button_color_initial"]
         button_color_clicked = drag_and_drop_mushra["button_color_clicked"]
         button_color_active = drag_and_drop_mushra["button_color_active"]
+        button_fontcolor_initial = drag_and_drop_mushra["button_fontcolor_initial"]
         button_fontcolor = drag_and_drop_mushra["button_fontcolor"]
         autoplay_reference = drag_and_drop_mushra["autoplay_reference"]
         autoplay_delay = drag_and_drop_mushra["autoplay_delay"]
@@ -480,6 +485,7 @@ class _RatingArea(QGraphicsView):
         self._button_color_initial = button_color_initial
         self._button_color_clicked = button_color_clicked
         self._button_color_active = button_color_active
+        self._button_fontcolor_initial = button_fontcolor_initial
         self._button_fontcolor = button_fontcolor
         self._autoplay_reference = autoplay_reference
         self._autoplay_delay_ms = max(0, int(float(autoplay_delay) * 1000))
@@ -585,6 +591,7 @@ class _RatingArea(QGraphicsView):
                 active_color=self._button_color_active,
                 edge_color=self._edge_color,
                 font_color=self._button_fontcolor,
+                initial_font_color=self._button_fontcolor_initial,
                 font_size=self._button_fontsize,
                 switch_style_on_first_click=True,
             )
@@ -991,6 +998,7 @@ class _DraggableTile(QGraphicsObject):
         active_color: str = "#a5d6a7",
         edge_color: str = "#c8cdd4",
         font_color: str = "#444a55",
+        initial_font_color: Optional[str] = None,
         font_size: int = 17,
         movable: bool = True,
         switch_style_on_first_click: bool = False,
@@ -1004,6 +1012,7 @@ class _DraggableTile(QGraphicsObject):
         self._active_color = QColor(active_color)
         self._edge_color = QColor(edge_color)
         self._font_color = QColor(font_color)
+        self._initial_font_color = QColor(initial_font_color) if initial_font_color is not None else None
         self._font_size = max(1, int(font_size))
         self._movable = movable
         self._switch_style_on_first_click = switch_style_on_first_click
@@ -1059,7 +1068,12 @@ class _DraggableTile(QGraphicsObject):
             QPointF(center_x, lower_start),
         )
 
-        painter.setPen(self._font_color)
+        font_color = self._font_color
+        if self._switch_style_on_first_click and not self._was_clicked and not self._is_active:
+            if self._initial_font_color is not None:
+                font_color = self._initial_font_color
+
+        painter.setPen(font_color)
         painter.drawText(self._rect, Qt.AlignmentFlag.AlignCenter, self.name)
 
     def mousePressEvent(self, event) -> None:

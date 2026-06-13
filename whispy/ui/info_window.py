@@ -51,6 +51,7 @@ class InfoWindow(QWidget):
         *,
         fontsize: int = 12,
         fontcolor: str = "#FFFFFF",
+        background_color: Optional[str] = None,
         fullscreen: bool = False,
         minimum_width: int=320,
         center: bool = True,
@@ -93,6 +94,8 @@ class InfoWindow(QWidget):
 
         self._content_widget = QWidget(self)
         self._content_widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.setStyleSheet(f"background-color: {background_color};")
+        
         content_layout = QVBoxLayout(self._content_widget)
         content_layout.setContentsMargins(10, 10, 10, 10)
         content_layout.setSpacing(10)
