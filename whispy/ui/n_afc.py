@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QSizePolicy,
 )
 
 import pandas as pd
@@ -160,7 +161,10 @@ class NAFC(QMainWindow):
 
         task_label = QLabel(str(task_text).replace("\n", "  \n"), self)
         task_label.setWordWrap(True)
-        task_label.setStyleSheet(f"color: {self._ui_cfg.get('fontcolor', '#e8eaed')};")
+        task_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        task_label.setStyleSheet(f"color: {self._ui_cfg.get('fontcolor', '#e8eaed')};"
+            "text-align: center;"
+        )
         task_label.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("task_fontsize", 16)))))
         layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
@@ -187,6 +191,7 @@ class NAFC(QMainWindow):
         self._rt: Optional[float] = None
         self._selected_button: Optional[QPushButton] = None
 
+        # creating buttons
         buttons_row = QWidget(self)
         br_layout = QHBoxLayout(buttons_row)
         br_layout.setContentsMargins(0, 12, 0, 12)
@@ -194,9 +199,12 @@ class NAFC(QMainWindow):
 
         self._choice_buttons: List[QPushButton] = []
         for idx, stim_id in enumerate(self._choices, start=1):
-            btn = QPushButton(str(idx), self)
+            btn = QPushButton(str('Stimulus ' + str(idx)), self)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setFixedSize(int(self._ui_cfg.get("button_size", 56)), int(self._ui_cfg.get("button_size", 56)))
+            btn.setMinimumSize(int(self._ui_cfg.get("button_size", 56)), int(self._ui_cfg.get("button_size", 56)))
+            btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+            btn.setStyleSheet("""QPushButton {border-radius: 0px; padding: 8px 12px;}""")
+            btn.adjustSize()
             btn.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("button_fontsize", 14)))))
             btn.clicked.connect(self._make_choice_handler(stim_id, btn))
             br_layout.addWidget(btn)
@@ -206,18 +214,25 @@ class NAFC(QMainWindow):
 
         layout.addWidget(buttons_row, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        submit_label = QLabel(str(self._ui_cfg.get("submit_hint", "Bitte einen Stimulus anhoeren, auswaehlen und dann abschicken.")), self)
+        submit_label = QLabel(str(self._ui_cfg.get("submit_hint", "Bitte einen Stimulus anhören, auswählen und dann bestätigen.")), self)
         submit_label.setWordWrap(True)
-        submit_label.setStyleSheet(f"color: {self._ui_cfg.get('fontcolor', '#e8eaed')};")
-        submit_label.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("task_fontsize", 16) - 1))))
+        submit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        submit_label.setStyleSheet(
+            f"color: {self._ui_cfg.get('submit_hint_text_color', '#e8eaed')};"
+            "text-align: center;"
+        )
+        submit_label.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("submit_hint_fontsize", 14)))))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        self._submit_button = QPushButton(str(self._ui_cfg.get("submit_button_text", "Auswahl abschicken")), self)
+        self._submit_button = QPushButton(str(self._ui_cfg.get("submit_button_text", "Auswahl bestätigen")), self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self._submit_button.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("button_fontsize", 14)))))
         self._submit_button.setEnabled(False)
+        
         self._submit_button.clicked.connect(self._on_submit_clicked)
         layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+                
+        self._apply_submit_button_styles()  
 
         self.setCentralWidget(container)
 
@@ -260,6 +275,7 @@ class NAFC(QMainWindow):
             self._selected = stim_id
             self._selected_button = button
             self._submit_button.setEnabled(True)
+            self._apply_submit_button_styles()
             self._apply_choice_button_styles()
             if self._debug:
                 # log the value and its type to help debugging mismatched keys
@@ -300,6 +316,20 @@ class NAFC(QMainWindow):
         self._allow_close = True
         self.close()
 
+    def _apply_submit_button_styles(self) -> None:
+        """Apply submit button colors from the UI config."""
+        default_bg = str(self._ui_cfg.get("submit_button_background_color", "#94b1ff"))
+        default_fg = str(self._ui_cfg.get("submit_button_text_color", "#9e9e9e"))
+        enabled_bg = str(self._ui_cfg.get("submit_button_enabled_background_color", default_bg))
+        enabled_fg = str(self._ui_cfg.get("submit_button_enabled_text_color", default_fg))
+
+        bg = enabled_bg if self._submit_button.isEnabled() else default_bg
+        fg = enabled_fg if self._submit_button.isEnabled() else default_fg
+
+        self._submit_button.setStyleSheet(
+            f"background-color: {bg}; color: {fg}; border: 1px solid #d0d7de; border-radius: 4px; padding: 6px 12px;"
+        )
+
     def _apply_choice_button_styles(self) -> None:
         """Apply default/selected color styles to all choice buttons."""
         default_bg = str(self._ui_cfg.get("button_background_color", "#3c4043"))
@@ -309,9 +339,13 @@ class NAFC(QMainWindow):
 
         for btn in self._choice_buttons:
             if btn is self._selected_button:
-                btn.setStyleSheet(f"background-color: {selected_bg}; color: {selected_fg};")
+                btn.setStyleSheet(f"background-color: {selected_bg}; color: {selected_fg};")  
             else:
                 btn.setStyleSheet(f"background-color: {default_bg}; color: {default_fg};")
+  
+        
+
+        btn.adjustSize()
 
     def get_results(self) -> pd.DataFrame:
         """Return a one-row DataFrame with trial result.

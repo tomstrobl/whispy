@@ -77,7 +77,7 @@ class InfoWindow(_BaseUIWindow):
         *,
         fontsize: int = 12,
         fontcolor: str = "#FFFFFF",
-        background_color: str = "#2b2b2b",
+        background_color: Optional[str] = None,
         fullscreen: bool = False,
         minimum_width: int=320,
         center: bool = True,
@@ -101,6 +101,11 @@ class InfoWindow(_BaseUIWindow):
         self._content_widget = QWidget()
         self._content_widget.setStyleSheet(
             f"background-color: {background_color};"
+        )
+        effective_background = background_color or "#94b1ff"
+        self.setStyleSheet(f"background-color: {effective_background};")
+        self._content_widget.setStyleSheet(
+            f"background-color: {effective_background};"
         )
         content_layout = QVBoxLayout(self._content_widget)
         content_layout.setContentsMargins(10, 10, 10, 10)
