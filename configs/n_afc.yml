@@ -12,14 +12,11 @@ ui:
   button_selected_text_color: "#202124"
   task_fontsize: 16
   task_spacing: 16
-  submit_hint: "Bitte einen Stimulus anhoeren, auswaehlen und dann abschicken."
-  submit_button_text: "Auswahl abschicken"
+  submit_hint: "Listen to a stimulus, select one, then submit."
+  submit_button_text: "Submit choice"
 
 # test-specific defaults
 test:
   n_choices: 3
   shuffle_choices: true
-  feedback: false
-  autoplay_stimulus_on_present: true
-  autoplay_delay: 0.1
 
