@@ -180,6 +180,7 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 AGENTS.md
+CLAUDE.md
 
 # OS hidden/system files (macOS, Linux, Windows)
 .DS_Store

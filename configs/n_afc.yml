@@ -25,12 +25,13 @@ ui:
   submit_button_text_color: "#BACDFF"
   submit_button_enabled_background_color: "#BACDFF"
   submit_button_enabled_text_color: "#202124"
+  task_fontsize: 16
+  task_spacing: 16
+  submit_hint: "Listen to a stimulus, select one, then submit."
+  submit_button_text: "Submit choice"
 
 # test-specific defaults
 test:
   n_choices: 3
   shuffle_choices: true
-  feedback: false
-  autoplay_stimulus_on_present: true
-  autoplay_delay: 0.1
 
