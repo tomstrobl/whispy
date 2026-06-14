@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .base import _BaseUIWindow
+from .base import _BaseUIWindow, style_qpushbutton
 from .info_window import InfoWindow
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import read_config
@@ -266,6 +266,7 @@ class _MainWindow(QWidget):
         fontsize = drag_and_drop_mushra["fontsize"]
         button_fontsize = drag_and_drop_mushra["button_fontsize"]
         fontcolor = drag_and_drop_mushra["fontcolor"]
+        window_background_color = drag_and_drop_mushra["window_background_color"]
 
         self._description = description
         self._fontsize = max(1, int(fontsize))
@@ -339,8 +340,10 @@ class _MainWindow(QWidget):
         self.stop_button = QPushButton("Stop", self)
         self.continue_button = QPushButton("Continue", self)
 
-        self._setup_control_button(self.stop_button, button_fontsize)
-        self._setup_control_button(self.continue_button, button_fontsize)
+        style_qpushbutton(self.stop_button, button_fontsize,
+                          fontcolor, window_background_color)
+        style_qpushbutton(self.continue_button, button_fontsize,
+                          fontcolor, window_background_color)
 
         self.stop_button.clicked.connect(self._on_stop_button_clicked)
         self.continue_button.clicked.connect(self.continueClicked)
@@ -368,17 +371,6 @@ class _MainWindow(QWidget):
     def _on_stop_button_clicked(self) -> None:
         self.view.deactivate_active_button()
         self.stopClicked.emit()
-
-    @staticmethod
-    def _setup_control_button(button: QPushButton, button_fontsize: int) -> None:
-        font_size = max(1, int(button_fontsize))
-        font = QFont("Helvetica", font_size, QFont.Weight.Normal)
-        button.setFont(font)
-        # Use the widget's style-aware size hint, then add a small safety margin.
-        hint = button.sizeHint()
-        width = hint.width() + max(6, int(font_size * 0.5))
-        height = hint.height() + max(4, int(font_size * 0.3))
-        button.setFixedSize(width, height)
 
 
 class _RatingArea(QGraphicsView):
@@ -446,6 +438,11 @@ class _RatingArea(QGraphicsView):
             | QPainter.RenderHint.TextAntialiasing
             | QPainter.RenderHint.SmoothPixmapTransform
         )
+        # Prevent drag ghosting artifacts by repainting the full viewport.
+        self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
+        self.setCacheMode(QGraphicsView.CacheModeFlag.CacheNone)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
+        self.viewport().setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
         self.setFrameShape(QGraphicsView.Shape.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from whispy.utils._utils import format_markdown
-from .base import _BaseUIWindow
+from .base import _BaseUIWindow, style_qpushbutton
 
 import math
 from typing import Optional
@@ -77,6 +77,7 @@ class InfoWindow(_BaseUIWindow):
         *,
         fontsize: int = 12,
         fontcolor: str = "#FFFFFF",
+        background_color: str = "#2b2b2b",
         fullscreen: bool = False,
         minimum_width: int=320,
         center: bool = True,
@@ -98,6 +99,9 @@ class InfoWindow(_BaseUIWindow):
                 self.disable_close_button()
 
         self._content_widget = QWidget()
+        self._content_widget.setStyleSheet(
+            f"background-color: {background_color};"
+        )
         content_layout = QVBoxLayout(self._content_widget)
         content_layout.setContentsMargins(10, 10, 10, 10)
         content_layout.setSpacing(10)
@@ -126,7 +130,8 @@ class InfoWindow(_BaseUIWindow):
         controls_layout.addStretch(1)
 
         self.continue_button = QPushButton("Continue")
-        self._setup_control_button(self.continue_button, self._fontsize)
+        style_qpushbutton(self.continue_button, fontsize,
+                          fontcolor, background_color)
         self.continue_button.clicked.connect(self._on_continue_clicked)
 
         controls_layout.addWidget(self.continue_button)
@@ -154,7 +159,9 @@ class InfoWindow(_BaseUIWindow):
         if parent is None:
             if self._fullscreen:
                 width, height = self._primary_screen_size()
-                self._show_host_window(width=width, height=height, fullscreen=True)
+                self._show_host_window(
+                    width=width, height=height, fullscreen=True,
+                    background_color=background_color)
             else:
                 self._show_host_window()
                 self._center_on_screen()
@@ -234,13 +241,3 @@ class InfoWindow(_BaseUIWindow):
         if self in _orphaned_windows:
             _orphaned_windows.remove(self)
         super().closeEvent(event)
-
-    @staticmethod
-    def _setup_control_button(button: QPushButton, button_fontsize: int) -> None:
-        font_size = max(1, int(button_fontsize))
-        font = QFont("Helvetica", font_size, QFont.Weight.Normal)
-        button.setFont(font)
-        hint = button.sizeHint()
-        width = hint.width() + max(6, int(font_size * 0.5))
-        height = hint.height() + max(4, int(font_size * 0.3))
-        button.setFixedSize(width, height)
