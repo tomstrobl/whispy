@@ -266,12 +266,12 @@ class _MainWindow(QWidget):
         fontsize = drag_and_drop_mushra["fontsize"]
         button_fontsize = drag_and_drop_mushra["button_fontsize"]
         fontcolor = drag_and_drop_mushra["fontcolor"]
-        background_color = drag_and_drop_mushra["window_background_color"]
+        window_background_color = drag_and_drop_mushra["window_background_color"]
 
         self._description = description
         self._fontsize = max(1, int(fontsize))
         self._fontcolor = fontcolor
-        self._window_background_color = background_color
+        self._window_background_color = window_background_color
         self._info_window: Optional[InfoWindow] = None
 
         layout = QVBoxLayout(self)
