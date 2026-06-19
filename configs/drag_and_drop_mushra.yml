@@ -20,6 +20,9 @@ button_color_active: "#a5d6a7"
 button_fontcolor_initial: "#ffffff"
 button_fontcolor: "#2b2b2b"
 
+# rounded edges for stop and continue button
+stop_continue_button_border_radius: "2px"
+
 # look of rating buttons
 button_size: 40
 button_fontsize: 16

@@ -20,8 +20,11 @@ from PyQt6.QtWidgets import (
 
 import pandas as pd
 
+from .base import style_qpushbutton
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import read_config
+
+
 
 # Directory containing this file. Required for default configs
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
@@ -54,13 +57,14 @@ class NAFC(QMainWindow):
     debug : bool, optional
         If True, window close button is enabled and debug prints are emitted.
     """
-
+    
     def __init__(
         self,
         *,
         screen: Optional[Dict[str, Any]] = None,
         stimuli_handler: Optional[StimuliHandler] = None,
         n_afc_config: Optional[str] = None,
+        n_afc_ui: Optional[str] = None,
         blocking: bool = True,
         debug: bool = False,
     ) -> None:
@@ -122,12 +126,18 @@ class NAFC(QMainWindow):
         # load UI/test config
         if n_afc_config is None:
             n_afc_config = os.path.join(FILEPATH, "..", "..", "configs", "n_afc.yml")
+        if n_afc_ui is None:
+            n_afc_ui = os.path.join(FILEPATH, "..", "..", "configs", "design.yml")
+
         cfg = read_config(n_afc_config)
-        self._ui_cfg = cfg.get("ui", {}) if isinstance(cfg, dict) else {}
-        self._test_cfg = cfg.get("test", {}) if isinstance(cfg, dict) else {}
+        cfg_ui = read_config(n_afc_ui)
+        self.cfg_ui = cfg_ui
+
+        # self._ui_cfg = cfg.get("ui", {}) if isinstance(cfg, dict) else {}
+        self._test_cfg = cfg if isinstance(cfg, dict) else {}
 
         # window sizing
-        window_size = self._ui_cfg.get("window_size", [1000, 600])
+        window_size = self.cfg_ui["window_size"]
         fullscreen = isinstance(window_size, str) and window_size.strip().lower() == "fullscreen"
         if fullscreen:
             geo = QApplication.primaryScreen().availableGeometry()
@@ -142,10 +152,10 @@ class NAFC(QMainWindow):
 
         # UI elements
         container = QWidget(self)
-        container.setStyleSheet(f"background-color: {self._ui_cfg.get('window_background_color', '#2b2b2b')};")
+        container.setStyleSheet(f"background-color: {cfg_ui['window_background_color']};")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(14, 14, 14, 14)
-        layout.setSpacing(self._ui_cfg.get("task_spacing", 12))
+        layout.setSpacing(cfg_ui["task_spacing"])
 
         # task label (try to get from attributes if provided in screen)
         task_text = "N-AFC task"
@@ -158,14 +168,15 @@ class NAFC(QMainWindow):
                     task_text = attributes[attr_name].get("task", task_text)
             except Exception:
                 pass
-
+        
+        font_color = cfg_ui["fontcolor"]
         task_label = QLabel(str(task_text).replace("\n", "  \n"), self)
         task_label.setWordWrap(True)
         task_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        task_label.setStyleSheet(f"color: {self._ui_cfg.get('fontcolor', '#e8eaed')};"
+        task_label.setStyleSheet(f"color: {font_color};"
             "text-align: center;"
         )
-        task_label.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("task_fontsize", 16)))))
+        task_label.setFont(QFont("Helvetica", max(1, self.cfg_ui["fontsize"])))
         layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # choices
@@ -192,20 +203,24 @@ class NAFC(QMainWindow):
         self._selected_button: Optional[QPushButton] = None
 
         # creating buttons
+        button_spacing = cfg_ui["button_spacing"]
         buttons_row = QWidget(self)
         br_layout = QHBoxLayout(buttons_row)
         br_layout.setContentsMargins(0, 12, 0, 12)
-        br_layout.setSpacing(self._ui_cfg.get("button_spacing", 8))
+        br_layout.setSpacing(button_spacing)
 
+        # choice button  design
+        button_fontsize = cfg_ui["button_fontsize"]
+        button_font_color = cfg_ui["button_fontcolor_initial"]
+        button_color_initial = cfg_ui["button_color_initial"]
+        button_border_raduis = cfg_ui["button_border_radius"]
+        
         self._choice_buttons: List[QPushButton] = []
         for idx, stim_id in enumerate(self._choices, start=1):
             btn = QPushButton(str('Stimulus ' + str(idx)), self)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setMinimumSize(int(self._ui_cfg.get("button_size", 56)), int(self._ui_cfg.get("button_size", 56)))
-            btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-            btn.setStyleSheet("""QPushButton {border-radius: 0px; padding: 8px 12px;}""")
-            btn.adjustSize()
-            btn.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("button_fontsize", 14)))))
+            style_qpushbutton(btn, button_fontsize, 
+                              button_font_color, button_color_initial, button_border_raduis)
             btn.clicked.connect(self._make_choice_handler(stim_id, btn))
             br_layout.addWidget(btn)
             self._choice_buttons.append(btn)
@@ -214,19 +229,19 @@ class NAFC(QMainWindow):
 
         layout.addWidget(buttons_row, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        submit_label = QLabel(str(self._ui_cfg.get("submit_hint", "Bitte einen Stimulus anhören, auswählen und dann bestätigen.")), self)
+        submit_label = QLabel(self.cfg_ui["submit_hint"], self)
         submit_label.setWordWrap(True)
         submit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         submit_label.setStyleSheet(
-            f"color: {self._ui_cfg.get('submit_hint_text_color', '#e8eaed')};"
+            f"color: {font_color};"
             "text-align: center;"
         )
-        submit_label.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("submit_hint_fontsize", 14)))))
+        submit_label.setFont(QFont("Helvetica", max(1, self.cfg_ui["fontsize"])))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        self._submit_button = QPushButton(str(self._ui_cfg.get("submit_button_text", "Auswahl bestätigen")), self)
+        self._submit_button = QPushButton(str(self.cfg_ui["submit_button_text"]), self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._submit_button.setFont(QFont("Helvetica", max(1, int(self._ui_cfg.get("button_fontsize", 14)))))
+        self._submit_button.setFont(QFont("Helvetica", max(1, self.cfg_ui["button_fontsize"])))
         self._submit_button.setEnabled(False)
         
         self._submit_button.clicked.connect(self._on_submit_clicked)
@@ -318,30 +333,47 @@ class NAFC(QMainWindow):
 
     def _apply_submit_button_styles(self) -> None:
         """Apply submit button colors from the UI config."""
-        default_bg = str(self._ui_cfg.get("submit_button_background_color", "#94b1ff"))
-        default_fg = str(self._ui_cfg.get("submit_button_text_color", "#9e9e9e"))
-        enabled_bg = str(self._ui_cfg.get("submit_button_enabled_background_color", default_bg))
-        enabled_fg = str(self._ui_cfg.get("submit_button_enabled_text_color", default_fg))
+        default_button_color = self.cfg_ui["window_background_color"]
+        default_fontcolor = self.cfg_ui["submit_button_text_color"]
+        enabled_button_color = self.cfg_ui["button_color_clicked"]
+        enabled_fontcolor = self.cfg_ui["button_fontcolor"]
+        button_border_radius = self.cfg_ui["button_border_radius"]
 
-        bg = enabled_bg if self._submit_button.isEnabled() else default_bg
-        fg = enabled_fg if self._submit_button.isEnabled() else default_fg
+        bg = enabled_button_color if self._submit_button.isEnabled() else default_button_color
+        fg = enabled_fontcolor if self._submit_button.isEnabled() else default_fontcolor
 
         self._submit_button.setStyleSheet(
-            f"background-color: {bg}; color: {fg}; border: 1px solid #d0d7de; border-radius: 4px; padding: 6px 12px;"
+            f"background-color: {bg}; color: {fg}; border: 1px solid #d0d7de; border-radius: {button_border_radius}; padding: 6px 12px;"
         )
 
     def _apply_choice_button_styles(self) -> None:
         """Apply default/selected color styles to all choice buttons."""
-        default_bg = str(self._ui_cfg.get("button_background_color", "#3c4043"))
-        default_fg = str(self._ui_cfg.get("button_text_color", "#ffffff"))
-        selected_bg = str(self._ui_cfg.get("button_selected_background_color", "#8ab4f8"))
-        selected_fg = str(self._ui_cfg.get("button_selected_text_color", "#202124"))
+        button_color_initial =  self.cfg_ui["button_color_initial"]
+        button_fontcolor_initial = self.cfg_ui["button_fontcolor_initial"]
+        button_color_clicked = self.cfg_ui["button_color_clicked"]
+        button_fontcolor = self.cfg_ui["button_fontcolor"]
+        button_border_radius = self.cfg_ui["button_border_radius"]
+        hover_color = self.cfg_ui["button_hover_background_color"]
 
         for btn in self._choice_buttons:
             if btn is self._selected_button:
-                btn.setStyleSheet(f"background-color: {selected_bg}; color: {selected_fg};")  
+                btn.setStyleSheet(f"""
+                QPushButton {{
+                            background-color: {button_color_clicked}; 
+                            color: {button_fontcolor};
+                            }}
+                            """)
             else:
-                btn.setStyleSheet(f"background-color: {default_bg}; color: {default_fg};")
+                btn.setStyleSheet(f"""
+                QPushButton {{
+                            background-color: {button_color_initial};
+                            color: {button_fontcolor_initial};
+                            border-radius: {button_border_radius}
+                            }}
+                QPushButton:hover {{
+                            background-color: {hover_color};
+                            }}
+                            """)
   
         
 

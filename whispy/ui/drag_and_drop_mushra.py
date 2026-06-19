@@ -267,6 +267,7 @@ class _MainWindow(QWidget):
         button_fontsize = drag_and_drop_mushra["button_fontsize"]
         fontcolor = drag_and_drop_mushra["fontcolor"]
         window_background_color = drag_and_drop_mushra["window_background_color"]
+        stop_continue_button_border_radius = drag_and_drop_mushra["stop_continue_button_border_radius"]
 
         self._description = description
         self._fontsize = max(1, int(fontsize))
@@ -342,9 +343,9 @@ class _MainWindow(QWidget):
         self.continue_button = QPushButton("Continue", self)
 
         style_qpushbutton(self.stop_button, button_fontsize,
-                          fontcolor, window_background_color)
+                          fontcolor, window_background_color, stop_continue_button_border_radius)
         style_qpushbutton(self.continue_button, button_fontsize,
-                          fontcolor, window_background_color)
+                          fontcolor, window_background_color, stop_continue_button_border_radius)
 
         self.stop_button.clicked.connect(self._on_stop_button_clicked)
         self.continue_button.clicked.connect(self.continueClicked)

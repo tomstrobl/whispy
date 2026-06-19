@@ -77,6 +77,7 @@ class InfoWindow(_BaseUIWindow):
         *,
         fontsize: int = 12,
         fontcolor: str = "#FFFFFF",
+        stop_continue_button_border_radius: str = "2px",
         background_color: Optional[str] = None,
         fullscreen: bool = False,
         minimum_width: int=320,
@@ -136,7 +137,7 @@ class InfoWindow(_BaseUIWindow):
 
         self.continue_button = QPushButton("Continue")
         style_qpushbutton(self.continue_button, fontsize,
-                          fontcolor, background_color)
+                          fontcolor, background_color, stop_continue_button_border_radius)
         self.continue_button.clicked.connect(self._on_continue_clicked)
 
         controls_layout.addWidget(self.continue_button)

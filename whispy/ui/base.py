@@ -54,7 +54,7 @@ def ensure_qapplication() -> QApplication:
 
 def style_qpushbutton(
     button: QPushButton, button_fontsize: int,
-    button_fontcolor: str, button_background_color: str) -> None:
+    button_fontcolor: str, button_background_color: str, button_border_radius: str) -> None:
     font_size = max(1, int(button_fontsize))
     font = QFont("Helvetica", font_size, QFont.Weight.Normal)
     button.setFont(font)
@@ -63,9 +63,16 @@ def style_qpushbutton(
     width = hint.width() + max(6, int(font_size * 0.5))
     height = hint.height() + max(4, int(font_size * 0.3))
     button.setFixedSize(width, height)
-    button.setStyleSheet(
-        f"background-color: {button_background_color};"
-        f"color: {button_fontcolor};"
+    button.setStyleSheet(f"""
+    QPushButton {{
+        background-color: {button_background_color};
+        color: {button_fontcolor};
+        border-radius: {button_border_radius}
+        }}
+    QPushButton:hover {{
+        background-color: {button_background_color};
+        }}
+        """
     )
 
 
