@@ -1,41 +1,5 @@
-# N-AFC UI and test defaults
-ui:
-  # window defaults
-  window_size: [1100, 550]
-  fontcolor: "#e8eaed"
-  window_background_color: "#94b1ff" # perano
-  # task instruction defaults
-  task_fontsize: 20
-  task_spacing: 16
-  # task_fontsize: 16
-  # task_spacing: 16
-  # choice-button defaults
-  button_size: 80
-  button_fontsize: 16
-  button_spacing: 16
-  button_border_radius: '3px'
-  button_background_color: "#5E72A3"
-  button_text_color: "#ffffff"
-  button_selected_background_color: "#BACDFF"
-  button_selected_text_color: "#202124"
-  button_hover_background_color: "#708edb"
-  # submit-hint defaults
-  submit_hint: "Bitte einen Stimulus anhören, auswählen und dann bestätigen."
-  submit_hint_fontsize: 14
-  submit_hint_text_color: "#e8eaed"
-  # submit_hint: "Listen to a stimulus, select one, then submit."
-  # submit-button defaults
-  # submit_button_text: "Auswahl bestätigen"
-  submit_button_text: "Submit choice"
-  submit_button_background_color: "#94b1ff"
-  submit_button_text_color: "#BACDFF"
-  submit_button_enabled_background_color: "#BACDFF"
-  submit_button_enabled_text_color: "#202124"
-
-  
-
 # test-specific defaults
-test:
-  n_choices: 3
-  shuffle_choices: true
+
+n_choices: 3
+shuffle_choices: true
 

@@ -40,6 +40,7 @@ class DragAndDropMUSHRA(_BaseUIWindow):
         stimuli_handler: Optional[StimuliHandler] = None,
         attributes: Optional[str] = None,
         drag_and_drop_mushra: Optional[str] = None,
+        drag_and_drop_mushra_ui: Optional[str] = None,
         blocking: Optional[bool] = True,
         debug: Optional[bool] = False,
         parent: Optional[QMainWindow] = None,
@@ -79,8 +80,13 @@ class DragAndDropMUSHRA(_BaseUIWindow):
         if drag_and_drop_mushra is None:
             drag_and_drop_mushra = os.path.join(
                 FILEPATH, "..", "..", "configs", "drag_and_drop_mushra.yml")
+        # read bevavioral test config (use default if not provided)
+        if drag_and_drop_mushra_ui is None:
+            drag_and_drop_mushra_ui = os.path.join(
+                FILEPATH, "..", "..", "configs", "design.yml")
 
         drag_and_drop_mushra = read_config(drag_and_drop_mushra)
+        drag_and_drop_mushra_ui = read_config(drag_and_drop_mushra_ui)
 
         # parse config data to get parameters for current task ----------------
         # current attribute and rating scale
@@ -101,21 +107,21 @@ class DragAndDropMUSHRA(_BaseUIWindow):
             self.disable_close_button()
 
         # set window size
-        window_size = drag_and_drop_mushra["window_size"]
+        window_size = drag_and_drop_mushra_ui["window_size"]
         window_width, window_height, fullscreen = self._resolve_window_size(
             window_size,
             fallback=(1000, 700),
         )
         if fullscreen:
             # Shallow-copy the config so the caller's dict is not mutated.
-            drag_and_drop_mushra = dict(drag_and_drop_mushra)
-            drag_and_drop_mushra["window_size"] = [window_width, window_height]
+            drag_and_drop_mushra_ui = dict(drag_and_drop_mushra_ui)
+            drag_and_drop_mushra_ui["window_size"] = [window_width, window_height]
 
         self._continue_info_window: Optional[InfoWindow] = None
 
         container = QWidget()
         container.setStyleSheet(
-            f"background-color: {drag_and_drop_mushra['window_background_color']};"
+            f"background-color: {drag_and_drop_mushra_ui['window_background_color']};"
         )
         layout = QVBoxLayout(container)
         layout.setContentsMargins(22, 22, 22, 22)
@@ -130,6 +136,7 @@ class DragAndDropMUSHRA(_BaseUIWindow):
             values=values,
             labels=labels,
             drag_and_drop_mushra=drag_and_drop_mushra,
+            drag_and_drop_mushra_ui=drag_and_drop_mushra_ui,
             parent=container,
         )
         layout.addWidget(self.drag_area)
@@ -255,19 +262,22 @@ class _MainWindow(QWidget):
         values: Optional[List[float]] = None,
         labels: Optional[List[Optional[str]]] = None,
         drag_and_drop_mushra: Optional[Dict] = None,
+        drag_and_drop_mushra_ui: Optional[Dict] = None,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
         if drag_and_drop_mushra is None:
             raise ValueError("drag_and_drop_mushra config is required")
+        if drag_and_drop_mushra_ui is None:
+            raise ValueError("drag_and_drop_mushra_ui config.design is required")
 
-        task_fontsize = drag_and_drop_mushra["task_fontsize"]
-        task_spacing = drag_and_drop_mushra["task_spacing"]
-        fontsize = drag_and_drop_mushra["fontsize"]
-        button_fontsize = drag_and_drop_mushra["button_fontsize"]
-        fontcolor = drag_and_drop_mushra["fontcolor"]
-        window_background_color = drag_and_drop_mushra["window_background_color"]
-        stop_continue_button_border_radius = drag_and_drop_mushra["stop_continue_button_border_radius"]
+        task_fontsize = drag_and_drop_mushra_ui["fontsize"]
+        task_spacing = drag_and_drop_mushra_ui["task_spacing"]
+        fontsize = drag_and_drop_mushra_ui["fontsize"]
+        button_fontsize = drag_and_drop_mushra_ui["button_fontsize"]
+        fontcolor = drag_and_drop_mushra_ui["fontcolor"]
+        window_background_color = drag_and_drop_mushra_ui["window_background_color"]
+        button_border_radius = drag_and_drop_mushra_ui["button_border_radius"]
 
         self._description = description
         self._fontsize = max(1, int(fontsize))
@@ -324,6 +334,7 @@ class _MainWindow(QWidget):
             values=values,
             labels=labels,
             drag_and_drop_mushra=drag_and_drop_mushra,
+            drag_and_drop_mushra_ui=drag_and_drop_mushra_ui,
             parent=self,
         )
         layout.addWidget(self.view, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -343,9 +354,11 @@ class _MainWindow(QWidget):
         self.continue_button = QPushButton("Continue", self)
 
         style_qpushbutton(self.stop_button, button_fontsize,
-                          fontcolor, window_background_color, stop_continue_button_border_radius)
+                          fontcolor, window_background_color, button_border_radius)
+        self.stop_button.setStyleSheet(self.stop_button.styleSheet() + " QPushButton { border: 1px solid #d0d7de; }")
         style_qpushbutton(self.continue_button, button_fontsize,
-                          fontcolor, window_background_color, stop_continue_button_border_radius)
+                          fontcolor, window_background_color, button_border_radius)
+        self.continue_button.setStyleSheet(self.continue_button.styleSheet() + " QPushButton { border: 1px solid #d0d7de; }")
 
         self.stop_button.clicked.connect(self._on_stop_button_clicked)
         self.continue_button.clicked.connect(self.continueClicked)
@@ -391,6 +404,7 @@ class _RatingArea(QGraphicsView):
         values: Optional[List[float]] = None,
         labels: Optional[List[Optional[str]]] = None,
         drag_and_drop_mushra: Optional[Dict] = None,
+        drag_and_drop_mushra_ui: Optional[Dict] = None,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
@@ -398,21 +412,25 @@ class _RatingArea(QGraphicsView):
         if drag_and_drop_mushra is None:
             raise ValueError("drag_and_drop_mushra config is required")
 
-        button_size = drag_and_drop_mushra["button_size"]
-        button_fontsize = drag_and_drop_mushra["button_fontsize"]
-        button_spacing = drag_and_drop_mushra["button_spacing"]
-        rating_area_background_color = drag_and_drop_mushra["rating_area_background_color"]
-        window_background_color = drag_and_drop_mushra["window_background_color"]
-        edge_color = drag_and_drop_mushra["edge_color"]
-        button_color_initial = drag_and_drop_mushra["button_color_initial"]
-        button_color_clicked = drag_and_drop_mushra["button_color_clicked"]
-        button_color_active = drag_and_drop_mushra["button_color_active"]
-        button_fontcolor_initial = drag_and_drop_mushra["button_fontcolor_initial"]
-        button_fontcolor = drag_and_drop_mushra["button_fontcolor"]
+        if drag_and_drop_mushra_ui is None:
+            raise ValueError("drag_and_drop_mushra_ui config.design is required")
+
+        button_size = drag_and_drop_mushra_ui["button_size"]
+        button_fontsize = drag_and_drop_mushra_ui["button_fontsize"]
+        button_spacing = drag_and_drop_mushra_ui["button_spacing"]
+        rating_area_background_color = drag_and_drop_mushra_ui["rating_area_background_color"]
+        window_background_color = drag_and_drop_mushra_ui["window_background_color"]
+        edge_color = drag_and_drop_mushra_ui["edge_color"]
+        button_color_initial = drag_and_drop_mushra_ui["button_color_initial"]
+        button_color_clicked = drag_and_drop_mushra_ui["button_color_clicked"]
+        button_color_active = drag_and_drop_mushra_ui["button_color_active"]
+        button_color_hover = drag_and_drop_mushra_ui["button_hover_background_color"]
+        button_fontcolor_initial = drag_and_drop_mushra_ui["button_fontcolor_initial"]
+        button_fontcolor = drag_and_drop_mushra_ui["button_fontcolor"]
+        window_size = drag_and_drop_mushra_ui["window_size"]
+        rating_area_size = drag_and_drop_mushra_ui["rating_area_size"]
         autoplay_reference = drag_and_drop_mushra["autoplay_reference"]
         autoplay_delay = drag_and_drop_mushra["autoplay_delay"]
-        window_size = drag_and_drop_mushra["window_size"]
-        rating_area_size = drag_and_drop_mushra["rating_area_size"]
 
         self._num_buttons = max(1, num_buttons)
         self._reference = bool(reference)
@@ -425,6 +443,7 @@ class _RatingArea(QGraphicsView):
         self._button_color_initial = button_color_initial
         self._button_color_clicked = button_color_clicked
         self._button_color_active = button_color_active
+        self._button_color_hover = button_color_hover
         self._button_fontcolor_initial = button_fontcolor_initial
         self._button_fontcolor = button_fontcolor
         self._autoplay_reference = autoplay_reference
@@ -875,8 +894,8 @@ class _RatingAreaLabels(QWidget):
         self._lower_labels: List[str] = []
         self._fontsize = max(1, int(fontsize))
         self._fontcolor = QColor(fontcolor)
-        self.setMinimumHeight(48)
-        self.setMaximumHeight(56)
+        self.setMinimumHeight(52)
+        self.setMaximumHeight(66)
 
     def set_layout(self, positions: List[float], upper_labels: List[str], lower_labels: List[str]) -> None:
         self._positions = positions
@@ -892,8 +911,8 @@ class _RatingAreaLabels(QWidget):
         upper_font = QFont("Helvetica", self._fontsize, QFont.Weight.DemiBold)
         lower_font = QFont("Helvetica", self._fontsize)
 
-        top_y = 16
-        bottom_y = 35
+        top_y = 20
+        bottom_y = 45
 
         for idx, x in enumerate(self._positions):
             if idx < len(self._upper_labels):
@@ -941,6 +960,7 @@ class _DraggableTile(QGraphicsObject):
         color: str = "#d9dde3",
         initial_color: str = "#ffffff",
         active_color: str = "#a5d6a7",
+
         edge_color: str = "#c8cdd4",
         font_color: str = "#444a55",
         initial_font_color: Optional[str] = None,

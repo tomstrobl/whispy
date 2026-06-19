@@ -1,41 +1,41 @@
-# ---------------------------------- Look ----------------------------------- #
-# Window size. Either [pixels_x, pixels_y] or "fullscreen"
-window_size: fullscreen
+# # ---------------------------------- Look ----------------------------------- #
+# # Window size. Either [pixels_x, pixels_y] or "fullscreen"
+# window_size: fullscreen
 
-# Rating area size.
-# Percentage with respect to window size.
-# Use 100% for maximally possible size.
-rating_area_size: [75, 50]
+# # Rating area size.
+# # Percentage with respect to window size.
+# # Use 100% for maximally possible size.
+# rating_area_size: [75, 50]
 
-# overall color theme
-fontcolor: "#e8eaed"
-window_background_color: "#94b1ff"
-rating_area_background_color: "#D3DFFF"
-edge_color: "#454545"
+# # overall color theme
+# fontcolor: "#e8eaed"
+# window_background_color: "#94b1ff"
+# rating_area_background_color: "#D3DFFF"
+# edge_color: "#454545"
 
-# color theme for the rating buttons
-button_color_initial: "#768ECC"
-button_color_clicked: "#BACDFF"
-button_color_active: "#a5d6a7"
-button_fontcolor_initial: "#ffffff"
-button_fontcolor: "#2b2b2b"
+# # color theme for the rating buttons
+# button_color_initial: "#768ECC"
+# button_color_clicked: "#BACDFF"
+# button_color_active: "#a5d6a7"
+# button_fontcolor_initial: "#ffffff"
+# button_fontcolor: "#2b2b2b"
 
-# rounded edges for stop and continue button
-stop_continue_button_border_radius: "2px"
+# # rounded edges for stop and continue button
+# stop_continue_button_border_radius: "2px"
 
-# look of rating buttons
-button_size: 40
-button_fontsize: 16
-button_spacing: 8
+# # look of rating buttons
+# button_size: 40
+# button_fontsize: 16
+# button_spacing: 8
 
-# The task is a string displayed on top of the GUI
-# This defines the fontsize and the space between
-# the task and the rating interface in pixel
-task_fontsize: 16
-task_spacing: 24
+# # The task is a string displayed on top of the GUI
+# # This defines the fontsize and the space between
+# # the task and the rating interface in pixel
+# task_fontsize: 16
+# task_spacing: 24
 
-# Size for all other text
-fontsize: 12
+# # Size for all other text
+# fontsize: 12
 
 # -------------------------------- Behaviour -------------------------------- #
 # Specify if the reference should be played
