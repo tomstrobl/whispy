@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import os
 import random
-import sys
 import time
 from functools import partial
 from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import QEventLoop, Qt
-from PyQt6.QtGui import QCloseEvent, QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QApplication,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -24,14 +22,13 @@ import pandas as pd
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import load_design, read_config
 
+from .base import _BaseUIWindow
+
 # Directory containing this file. Required for default configs
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
 
-# Module-level QApplication reference like other UI modules
-_qapp: Optional[QApplication] = None
 
-
-class NAFC(QMainWindow):
+class NAFC(_BaseUIWindow):
     """Simple N-AFC (N-alternative forced choice) UI.
 
     Notes
@@ -51,10 +48,18 @@ class NAFC(QMainWindow):
         Path to the N-AFC YAML config. If ``None``, ``configs/n_afc.yml`` from
         the package is used.
     blocking : bool, optional
-        If ``True``, block until the window is closed (via ``wait_until_closed``).
+        If ``True``, block until the trial is submitted (via
+        ``wait_until_closed``).
     debug : bool, optional
         If ``True``, the window close button is enabled and debug prints are
         emitted.
+    parent : QMainWindow, optional
+        If provided, reuse that UI's host window instead of opening a new one:
+        the host's central widget is swapped in place. This keeps a running
+        experiment (e.g. a staircase) in the same window across trials so it
+        does not flicker/reload or drop out of fullscreen. The OS window is not
+        re-shown or resized; call ``close()`` on any instance sharing the host
+        to close it.
     """
 
     def __init__(
@@ -65,22 +70,9 @@ class NAFC(QMainWindow):
         n_afc_config: Optional[str] = None,
         blocking: bool = True,
         debug: bool = False,
+        parent: Optional[QMainWindow] = None,
     ) -> None:
-        global _qapp
-        if QApplication.instance() is None:
-            _qapp = QApplication(sys.argv[:1])
-
-        # enable Qt integration for IPython kernels (same pattern as other UIs)
-        try:
-            from IPython import get_ipython
-
-            ip = get_ipython()
-            if ip is not None:
-                ip.enable_gui("qt6")
-        except Exception:
-            pass
-
-        super().__init__()
+        super().__init__(blocking=bool(blocking), debug=bool(debug), parent=parent)
 
         # default screen for quick tests
         if screen is None:
@@ -97,9 +89,6 @@ class NAFC(QMainWindow):
             }
 
         self.screen = screen
-        self._debug = bool(debug)
-        self._allow_close = bool(debug)
-        self._wait_loop: Optional[QEventLoop] = None
 
         # stimuli handler
         self.stimuli_handler = stimuli_handler if stimuli_handler is not None else SoundDevice()
@@ -122,12 +111,22 @@ class NAFC(QMainWindow):
         self._rt: Optional[float] = None
         self._choice_buttons: List[QPushButton] = []
 
-        self._apply_window_size()
+        # In non-debug standalone mode, block the native close button.
+        if parent is None and not self._debug:
+            self.disable_close_button()
+
         self._build_ui()
 
-        self.show()
-        self.raise_()
-        self.activateWindow()
+        # Resolve and present the host window. When reusing a parent host the
+        # central widget is swapped in place (no new OS window), so a running
+        # experiment stays e.g. fullscreen across trials.
+        window_size = self._ui_cfg.get("window_size", [1000, 600])
+        width, height, fullscreen = self._resolve_window_size(
+            window_size, fallback=(1000, 600), minimum_size=(400, 300))
+        if parent is None:
+            self._show_host_window(
+                width=width, height=height, fullscreen=fullscreen,
+                background_color=self._background_color)
 
         # start time for reaction time measurement
         self._start_time = time.time()
@@ -184,21 +183,6 @@ class NAFC(QMainWindow):
             return str(attr.get("task", "N-AFC task"))
         return "N-AFC task"
 
-    def _apply_window_size(self) -> None:
-        """Size the window from config (``[w, h]`` or ``"fullscreen"``)."""
-        window_size = self._ui_cfg.get("window_size", [1000, 600])
-        fullscreen = isinstance(window_size, str) and window_size.strip().lower() == "fullscreen"
-        if fullscreen:
-            geo = QApplication.primaryScreen().availableGeometry()
-            self.resize(geo.width(), geo.height())
-            self.showFullScreen()
-            return
-        try:
-            w, h = int(window_size[0]), int(window_size[1])
-        except Exception:
-            w, h = 1000, 600
-        self.resize(max(400, w), max(300, h))
-
     def _build_ui(self) -> None:
         """Build the central widget: task text, choice buttons, submit."""
         container = QWidget(self)
@@ -253,7 +237,7 @@ class NAFC(QMainWindow):
         self._submit_button.clicked.connect(self._on_submit_clicked)
         layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        self.setCentralWidget(container)
+        self._host.setCentralWidget(container)
 
     # --------------------------------------------------------------- handlers
     def _on_choice_clicked(self, stim_id: Any, button: QPushButton, *_args: Any) -> None:
@@ -293,7 +277,13 @@ class NAFC(QMainWindow):
                 print(f"playback failed for {stim_id!r} (fallback tried): {exc}")
 
     def _on_submit_clicked(self) -> None:
-        """Finalize the currently selected choice and close the trial window."""
+        """Finalize the currently selected choice and end the trial.
+
+        Like the other whispy UIs, this only releases the blocking loop; the
+        window stays open so the caller can present the next trial in the same
+        window (no reload / fullscreen drop). The caller closes it explicitly
+        via ``close()`` when the experiment is done.
+        """
         if self._selected is None:
             return
 
@@ -302,8 +292,7 @@ class NAFC(QMainWindow):
         if self._debug:
             print(f"Submitted: {self._selected!r} (rt={self._rt:.3f}s)")
 
-        self._allow_close = True
-        self.close()
+        self.unblock()
 
     def _apply_choice_button_styles(self) -> None:
         """Apply default/selected color styles to all choice buttons."""
@@ -351,27 +340,3 @@ class NAFC(QMainWindow):
             }
         )
         return pd.DataFrame([row])
-
-    # -------------------------------------------------------------- lifecycle
-    def wait_until_closed(self) -> None:
-        """Block until the window has been closed."""
-        if not self.isVisible():
-            return
-        if self._wait_loop is None:
-            self._wait_loop = QEventLoop(self)
-        self._wait_loop.exec()
-
-    def closeEvent(self, event: QCloseEvent) -> None:
-        """Handle close requests and release the internal wait loop.
-
-        Parameters
-        ----------
-        event : QCloseEvent
-            Close event emitted by Qt.
-        """
-        if not self._allow_close:
-            event.ignore()
-            return
-        if self._wait_loop is not None and self._wait_loop.isRunning():
-            self._wait_loop.quit()
-        super().closeEvent(event)
