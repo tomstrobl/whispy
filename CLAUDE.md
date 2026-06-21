@@ -30,12 +30,14 @@ There is currently no test suite, linter, or formatter configured in `pyproject.
 ## Configuration conventions
 
 - `whispy.utils.read_config()` (thin `yaml.safe_load` wrapper) is the single shared config loader used everywhere.
+- `whispy.utils.load_design()` returns the global theme from `configs/design.yml` merged with optional per-UI overrides (`load_design(overrides)`, where `overrides` is a dict or YAML path; `None`-valued keys are ignored). Every UI loads its look this way so all listening tests share one theme by default.
 - Every config-consuming class resolves a default path relative to its own file's `FILEPATH` if no explicit path is passed, so configs can be overridden per-call without touching package defaults.
+- `configs/design.yml`: the single source of truth for the shared look (window size, colors, fonts, button geometry/colors). It carries both the MUSHRA tile-state keys (`button_color_initial/clicked/active`) and the N-AFC button-state keys (`button_background_color`, `button_selected_*`), driven from one palette so the two UIs match.
 - `configs/experiment.yml`: list of `block -> [block_name, section -> {section_name, attribute, reference, test}]`.
 - `configs/attributes.yml`: maps attribute name -> `{task, description, values, labels, neutral_value}` (rating scale definition shown by `DragAndDropMUSHRA` and used for the task text in `NAFC`).
 - `configs/stimuli.yml`: handler-scoped (top-level keys like `SoundDevice:`, `OSCHandler:`), mapping stimulus IDs to playback info (e.g. `file:` for `SoundDevice`). Stimulus IDs are saved into experiment results — prefer descriptive names.
-- `configs/drag_and_drop_mushra.yml` / `configs/n_afc.yml`: per-UI layout/theme (`window_size`, colors, font sizes, button geometry, autoplay behavior, etc.). `window_size: "fullscreen"` is a special-cased string.
-- `configs/questionnaire.yml`: splits into `ui:` (layout/theme) and `questionnaire:` (list of `{section, prompt, questions: [...]}`). Supported question `type`s: `text`, `text_box`, `numeric`, `single_choice`, `multiple_choice`. `single_choice` supports an `other_question` sub-block for a free-text "other" option.
+- `configs/drag_and_drop_mushra.yml` / `configs/n_afc.yml`: per-UI layout/behavior (`window_size`, `rating_area_size`, autoplay, N-AFC `test:`/wording). Colors/fonts are inherited from `configs/design.yml`; any theme key may still be overridden here. `window_size: "fullscreen"` is a special-cased string.
+- `configs/questionnaire.yml`: splits into `ui:` (questionnaire layout/sizing; colors inherited from `design.yml`) and `questionnaire:` (list of `{section, prompt, questions: [...]}`). Supported question `type`s: `text`, `text_box`, `numeric`, `single_choice`, `multiple_choice`. `single_choice` supports an `other_question` sub-block for a free-text "other" option.
 
 ## UI / Qt patterns to preserve
 

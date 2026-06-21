@@ -1,17 +1,12 @@
-# N-AFC UI and test defaults
+# NAFC — test parameters, behavior & wording.
+# The look (colors, fonts, button styling) is inherited from the global theme
+# in configs/design.yml so every listening test matches. Override individual
+# theme keys under `ui:` if needed.
+
 ui:
+  # Window size. Either [pixels_x, pixels_y] or "fullscreen".
   window_size: [1100, 550]
-  fontcolor: "#e8eaed"
-  window_background_color: "#2b2b2b"
-  button_size: 56
-  button_fontsize: 16
-  button_spacing: 8
-  button_background_color: "#3c4043"
-  button_text_color: "#ffffff"
-  button_selected_background_color: "#8ab4f8"
-  button_selected_text_color: "#202124"
-  task_fontsize: 16
-  task_spacing: 16
+  # Hint shown below the choice buttons and the submit-button label.
   submit_hint: "Listen to a stimulus, select one, then submit."
   submit_button_text: "Submit choice"
 
@@ -19,4 +14,3 @@ ui:
 test:
   n_choices: 3
   shuffle_choices: true
-

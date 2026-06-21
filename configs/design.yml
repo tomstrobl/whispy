@@ -1,0 +1,58 @@
+# =============================================================================
+# Global design / theme for ALL whispy UIs
+# =============================================================================
+# This file is the single source of truth for how every listening test looks
+# (DragAndDropMUSHRA, NAFC, Questionnaire, InfoWindow). Each UI loads these
+# values via `whispy.utils.load_design()` and may override individual keys in
+# its own config (configs/n_afc.yml, configs/drag_and_drop_mushra.yml,
+# configs/questionnaire.yml). Change a color here and it changes everywhere.
+#
+# Palette: a clean, cool indigo theme on a light slate background.
+
+# ------------------------------- Window ------------------------------------ #
+# Default window size. Either [pixels_x, pixels_y] or "fullscreen".
+window_size: [1000, 700]
+# Overall surface + text.
+window_background_color: "#eef1f7"   # light cool gray
+fontcolor: "#2b2f38"                 # dark slate (used for body text)
+# Base font size for general text.
+fontsize: 14
+
+# ------------------------------- Buttons ----------------------------------- #
+# Shared button geometry.
+button_size: 44
+button_fontsize: 16
+button_spacing: 12
+button_border_radius: "8px"
+
+# --- Push buttons (Continue / Stop / Submit, N-AFC choices) ---
+# Light, clearly raised look so users recognize them as clickable, with a
+# subtle border and a hover highlight.
+button_background_color: "#ffffff"           # resting (light)
+button_text_color: "#2b3550"                 # dark label
+button_border_color: "#b9c4dd"               # subtle outline
+button_hover_background_color: "#dbe2f1"      # light blue on hover
+button_selected_background_color: "#5cb874"  # selected (N-AFC, green)
+button_selected_text_color: "#ffffff"
+# Disabled state (e.g. the N-AFC submit button before a choice is made).
+button_disabled_background_color: "#eef1f7"
+button_disabled_text_color: "#9aa3b2"
+
+# --- MUSHRA rating tiles (drag-and-drop) ---
+# These stay colored so the draggable handles read as distinct from buttons.
+button_fontcolor: "#ffffff"          # tile label color
+button_color_initial: "#5168a6"      # resting tile (indigo)
+button_color_clicked: "#9db4e8"      # pressed / being dragged (light indigo)
+button_color_active: "#5cb874"       # currently playing (green)
+
+# ------------------------------- Task text --------------------------------- #
+# Prompt shown on top of a rating / N-AFC screen and the gap below it (px).
+task_fontsize: 16
+task_spacing: 24
+
+# --------------------------- Areas & responses ----------------------------- #
+# MUSHRA rating area surface + value-line color.
+rating_area_background_color: "#dbe2f1"
+edge_color: "#6b7280"
+# Questionnaire response fields (text boxes, choice indicators).
+response_boxes_color: "#ffffff"

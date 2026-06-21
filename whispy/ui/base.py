@@ -54,19 +54,37 @@ def ensure_qapplication() -> QApplication:
 
 def style_qpushbutton(
     button: QPushButton, button_fontsize: int,
-    button_fontcolor: str, button_background_color: str) -> None:
+    button_fontcolor: str, button_background_color: str,
+    button_border_radius: str = "8px",
+    button_hover_background_color: Optional[str] = None,
+    button_border_color: Optional[str] = None) -> None:
     font_size = max(1, int(button_fontsize))
     font = QFont("Helvetica", font_size, QFont.Weight.Normal)
     button.setFont(font)
+    button.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    border = f"1px solid {button_border_color}" if button_border_color else "none"
+    sheet = (
+        f"QPushButton {{"
+        f" background-color: {button_background_color};"
+        f" color: {button_fontcolor};"
+        f" border: {border};"
+        f" border-radius: {button_border_radius};"
+        f" padding: 6px 16px; }}"
+    )
+    if button_hover_background_color:
+        sheet += (
+            f"QPushButton:hover {{"
+            f" background-color: {button_hover_background_color}; }}"
+        )
+    # Apply the stylesheet (incl. padding/border) BEFORE measuring, so the size
+    # hint accounts for it and the label is never clipped.
+    button.setStyleSheet(sheet)
     # Use the widget's style-aware size hint, then add a small safety margin.
     hint = button.sizeHint()
     width = hint.width() + max(6, int(font_size * 0.5))
     height = hint.height() + max(4, int(font_size * 0.3))
     button.setFixedSize(width, height)
-    button.setStyleSheet(
-        f"background-color: {button_background_color};"
-        f"color: {button_fontcolor};"
-    )
 
 
 class _BaseUIWindow(QMainWindow):

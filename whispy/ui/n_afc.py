@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 import pandas as pd
 
 from whispy.interfaces import StimuliHandler, SoundDevice
-from whispy.utils import read_config
+from whispy.utils import load_design, read_config
 
 # Directory containing this file. Required for default configs
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
@@ -108,8 +108,11 @@ class NAFC(QMainWindow):
         if n_afc_config is None:
             n_afc_config = os.path.join(FILEPATH, "..", "..", "configs", "n_afc.yml")
         cfg = read_config(n_afc_config)
-        self._ui_cfg = cfg.get("ui", {}) if isinstance(cfg, dict) else {}
-        self._test_cfg = cfg.get("test", {}) if isinstance(cfg, dict) else {}
+        cfg = cfg if isinstance(cfg, dict) else {}
+        # The global theme from configs/design.yml is the base; the per-UI
+        # `ui:` block only overrides wording, window size, or individual colors.
+        self._ui_cfg = load_design(cfg.get("ui"))
+        self._test_cfg = cfg.get("test", {})
         self._resolve_config()
 
         # trial choices and selection state
@@ -143,10 +146,15 @@ class NAFC(QMainWindow):
         self._button_size = int(ui.get("button_size", 56))
         self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
         self._button_spacing = int(ui.get("button_spacing", 8))
-        self._button_bg = str(ui.get("button_background_color", "#3c4043"))
-        self._button_fg = str(ui.get("button_text_color", "#ffffff"))
-        self._button_selected_bg = str(ui.get("button_selected_background_color", "#8ab4f8"))
-        self._button_selected_fg = str(ui.get("button_selected_text_color", "#202124"))
+        self._button_bg = str(ui.get("button_background_color", "#ffffff"))
+        self._button_fg = str(ui.get("button_text_color", "#2b3550"))
+        self._button_border = str(ui.get("button_border_color", "#b9c4dd"))
+        self._button_hover_bg = str(ui.get("button_hover_background_color", "#dbe2f1"))
+        self._button_selected_bg = str(ui.get("button_selected_background_color", "#5cb874"))
+        self._button_selected_fg = str(ui.get("button_selected_text_color", "#ffffff"))
+        self._button_disabled_bg = str(ui.get("button_disabled_background_color", "#eef1f7"))
+        self._button_disabled_fg = str(ui.get("button_disabled_text_color", "#9aa3b2"))
+        self._button_radius = str(ui.get("button_border_radius", "8px"))
         self._submit_hint = str(ui.get("submit_hint", "Listen to a stimulus, select one, then submit."))
         self._submit_button_text = str(ui.get("submit_button_text", "Submit choice"))
 
@@ -233,6 +241,14 @@ class NAFC(QMainWindow):
         self._submit_button = QPushButton(self._submit_button_text, self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self._submit_button.setFont(QFont("Helvetica", self._button_fontsize))
+        self._submit_button.setStyleSheet(
+            f"QPushButton {{ background-color: {self._button_bg}; color: {self._button_fg};"
+            f" border: 1px solid {self._button_border}; border-radius: {self._button_radius};"
+            f" padding: 6px 16px; }}"
+            f"QPushButton:hover {{ background-color: {self._button_hover_bg}; }}"
+            f"QPushButton:disabled {{ background-color: {self._button_disabled_bg};"
+            f" color: {self._button_disabled_fg}; border-color: {self._button_disabled_bg}; }}"
+        )
         self._submit_button.setEnabled(False)
         self._submit_button.clicked.connect(self._on_submit_clicked)
         layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -293,12 +309,20 @@ class NAFC(QMainWindow):
         """Apply default/selected color styles to all choice buttons."""
         for btn in self._choice_buttons:
             if btn is self._selected_button:
+                # Selected: filled green, no hover change.
                 btn.setStyleSheet(
-                    f"background-color: {self._button_selected_bg}; color: {self._button_selected_fg};"
+                    f"QPushButton {{ background-color: {self._button_selected_bg};"
+                    f" color: {self._button_selected_fg}; border: none;"
+                    f" border-radius: {self._button_radius}; }}"
                 )
             else:
+                # Resting: light, bordered, with a hover highlight.
                 btn.setStyleSheet(
-                    f"background-color: {self._button_bg}; color: {self._button_fg};"
+                    f"QPushButton {{ background-color: {self._button_bg};"
+                    f" color: {self._button_fg};"
+                    f" border: 1px solid {self._button_border};"
+                    f" border-radius: {self._button_radius}; }}"
+                    f"QPushButton:hover {{ background-color: {self._button_hover_bg}; }}"
                 )
 
     # ---------------------------------------------------------------- results

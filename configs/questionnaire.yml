@@ -1,4 +1,8 @@
 # ---------------------------------- Look ----------------------------------- #
+# Colors (fontcolor, window_background_color, response_boxes_color) are
+# inherited from the global theme in configs/design.yml so the questionnaire
+# matches the other listening-test UIs. Only questionnaire-specific layout and
+# sizing live here; add a theme key under `ui:` to override it for this UI only.
 ui:
 # Window size. Either [pixels_x, pixels_y] or "fullscreen"
   window_size: fullscreen
@@ -15,12 +19,9 @@ ui:
   width_numeric_response: 10
   width_text_response: 50
   text_box_number_of_lines: 5
-  # fontsizes and colors
+  # section / question font sizes (questionnaire-specific)
   section_fontsize: 16
   question_fontsize: 12
-  fontcolor: "#e8eaed"
-  window_background_color: "#2b2b2b"
-  response_boxes_color: "#5a5a5a"
 
 # ------------------------------ Questionnaire ------------------------------ #
 # The questionnaire can have an arbitrary number of sections. Each section

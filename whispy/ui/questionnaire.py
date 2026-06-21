@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from whispy.utils import read_config
+from whispy.utils import load_design, read_config
 from whispy.utils._utils import format_markdown
 
 from .base import _BaseUIWindow, style_qpushbutton
@@ -73,7 +73,9 @@ class Questionnaire(_BaseUIWindow):
         if not isinstance(cfg, dict):
             raise ValueError("Questionnaire config must be a mapping.")
 
-        self._ui_cfg = cfg.get("ui", {})
+        # The global theme from configs/design.yml is the base; the per-UI
+        # `ui:` block only overrides layout/sizing (and optionally colors).
+        self._ui_cfg = load_design(cfg.get("ui"))
         self._questionnaire_cfg = cfg.get("questionnaire", [])
         if not isinstance(self._questionnaire_cfg, list):
             raise ValueError("The 'questionnaire' key must be a list.")
@@ -252,8 +254,14 @@ class _QuestionnaireMain(QWidget):
         controls = QHBoxLayout()
         controls.addStretch(1)
         self.continue_button = QPushButton("Continue", self)
-        style_qpushbutton(self.continue_button, question_font_size,
-                          ui_cfg['fontcolor'], ui_cfg['window_background_color'])
+        style_qpushbutton(
+            self.continue_button, question_font_size,
+            ui_cfg.get("button_text_color", "#2b3550"),
+            ui_cfg.get("button_background_color", "#ffffff"),
+            ui_cfg.get("button_border_radius", "8px"),
+            ui_cfg.get("button_hover_background_color"),
+            ui_cfg.get("button_border_color"),
+        )
         self.continue_button.clicked.connect(self.continueClicked)
         controls.addWidget(self.continue_button)
         root_layout.addLayout(controls)

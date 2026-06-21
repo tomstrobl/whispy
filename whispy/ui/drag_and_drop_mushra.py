@@ -3,7 +3,7 @@ from __future__ import annotations
 from .base import _BaseUIWindow, style_qpushbutton
 from .info_window import InfoWindow
 from whispy.interfaces import StimuliHandler, SoundDevice
-from whispy.utils import read_config
+from whispy.utils import load_design, read_config
 from whispy.utils._utils import format_markdown
 
 import pandas
@@ -75,12 +75,14 @@ class DragAndDropMUSHRA(_BaseUIWindow):
 
         attributes = read_config(attributes)
 
-        # read GUI config (use default if not provided)
+        # read GUI config (use default if not provided). The global theme from
+        # configs/design.yml is the base; the per-UI config only overrides
+        # layout/behavior (and optionally individual theme keys).
         if drag_and_drop_mushra is None:
             drag_and_drop_mushra = os.path.join(
                 FILEPATH, "..", "..", "configs", "drag_and_drop_mushra.yml")
 
-        drag_and_drop_mushra = read_config(drag_and_drop_mushra)
+        drag_and_drop_mushra = load_design(drag_and_drop_mushra)
 
         # parse config data to get parameters for current task ----------------
         # current attribute and rating scale
@@ -267,6 +269,12 @@ class _MainWindow(QWidget):
         button_fontsize = drag_and_drop_mushra["button_fontsize"]
         fontcolor = drag_and_drop_mushra["fontcolor"]
         window_background_color = drag_and_drop_mushra["window_background_color"]
+        # Control-button look (Stop / Continue): light, bordered, hover.
+        button_bg = drag_and_drop_mushra.get("button_background_color", "#ffffff")
+        button_fg = drag_and_drop_mushra.get("button_text_color", "#2b3550")
+        button_border_color = drag_and_drop_mushra.get("button_border_color")
+        button_hover_bg = drag_and_drop_mushra.get("button_hover_background_color")
+        button_radius = drag_and_drop_mushra.get("button_border_radius", "8px")
 
         self._description = description
         self._fontsize = max(1, int(fontsize))
@@ -341,9 +349,11 @@ class _MainWindow(QWidget):
         self.continue_button = QPushButton("Continue", self)
 
         style_qpushbutton(self.stop_button, button_fontsize,
-                          fontcolor, window_background_color)
+                          button_fg, button_bg, button_radius,
+                          button_hover_bg, button_border_color)
         style_qpushbutton(self.continue_button, button_fontsize,
-                          fontcolor, window_background_color)
+                          button_fg, button_bg, button_radius,
+                          button_hover_bg, button_border_color)
 
         self.stop_button.clicked.connect(self._on_stop_button_clicked)
         self.continue_button.clicked.connect(self.continueClicked)

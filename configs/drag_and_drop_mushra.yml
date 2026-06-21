@@ -1,41 +1,17 @@
-# ---------------------------------- Look ----------------------------------- #
-# Window size. Either [pixels_x, pixels_y] or "fullscreen"
-window_size: fullscreen
+# DragAndDropMUSHRA — layout & behavior.
+# The look (colors, fonts, button styling) is inherited from the global theme
+# in configs/design.yml so every listening test matches. To override a theme
+# key for this UI only, add it here (it takes precedence over design.yml).
 
-# Rating area size.
-# Percentage with respect to window size.
-# Use 100% for maximally possible size.
+# -------------------------------- Layout ----------------------------------- #
+# Window size. Either [pixels_x, pixels_y] or "fullscreen".
+window_size: fullscreen
+# Rating area size as a percentage of the window size.
+# Use 100 for the maximally possible size.
 rating_area_size: [75, 50]
 
-# overall color theme
-fontcolor: "#e8eaed"
-window_background_color: "#2b2b2b"
-rating_area_background_color: "#f6f7f9"
-edge_color: "#454545"
-
-# color theme for the rating buttons
-button_color_initial: "#ffffff"
-button_color_clicked: "#d9dde3"
-button_color_active: "#a5d6a7"
-button_fontcolor: "#2b2b2b"
-
-# look of rating buttons
-button_size: 40
-button_fontsize: 16
-button_spacing: 8
-
-# The task is a string displayed on top of the GUI
-# This defines the fontsize and the space between
-# the task and the rating interface in pixel
-task_fontsize: 16
-task_spacing: 24
-
-# Size for all other text
-fontsize: 12
-
 # -------------------------------- Behaviour -------------------------------- #
-# Specify if the reference should be played
-# automatically, after the test conditions
-# and the delay of the auto play in seconds
-autoplay_reference: True
-autoplay_delay: .1
+# Play the reference automatically after the test conditions, and the delay
+# (in seconds) before that autoplay.
+autoplay_reference: true
+autoplay_delay: 0.1

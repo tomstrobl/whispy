@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from whispy.utils import load_design
 from whispy.utils._utils import format_markdown
 from .base import _BaseUIWindow, style_qpushbutton
 
@@ -75,9 +76,9 @@ class InfoWindow(_BaseUIWindow):
         self,
         info_text: str,
         *,
-        fontsize: int = 12,
-        fontcolor: str = "#FFFFFF",
-        background_color: str = "#2b2b2b",
+        fontsize: Optional[int] = None,
+        fontcolor: Optional[str] = None,
+        background_color: Optional[str] = None,
         fullscreen: bool = False,
         minimum_width: int=320,
         center: bool = True,
@@ -86,6 +87,16 @@ class InfoWindow(_BaseUIWindow):
         parent: Optional[QMainWindow] = None,
     ) -> None:
         super().__init__(blocking=blocking, debug=debug, parent=parent)
+
+        # Fall back to the global theme so standalone info screens match the
+        # other listening-test UIs. Explicit args still win.
+        design = load_design()
+        if fontsize is None:
+            fontsize = int(design.get("fontsize", 12))
+        if fontcolor is None:
+            fontcolor = str(design.get("fontcolor", "#FFFFFF"))
+        if background_color is None:
+            background_color = str(design.get("window_background_color", "#2b2b2b"))
         self._fullscreen = fullscreen
         self._center = center
         self._fontsize = max(1, int(fontsize))
@@ -130,8 +141,14 @@ class InfoWindow(_BaseUIWindow):
         controls_layout.addStretch(1)
 
         self.continue_button = QPushButton("Continue")
-        style_qpushbutton(self.continue_button, fontsize,
-                          fontcolor, background_color)
+        style_qpushbutton(
+            self.continue_button, fontsize,
+            design.get("button_text_color", "#2b3550"),
+            design.get("button_background_color", "#ffffff"),
+            design.get("button_border_radius", "8px"),
+            design.get("button_hover_background_color"),
+            design.get("button_border_color"),
+        )
         self.continue_button.clicked.connect(self._on_continue_clicked)
 
         controls_layout.addWidget(self.continue_button)
