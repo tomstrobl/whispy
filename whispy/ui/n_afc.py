@@ -177,7 +177,17 @@ class NAFC(_BaseUIWindow):
         return choices
 
     def _resolve_task_text(self) -> str:
-        """Look up the task prompt from ``attributes.yml`` for this trial."""
+        """Resolve the on-screen task prompt for this trial.
+
+        A ``task`` given directly in the ``screen`` dict wins, so a trial can
+        carry its prompt inline (e.g. from a single experiment config). Failing
+        that, the prompt is the ``task`` of the ``attribute`` in
+        ``attributes.yml``.
+        """
+        inline_task = self.screen.get("task")
+        if inline_task:
+            return str(inline_task)
+
         attr_name = self.screen.get("attribute")
         if attr_name is None:
             return "N-AFC task"

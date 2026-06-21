@@ -1,0 +1,56 @@
+# =============================================================================
+# Adaptive N-AFC staircase experiment — single configuration file
+# =============================================================================
+# This one file configures the WHOLE staircase_n_afc experiment. The only thing
+# configured elsewhere is the shared look of the UIs (configs/design.yml).
+#
+# It is read by three consumers, each picking out the keys it needs:
+#   - SoundDevice  -> the `SoundDevice:` block (which WAV plays for each id)
+#   - NAFC window  -> the `test:` and `ui:` blocks
+#   - the notebook -> the `trial:` and `staircase:` blocks
+#
+# Edit the values below to design your own experiment; you should not need to
+# touch any Python.
+
+# ------------------------------- Stimuli ----------------------------------- #
+# Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
+# the notebook). All files must share one sampling rate and must not clip.
+SoundDevice:
+  1: { file: stimulus_1.wav }
+  2: { file: stimulus_2.wav }
+  3: { file: stimulus_3.wav }
+  4: { file: stimulus_4.wav }
+
+# --------------------------- N-AFC window ---------------------------------- #
+# `test`/`ui` are read by the NAFC window. Colors/fonts come from design.yml;
+# anything you set under `ui:` overrides that global theme for this experiment.
+test:
+  n_choices: 3            # number of intervals (must match the trial below)
+  shuffle_choices: true   # randomize button order so position carries no info
+ui:
+  window_size: fullscreen                  # or [width, height] in pixels
+  submit_hint: "Listen to every interval, pick the odd one out, then submit."
+  submit_button_text: "Submit choice"
+
+# -------------------------------- Trial ------------------------------------ #
+# Defines what one trial looks like (an "odd one out" N-AFC): the non-target
+# intervals all play `standard`, one interval plays the current target level.
+trial:
+  task: "Which interval is the **odd one out**?"   # prompt shown on top
+  standard: 1                                       # the reference stimulus id
+  levels: [2, 3, 4]                                 # target ids, hardest -> easiest
+  block_name: Staircase
+  section_name: 3-AFC
+
+# ----------------------------- Adaptive rule ------------------------------- #
+# Transformed up/down staircase (Levitt, 1971). Step down (harder) after
+# `n_down` correct in a row; step up (easier) after `n_up` wrong in a row.
+#   1-up / 2-down -> ~70.7% correct,  1-up / 3-down -> ~79.4% correct.
+staircase:
+  n_up: 1                    # wrong answers in a row to step up (easier)
+  n_down: 2                  # correct answers in a row to step down (harder)
+  step: 1                    # levels moved per step
+  start_index: -1            # starting level index (-1 = easiest / last level)
+  max_reversals: 6           # stop after this many reversals ...
+  max_trials: 30             # ... or this many trials, whichever comes first
+  reversals_for_threshold: 4 # how many final reversals threshold() averages
