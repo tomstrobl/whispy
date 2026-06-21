@@ -23,6 +23,7 @@ from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import load_design, read_config
 
 from .base import _BaseUIWindow
+from .info_window import InfoWindow
 
 # Directory containing this file. Required for default configs
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
@@ -110,6 +111,12 @@ class NAFC(_BaseUIWindow):
         self._selected_button: Optional[QPushButton] = None
         self._rt: Optional[float] = None
         self._choice_buttons: List[QPushButton] = []
+        # Choice buttons the participant has played at least once (gates
+        # submit). Tracked per button, not per stimulus id, so duplicated
+        # intervals (e.g. two standards in an odd-one-out trial) must all be
+        # heard.
+        self._listened: set = set()
+        self._listen_info_window: Optional[InfoWindow] = None
 
         # In non-debug standalone mode, block the native close button.
         if parent is None and not self._debug:
@@ -248,6 +255,7 @@ class NAFC(_BaseUIWindow):
         """
         self._selected = stim_id
         self._selected_button = button
+        self._listened.add(button)
         self._submit_button.setEnabled(True)
         self._apply_choice_button_styles()
         if self._debug:
@@ -287,12 +295,31 @@ class NAFC(_BaseUIWindow):
         if self._selected is None:
             return
 
+        # Require the participant to have heard every interval at least once
+        # (mirrors the MUSHRA "listen to each sound once" rule).
+        if not self._debug and not self._all_listened():
+            self._show_listen_hint()
+            return
+
         # Reaction time is measured for the confirmed answer.
         self._rt = time.time() - self._start_time
         if self._debug:
             print(f"Submitted: {self._selected!r} (rt={self._rt:.3f}s)")
 
         self.unblock()
+
+    def _all_listened(self) -> bool:
+        """Whether every choice/interval has been played at least once."""
+        return all(button in self._listened for button in self._choice_buttons)
+
+    def _show_listen_hint(self) -> None:
+        """Pop up a non-blocking reminder to listen to every interval first."""
+        self._listen_info_window = InfoWindow(
+            info_text="You have to listen to each interval at least once.",
+            fontsize=self._task_fontsize,
+            fontcolor=self._fontcolor,
+            blocking=False,
+        )
 
     def _apply_choice_button_styles(self) -> None:
         """Apply default/selected color styles to all choice buttons."""
