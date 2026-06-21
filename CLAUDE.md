@@ -11,9 +11,8 @@ There is no `README.md`; `AGENTS.md` is another AI-facing guide that overlaps wi
 ## Commands
 
 - Install in editable mode: `pip install -e .`
-- Run the N-AFC demo script (opens a Qt window): `python examples/run_n_afc.py`
-- Open the demo notebooks for the full experiment flow: `examples/drag_and_drop_mushra.ipynb`, `examples/n_afc.ipynb`
-- Regenerate the demo WAV stimuli: `python stimuli/generate_example_stimli.py`
+- Open the demo notebooks for the full experiment flow: `examples/drag_and_drop_mushra.ipynb` (MUSHRA), `examples/n_afc.ipynb` (single N-AFC trial), `examples/staircase_n_afc.ipynb` (adaptive staircase driving N-AFC trials)
+- Regenerate the demo WAV stimuli: `python examples/stimuli/generate_example_stimli.py` (run from inside `examples/stimuli/`)
 
 There is currently no test suite, linter, or formatter configured in `pyproject.toml`.
 

@@ -34,5 +34,5 @@ dependencies = [
     "sounddevice",
 ]
 
-[tool.setuptools]
-packages = ["whispy"]
+[tool.setuptools.packages.find]
+include = ["whispy*"]
