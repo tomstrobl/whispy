@@ -36,7 +36,7 @@ test:
   n_choices: 3            # number of intervals (must match the trial below)
   shuffle_choices: true   # randomize button order so position carries no info
 ui:
-  window_size: fullscreen                  # or [width, height] in pixels
+  window_size: [1000,600]                  # or [width, height] in pixels
   submit_hint: "Press the number keys (or click) to hear each interval, then press Enter to submit your choice."
   submit_button_text: "Submit choice"
 

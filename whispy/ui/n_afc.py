@@ -127,6 +127,15 @@ class NAFC(_BaseUIWindow):
         if parent is None and not self._debug:
             self.disable_close_button()
 
+        # Resolve the target window size BEFORE building the UI so buttons and
+        # fonts can scale to it (otherwise they look lost on large/fullscreen
+        # displays). When reusing a parent host this still resolves the
+        # configured size (e.g. fullscreen -> screen size), so every trial
+        # scales the same way.
+        window_size = self._ui_cfg.get("window_size", [1000, 600])
+        self._window_width, self._window_height, self._fullscreen = self._resolve_window_size(
+            window_size, fallback=(1000, 600), minimum_size=(400, 300))
+
         self._build_ui()
 
         # Keyboard support: number keys play an interval, Enter submits. The
@@ -135,15 +144,13 @@ class NAFC(_BaseUIWindow):
         # across trials (each trial is a fresh NAFC swapped into the host).
         self._install_key_handling()
 
-        # Resolve and present the host window. When reusing a parent host the
-        # central widget is swapped in place (no new OS window), so a running
-        # experiment stays e.g. fullscreen across trials.
-        window_size = self._ui_cfg.get("window_size", [1000, 600])
-        width, height, fullscreen = self._resolve_window_size(
-            window_size, fallback=(1000, 600), minimum_size=(400, 300))
+        # Present the host window. When reusing a parent host the central widget
+        # is swapped in place (no new OS window), so a running experiment stays
+        # e.g. fullscreen across trials.
         if parent is None:
             self._show_host_window(
-                width=width, height=height, fullscreen=fullscreen,
+                width=self._window_width, height=self._window_height,
+                fullscreen=self._fullscreen,
                 background_color=self._background_color)
 
         # start time for reaction time measurement
@@ -162,6 +169,9 @@ class NAFC(_BaseUIWindow):
         self._task_spacing = int(ui.get("task_spacing", 12))
         self._button_size = int(ui.get("button_size", 56))
         self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
+        # Extra multiplier on top of the automatic window-size scaling, so the
+        # button size can be dialed up/down without changing the base sizes.
+        self._button_scale = max(0.0, float(ui.get("button_scale", 1.0)))
         self._button_spacing = int(ui.get("button_spacing", 8))
         self._button_bg = str(ui.get("button_background_color", "#ffffff"))
         self._button_fg = str(ui.get("button_text_color", "#2b3550"))
@@ -211,8 +221,25 @@ class NAFC(_BaseUIWindow):
             return str(attr.get("task", "N-AFC task"))
         return "N-AFC task"
 
+    def _scale_factor(self) -> float:
+        """Factor for scaling buttons/fonts with the window size.
+
+        ``1.0`` at the 600 px reference height (so the configured ``button_size``
+        is unchanged for the default window) and grows proportionally with the
+        window height, so controls don't look lost on large/fullscreen displays.
+        Never shrinks below the configured sizes; ``button_scale`` tunes it.
+        """
+        reference_height = 600.0
+        height = float(getattr(self, "_window_height", reference_height))
+        return max(1.0, (height / reference_height) * self._button_scale)
+
     def _build_ui(self) -> None:
         """Build the central widget: task text, choice buttons, submit."""
+        scale = self._scale_factor()
+        button_size = round(self._button_size * scale)
+        button_fontsize = max(1, round(self._button_fontsize * scale))
+        task_fontsize = max(1, round(self._task_fontsize * scale))
+
         container = QWidget(self)
         container.setStyleSheet(f"background-color: {self._background_color};")
         layout = QVBoxLayout(container)
@@ -223,7 +250,7 @@ class NAFC(_BaseUIWindow):
         task_label = QLabel(self._resolve_task_text().replace("\n", "  \n"), self)
         task_label.setWordWrap(True)
         task_label.setStyleSheet(f"color: {self._fontcolor};")
-        task_label.setFont(QFont("Helvetica", self._task_fontsize))
+        task_label.setFont(QFont("Helvetica", task_fontsize))
         layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # choice buttons (labelled 1..n in the order shown to the participant)
@@ -234,8 +261,8 @@ class NAFC(_BaseUIWindow):
         for idx, stim_id in enumerate(self._choices, start=1):
             btn = QPushButton(str(idx), self)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setFixedSize(self._button_size, self._button_size)
-            btn.setFont(QFont("Helvetica", self._button_fontsize))
+            btn.setFixedSize(button_size, button_size)
+            btn.setFont(QFont("Helvetica", button_fontsize))
             btn.clicked.connect(partial(self._on_choice_clicked, stim_id, btn))
             br_layout.addWidget(btn)
             self._choice_buttons.append(btn)
@@ -246,13 +273,13 @@ class NAFC(_BaseUIWindow):
         submit_label = QLabel(self._submit_hint, self)
         submit_label.setWordWrap(True)
         submit_label.setStyleSheet(f"color: {self._fontcolor};")
-        submit_label.setFont(QFont("Helvetica", max(1, self._task_fontsize - 1)))
+        submit_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # submit button (disabled until a choice is selected)
         self._submit_button = QPushButton(self._submit_button_text, self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._submit_button.setFont(QFont("Helvetica", self._button_fontsize))
+        self._submit_button.setFont(QFont("Helvetica", button_fontsize))
         self._submit_button.setStyleSheet(
             f"QPushButton {{ background-color: {self._button_bg}; color: {self._button_fg};"
             f" border: 1px solid {self._button_border}; border-radius: {self._button_radius};"
