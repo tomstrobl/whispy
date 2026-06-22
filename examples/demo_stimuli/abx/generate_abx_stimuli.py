@@ -9,7 +9,7 @@
 #   - easy_a / easy_b : far apart in frequency  -> obviously different
 #   - hard_a / hard_b : close in frequency      -> subtle difference
 # These match configs/abx.yml. Run this script from inside the
-# examples/stimuli_abx/ directory to (re)create the WAVs next to it.
+# examples/demo_stimuli/abx/ directory to (re)create the WAVs next to it.
 #
 # This is intentionally separate from the other example stimulus generators.
 import pyfar as pf

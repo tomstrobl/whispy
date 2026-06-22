@@ -77,9 +77,10 @@ class SoundDevice(StimuliHandler):
         self.stimuli = self.stimuli["SoundDevice"]
 
         # parse base directory containing audio stimuli (the demo WAVs ship
-        # under examples/stimuli/)
+        # under examples/demo_stimuli/<test>/)
         if base_dir is None:
-            base_dir = os.path.join(FILEPATH, '..', '..', 'examples', 'stimuli')
+            base_dir = os.path.join(
+                FILEPATH, '..', '..', 'examples', 'demo_stimuli', 'mushra')
 
         # load and check audio files
         self.sampling_rate = None

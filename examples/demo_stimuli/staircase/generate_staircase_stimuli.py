@@ -10,10 +10,10 @@
 # examples/staircase_n_afc.ipynb (standard = 1, levels = [2, 3, 4, ...], which
 # starts easy and shrinks the frequency difference as it steps down).
 #
-# This is intentionally separate from examples/stimuli/generate_example_stimli.py,
+# This is intentionally separate from examples/demo_stimuli/mushra/generate_mushra_stimuli.py,
 # which generates the (timbre) stimuli used by the MUSHRA demo. Run this script
-# from inside the examples/stimuli_staircase/ directory to (re)create the WAVs
-# next to it.
+# from inside the examples/demo_stimuli/staircase/ directory to (re)create the
+# WAVs next to it.
 import pyfar as pf
 import numpy as np
 
