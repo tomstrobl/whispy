@@ -20,6 +20,14 @@ SoundDevice:
   2: { file: stimulus_2.wav }
   3: { file: stimulus_3.wav }
   4: { file: stimulus_4.wav }
+  5: { file: stimulus_5.wav }
+  6: { file: stimulus_6.wav }
+  7: { file: stimulus_7.wav }
+  8: { file: stimulus_8.wav }
+  9: { file: stimulus_9.wav }
+  10: { file: stimulus_10.wav }
+  11: { file: stimulus_11.wav }
+  12: { file: stimulus_12.wav }
 
 # --------------------------- N-AFC window ---------------------------------- #
 # `test`/`ui` are read by the NAFC window. Colors/fonts come from design.yml;
@@ -38,7 +46,7 @@ ui:
 trial:
   task: "Which interval is the **odd one out**?"   # prompt shown on top
   standard: 1                                       # the reference stimulus id
-  levels: [2, 3, 4]                                 # target ids, hardest -> easiest
+  levels: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]      # target ids, hardest -> easiest
   block_name: Staircase
   section_name: 3-AFC
 

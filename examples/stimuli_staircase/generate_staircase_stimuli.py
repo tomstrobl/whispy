@@ -23,8 +23,12 @@ standard_frequency = 1000.0
 # Frequency difference of each target from the standard, in Hz, ordered from
 # hardest (smallest) to easiest (largest). One target stimulus per entry, so
 # these become stimulus_2, stimulus_3, ... Add/adjust entries to change the
-# number of levels or their spacing.
-target_differences = [50.0, 150.0, 400.0]
+# number of levels or their spacing. More entries give the staircase finer
+# resolution; the spacing here is roughly geometric so the steps feel evenly
+# spaced perceptually.
+target_differences = [
+    25.0, 40.0, 60.0, 90.0, 130.0, 180.0, 250.0, 330.0, 430.0, 550.0, 700.0
+]
 
 # Shared peak amplitude for every stimulus. Level-matching the stimuli ensures
 # they differ only in frequency, and the value stays below 1 so nothing clips
