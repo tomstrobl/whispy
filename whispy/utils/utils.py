@@ -21,7 +21,10 @@ def read_config(file):
         The configuration.
     """
 
-    with open(file, "r") as f:
+    # Always decode as UTF-8. Without an explicit encoding, Python uses the
+    # locale default (cp1252 on Windows), which fails on the non-ASCII bytes in
+    # the configs (e.g. the ℹ️ glyph); macOS/Linux default to UTF-8.
+    with open(file, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return config
 
