@@ -194,3 +194,6 @@ Desktop.ini
 $RECYCLE.BIN/
 
 whispy_dev.py
+
+# Experiment results saved by the example notebooks
+examples/results/
