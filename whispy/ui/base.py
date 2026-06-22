@@ -47,7 +47,8 @@ def ensure_qapplication() -> QApplication:
         _qapp = QApplication(sys.argv[:1])
         app = _qapp
 
-    _enable_qt_gui_in_ipython()
+        _enable_qt_gui_in_ipython()
+
     return app
 
 
