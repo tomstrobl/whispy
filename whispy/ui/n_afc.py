@@ -6,9 +6,10 @@ import time
 from functools import partial
 from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
+    QApplication,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -117,12 +118,22 @@ class NAFC(_BaseUIWindow):
         # heard.
         self._listened: set = set()
         self._listen_info_window: Optional[InfoWindow] = None
+        # Whether this instance has an app-level key event filter installed.
+        # Tracked so it is installed/removed exactly once per trial (see
+        # ``_install_key_handling`` / ``_remove_key_handling``).
+        self._key_filter_installed = False
 
         # In non-debug standalone mode, block the native close button.
         if parent is None and not self._debug:
             self.disable_close_button()
 
         self._build_ui()
+
+        # Keyboard support: number keys play an interval, Enter submits. The
+        # filter belongs to THIS instance so it always acts on the current
+        # trial's choices/state, even though a staircase reuses one host window
+        # across trials (each trial is a fresh NAFC swapped into the host).
+        self._install_key_handling()
 
         # Resolve and present the host window. When reusing a parent host the
         # central widget is swapped in place (no new OS window), so a running
@@ -161,7 +172,7 @@ class NAFC(_BaseUIWindow):
         self._button_disabled_bg = str(ui.get("button_disabled_background_color", "#eef1f7"))
         self._button_disabled_fg = str(ui.get("button_disabled_text_color", "#9aa3b2"))
         self._button_radius = str(ui.get("button_border_radius", "8px"))
-        self._submit_hint = str(ui.get("submit_hint", "Listen to a stimulus, select one, then submit."))
+        self._submit_hint = str(ui.get("submit_hint", "Press a number key (or click) to listen, select one, then press Enter to submit."))
         self._submit_button_text = str(ui.get("submit_button_text", "Submit choice"))
 
     def _prepare_choices(self) -> List[Any]:
@@ -330,6 +341,69 @@ class NAFC(_BaseUIWindow):
             fontcolor=self._fontcolor,
             blocking=False,
         )
+
+    # --------------------------------------------------------------- keyboard
+    def _install_key_handling(self) -> None:
+        """Route key presses to this trial via an app-level event filter.
+
+        An application filter (rather than overriding ``keyPressEvent``) is used
+        because a staircase reuses a single host window across trials: key
+        events would otherwise be delivered to the first instance that owns the
+        host, not the current trial. The filter sees every key press regardless
+        of which widget has focus, and is removed again when the trial ends.
+        """
+        app = QApplication.instance()
+        if app is not None and not self._key_filter_installed:
+            app.installEventFilter(self)
+            self._key_filter_installed = True
+
+    def _remove_key_handling(self) -> None:
+        """Stop intercepting key presses for this trial (idempotent)."""
+        app = QApplication.instance()
+        if app is not None and self._key_filter_installed:
+            app.removeEventFilter(self)
+        self._key_filter_installed = False
+
+    def eventFilter(self, obj: Any, event: QEvent) -> bool:  # type: ignore[override]
+        """Handle number/Enter keys; defer everything else to Qt."""
+        if event.type() == QEvent.Type.KeyPress and self._handle_key_press(event):
+            return True
+        return super().eventFilter(obj, event)
+
+    def _handle_key_press(self, event: QEvent) -> bool:
+        """Play interval ``1..n`` for number keys, submit on Enter/Return.
+
+        Returns ``True`` when the key was consumed so Qt does not also act on
+        it (e.g. activating a focused button).
+        """
+        key = event.key()
+
+        # Enter / Return submit, reusing the click path so the same guards
+        # apply (a selection must exist and every interval must be heard).
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._on_submit_clicked()
+            return True
+
+        # Number keys 1..9 (main row and keypad share these key codes) select
+        # and play the interval shown with that label, exactly like a click.
+        if Qt.Key.Key_1 <= key <= Qt.Key.Key_9:
+            index = key - Qt.Key.Key_1
+            if 0 <= index < len(self._choice_buttons):
+                self._on_choice_clicked(self._choices[index], self._choice_buttons[index])
+                return True
+
+        return False
+
+    def unblock(self) -> None:  # type: ignore[override]
+        """Remove key handling for this trial, then release the blocking loop."""
+        self._remove_key_handling()
+        super().unblock()
+
+    def closeEvent(self, event: Any) -> None:  # type: ignore[override]
+        """Ensure the key filter is removed when the window actually closes."""
+        if self._allow_close:
+            self._remove_key_handling()
+        super().closeEvent(event)
 
     def _apply_choice_button_styles(self) -> None:
         """Apply default/selected color styles to all choice buttons."""
