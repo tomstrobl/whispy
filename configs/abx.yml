@@ -1,0 +1,53 @@
+# =============================================================================
+# ABX discrimination experiment — single configuration file
+# =============================================================================
+# This one file configures the WHOLE abx experiment. The only thing configured
+# elsewhere is the shared look of the UIs (configs/design.yml).
+#
+# It is read by three consumers, each picking out the keys it needs:
+#   - SoundDevice  -> the `SoundDevice:` block (which WAV plays for each id)
+#   - ABX window   -> the `test:` and `ui:` blocks (passed as `abx_config`)
+#   - the notebook -> the `trial:`, `pairs:` and `experiment:` blocks
+#
+# Edit the values below to design your own experiment; you should not need to
+# touch any Python.
+
+# ------------------------------- Stimuli ----------------------------------- #
+# Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
+# the notebook). All files must share one sampling rate and must not clip.
+SoundDevice:
+  easy_a: { file: easy_a.wav }
+  easy_b: { file: easy_b.wav }
+  hard_a: { file: hard_a.wav }
+  hard_b: { file: hard_b.wav }
+
+# ---------------------------- ABX window ----------------------------------- #
+# `test`/`ui` are read by the ABX window. Colors/fonts come from design.yml;
+# anything under `ui:` overrides that global theme for this experiment.
+test:
+  shuffle_ab: true   # randomize which stimulus of a pair is shown as A vs B
+ui:
+  window_size: fullscreen                  # or [width, height] in pixels
+  submit_hint: "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit."
+  submit_button_text: "Submit choice"
+
+# -------------------------------- Trial ------------------------------------ #
+# Shared prompt/metadata for every ABX trial. X is a copy of A or B (drawn at
+# random per trial) and the participant decides which one it matches.
+trial:
+  task: "Is **X** the same as **A** or **B**?"
+  block_name: ABX
+
+# -------------------------------- Pairs ------------------------------------ #
+# The stimulus pairs to test. Each pair is one A/B comparison; `name` labels it
+# in the results (it becomes `section_name`). Add as many pairs as you like.
+pairs:
+  - { a: easy_a, b: easy_b, name: easy (clearly different) }
+  - { a: hard_a, b: hard_b, name: hard (subtle) }
+
+# ----------------------------- Experiment ---------------------------------- #
+# How the notebook turns the pairs into a trial list.
+experiment:
+  repetitions: 6        # how many times each pair is presented
+  shuffle_trials: true  # randomize the order of all trials
+  seed: 0               # RNG seed for reproducible order / X assignment

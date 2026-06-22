@@ -1,0 +1,498 @@
+from __future__ import annotations
+
+import os
+import random
+import time
+from functools import partial
+from typing import Any, Dict, List, Optional
+
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
+    QApplication,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+import pandas as pd
+
+from whispy.interfaces import StimuliHandler, SoundDevice
+from whispy.utils import load_design, read_config
+
+from .base import _BaseUIWindow
+from .info_window import InfoWindow
+
+# Directory containing this file. Required for default configs
+FILEPATH = os.path.dirname(os.path.abspath(__file__))
+
+
+class ABX(_BaseUIWindow):
+    """Classic ABX discrimination UI.
+
+    The participant hears three intervals: ``A``, ``B`` and ``X``. ``X`` is a
+    copy of either ``A`` or ``B`` (chosen at random unless given) and the
+    participant decides whether ``X`` matches ``A`` or ``B``.
+
+    Notes
+    -----
+    - Mirrors :class:`whispy.ui.NAFC`: config-driven via ``configs/abx.yml``,
+      uses a :class:`~whispy.interfaces.StimuliHandler` to play stimuli by id,
+      reuses a single host window across trials (``parent=``), supports keyboard
+      control, and scales its controls with the window size.
+
+    Parameters
+    ----------
+    screen : dict, optional
+        Trial description. Must carry ``a`` and ``b`` (stimulus ids of the
+        pair). May carry ``x`` (the id played as X, must equal ``a`` or ``b``);
+        if absent, X is drawn at random. Optional metadata: ``task``, ``block``,
+        ``section``, ``trial_id``, ``block_name``, ``section_name``.
+    stimuli_handler : StimuliHandler, optional
+        Handler used to play stimuli. If ``None``, ``SoundDevice()`` is used.
+    abx_config : str, optional
+        Path to the ABX YAML config. If ``None``, ``configs/abx.yml`` from the
+        package is used.
+    blocking : bool, optional
+        If ``True``, block until the trial is submitted.
+    debug : bool, optional
+        If ``True``, the window close button is enabled and debug prints are
+        emitted (and the listen/answer gates are relaxed).
+    parent : QMainWindow, optional
+        If provided, reuse that UI's host window instead of opening a new one
+        (keeps a running experiment in the same window across trials).
+    """
+
+    def __init__(
+        self,
+        *,
+        screen: Optional[Dict[str, Any]] = None,
+        stimuli_handler: Optional[StimuliHandler] = None,
+        abx_config: Optional[str] = None,
+        blocking: bool = True,
+        debug: bool = False,
+        parent: Optional[QMainWindow] = None,
+    ) -> None:
+        super().__init__(blocking=bool(blocking), debug=bool(debug), parent=parent)
+
+        # default screen for quick tests
+        if screen is None:
+            screen = {
+                "block": 0,
+                "section": 0,
+                "a": 1,
+                "b": 2,
+                "trial_id": 0,
+                "block_name": "Block 1",
+                "section_name": "Section 1",
+            }
+        self.screen = screen
+
+        # stimuli handler
+        self.stimuli_handler = stimuli_handler if stimuli_handler is not None else SoundDevice()
+
+        # load UI/test config and resolve all settings once
+        if abx_config is None:
+            abx_config = os.path.join(FILEPATH, "..", "..", "configs", "abx.yml")
+        cfg = read_config(abx_config)
+        cfg = cfg if isinstance(cfg, dict) else {}
+        # The global theme from configs/design.yml is the base; the per-UI
+        # `ui:` block only overrides wording, window size, or individual colors.
+        self._ui_cfg = load_design(cfg.get("ui"))
+        self._test_cfg = cfg.get("test", {})
+        self._resolve_config()
+
+        # Resolve the A/B/X assignment for this trial.
+        self._a, self._b, self._x, self._correct = self._prepare_trial()
+
+        # selection / playback state
+        self._selected_answer: Optional[str] = None        # "A" or "B"
+        self._selected_answer_button: Optional[QPushButton] = None
+        self._rt: Optional[float] = None
+        # playback buttons keyed by label ("A"/"B"/"X"); answer buttons by "A"/"B".
+        self._playback_buttons: Dict[str, QPushButton] = {}
+        self._answer_buttons: Dict[str, QPushButton] = {}
+        # Interval labels the participant has played at least once (gates submit).
+        self._played: set = set()
+        self._listen_info_window: Optional[InfoWindow] = None
+        # Whether this instance has an app-level key event filter installed.
+        self._key_filter_installed = False
+
+        # In non-debug standalone mode, block the native close button.
+        if parent is None and not self._debug:
+            self.disable_close_button()
+
+        # Resolve the target window size BEFORE building the UI so buttons and
+        # fonts can scale to it (see NAFC for the same pattern).
+        window_size = self._ui_cfg.get("window_size", [1000, 600])
+        self._window_width, self._window_height, self._fullscreen = self._resolve_window_size(
+            window_size, fallback=(1000, 600), minimum_size=(400, 300))
+
+        self._build_ui()
+        self._install_key_handling()
+
+        if parent is None:
+            self._show_host_window(
+                width=self._window_width, height=self._window_height,
+                fullscreen=self._fullscreen,
+                background_color=self._background_color)
+
+        # start time for reaction time measurement
+        self._start_time = time.time()
+
+        if blocking:
+            self.wait_until_closed()
+
+    # ------------------------------------------------------------------ setup
+    def _resolve_config(self) -> None:
+        """Read all UI config values once into named attributes."""
+        ui = self._ui_cfg
+        self._fontcolor = str(ui.get("fontcolor", "#e8eaed"))
+        self._background_color = str(ui.get("window_background_color", "#2b2b2b"))
+        self._task_fontsize = max(1, int(ui.get("task_fontsize", 16)))
+        self._task_spacing = int(ui.get("task_spacing", 12))
+        self._button_size = int(ui.get("button_size", 56))
+        self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
+        self._button_spacing = int(ui.get("button_spacing", 8))
+        self._button_scale = max(0.0, float(ui.get("button_scale", 1.0)))
+        self._button_bg = str(ui.get("button_background_color", "#ffffff"))
+        self._button_fg = str(ui.get("button_text_color", "#2b3550"))
+        self._button_border = str(ui.get("button_border_color", "#b9c4dd"))
+        self._button_hover_bg = str(ui.get("button_hover_background_color", "#dbe2f1"))
+        self._button_selected_bg = str(ui.get("button_selected_background_color", "#5cb874"))
+        self._button_selected_fg = str(ui.get("button_selected_text_color", "#ffffff"))
+        self._button_disabled_bg = str(ui.get("button_disabled_background_color", "#eef1f7"))
+        self._button_disabled_fg = str(ui.get("button_disabled_text_color", "#9aa3b2"))
+        self._button_radius = str(ui.get("button_border_radius", "8px"))
+        # ABX-specific wording.
+        self._listen_label_text = str(ui.get("listen_label", "Listen:"))
+        self._answer_label_text = str(ui.get("answer_label", "Your answer — X is the same as:"))
+        self._submit_hint = str(ui.get(
+            "submit_hint",
+            "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit."))
+        self._submit_button_text = str(ui.get("submit_button_text", "Submit choice"))
+
+    def _prepare_trial(self) -> tuple[Any, Any, Any, str]:
+        """Resolve the per-trial A/B/X stimulus ids and the correct answer.
+
+        ``test.shuffle_ab`` randomizes which stimulus of the pair is presented
+        as A vs B (the answer is unaffected since it depends only on what X is).
+        X is taken from the screen if given, otherwise drawn at random from the
+        pair. The correct answer is ``"A"`` when X equals the A stimulus.
+        """
+        a = self.screen.get("a")
+        b = self.screen.get("b")
+        if bool(self._test_cfg.get("shuffle_ab", True)) and random.random() < 0.5:
+            a, b = b, a
+
+        x = self.screen.get("x")
+        if x is None:
+            x = random.choice([a, b])
+
+        correct = "A" if x == a else "B"
+        return a, b, x, correct
+
+    # -------------------------------------------------------------- build UI
+    def _scale_factor(self) -> float:
+        """Factor for scaling buttons/fonts with the window size.
+
+        ``1.0`` at the 600 px reference height and grows with the window height,
+        so controls don't look lost on large/fullscreen displays. Never shrinks
+        below the configured sizes; ``button_scale`` tunes it. (Same rule as
+        :class:`whispy.ui.NAFC`.)
+        """
+        reference_height = 600.0
+        height = float(getattr(self, "_window_height", reference_height))
+        return max(1.0, (height / reference_height) * self._button_scale)
+
+    def _build_ui(self) -> None:
+        """Build the central widget: prompt, playback row, answer row, submit."""
+        scale = self._scale_factor()
+        button_size = round(self._button_size * scale)
+        button_fontsize = max(1, round(self._button_fontsize * scale))
+        task_fontsize = max(1, round(self._task_fontsize * scale))
+
+        container = QWidget(self)
+        container.setStyleSheet(f"background-color: {self._background_color};")
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(self._task_spacing)
+
+        # task prompt
+        task_label = QLabel(self._resolve_task_text().replace("\n", "  \n"), self)
+        task_label.setWordWrap(True)
+        task_label.setStyleSheet(f"color: {self._fontcolor};")
+        task_label.setFont(QFont("Helvetica", task_fontsize))
+        layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # playback row: A, B, X (play only, not an answer)
+        listen_label = QLabel(self._listen_label_text, self)
+        listen_label.setStyleSheet(f"color: {self._fontcolor};")
+        listen_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
+        layout.addWidget(listen_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        play_row = QWidget(self)
+        play_layout = QHBoxLayout(play_row)
+        play_layout.setContentsMargins(0, 6, 0, 6)
+        play_layout.setSpacing(self._button_spacing)
+        for label in ("A", "B", "X"):
+            btn = QPushButton(label, self)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setFixedSize(button_size, button_size)
+            btn.setFont(QFont("Helvetica", button_fontsize))
+            btn.clicked.connect(partial(self._on_play_clicked, label))
+            play_layout.addWidget(btn)
+            self._playback_buttons[label] = btn
+        layout.addWidget(play_row, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # answer row: X is the same as A or B
+        answer_label = QLabel(self._answer_label_text, self)
+        answer_label.setWordWrap(True)
+        answer_label.setStyleSheet(f"color: {self._fontcolor};")
+        answer_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
+        layout.addWidget(answer_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        answer_row = QWidget(self)
+        answer_layout = QHBoxLayout(answer_row)
+        answer_layout.setContentsMargins(0, 6, 0, 6)
+        answer_layout.setSpacing(self._button_spacing)
+        for label in ("A", "B"):
+            btn = QPushButton(label, self)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setFixedSize(button_size, button_size)
+            btn.setFont(QFont("Helvetica", button_fontsize))
+            btn.clicked.connect(partial(self._on_answer_clicked, label))
+            answer_layout.addWidget(btn)
+            self._answer_buttons[label] = btn
+        layout.addWidget(answer_row, alignment=Qt.AlignmentFlag.AlignHCenter)
+        self._apply_playback_button_styles()
+        self._apply_answer_button_styles()
+
+        # submit hint
+        submit_label = QLabel(self._submit_hint, self)
+        submit_label.setWordWrap(True)
+        submit_label.setStyleSheet(f"color: {self._fontcolor};")
+        submit_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
+        layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # submit button (disabled until an answer is selected)
+        self._submit_button = QPushButton(self._submit_button_text, self)
+        self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._submit_button.setFont(QFont("Helvetica", button_fontsize))
+        self._submit_button.setStyleSheet(
+            f"QPushButton {{ background-color: {self._button_bg}; color: {self._button_fg};"
+            f" border: 1px solid {self._button_border}; border-radius: {self._button_radius};"
+            f" padding: 6px 16px; }}"
+            f"QPushButton:hover {{ background-color: {self._button_hover_bg}; }}"
+            f"QPushButton:disabled {{ background-color: {self._button_disabled_bg};"
+            f" color: {self._button_disabled_fg}; border-color: {self._button_disabled_bg}; }}"
+        )
+        self._submit_button.setEnabled(False)
+        self._submit_button.clicked.connect(self._on_submit_clicked)
+        layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        self._host.setCentralWidget(container)
+
+    def _resolve_task_text(self) -> str:
+        """Resolve the on-screen task prompt. A ``task`` on the screen wins."""
+        inline_task = self.screen.get("task")
+        if inline_task:
+            return str(inline_task)
+        return "Is **X** the same as **A** or **B**?"
+
+    # --------------------------------------------------------------- handlers
+    def _on_play_clicked(self, label: str, *_args: Any) -> None:
+        """Play the stimulus behind a playback button and mark it heard."""
+        self._played.add(label)
+        self._apply_playback_button_styles()
+        stim_id = {"A": self._a, "B": self._b, "X": self._x}[label]
+        if self._debug:
+            print(f"Play {label}: {stim_id!r}")
+        self._play_stimulus(stim_id)
+
+    def _on_answer_clicked(self, answer: str, *_args: Any) -> None:
+        """Select ``A`` or ``B`` as the answer (logged on submit)."""
+        self._selected_answer = answer
+        self._selected_answer_button = self._answer_buttons[answer]
+        self._submit_button.setEnabled(True)
+        self._apply_answer_button_styles()
+        if self._debug:
+            print(f"Answer: {answer}")
+
+    def _play_stimulus(self, stim_id: Any) -> None:
+        """Play a stimulus, retrying with a string key for ``SoundDevice``.
+
+        Playback errors never propagate, so a misconfigured stimulus can never
+        block the participant from finishing the trial.
+        """
+        try:
+            self.stimuli_handler.play(stim_id)
+            return
+        except Exception as exc:
+            if not isinstance(self.stimuli_handler, SoundDevice):
+                if self._debug:
+                    print(f"playback failed for {stim_id!r}: {exc}")
+                return
+
+        try:
+            self.stimuli_handler.play(str(stim_id))
+        except Exception as exc:
+            if self._debug:
+                print(f"playback failed for {stim_id!r} (fallback tried): {exc}")
+
+    def _on_submit_clicked(self) -> None:
+        """Finalize the answer and end the trial (window stays open)."""
+        if self._selected_answer is None:
+            return
+
+        # Require every interval to have been heard at least once.
+        if not self._debug and not self._all_played():
+            self._show_listen_hint()
+            return
+
+        self._rt = time.time() - self._start_time
+        if self._debug:
+            print(f"Submitted: {self._selected_answer} "
+                  f"(correct={self._correct}, rt={self._rt:.3f}s)")
+        self.unblock()
+
+    def _all_played(self) -> bool:
+        """Whether A, B and X have each been played at least once."""
+        return {"A", "B", "X"}.issubset(self._played)
+
+    def _show_listen_hint(self) -> None:
+        """Pop up a non-blocking reminder to listen to every interval first."""
+        self._listen_info_window = InfoWindow(
+            info_text="You have to listen to A, B and X at least once.",
+            fontsize=self._task_fontsize,
+            fontcolor=self._fontcolor,
+            blocking=False,
+        )
+
+    # --------------------------------------------------------------- keyboard
+    def _install_key_handling(self) -> None:
+        """Route key presses to this trial via an app-level event filter.
+
+        Matches :class:`whispy.ui.NAFC`: an application-level filter is used so
+        the current trial (not the shared host's first instance) handles keys.
+        """
+        app = QApplication.instance()
+        if app is not None and not self._key_filter_installed:
+            app.installEventFilter(self)
+            self._key_filter_installed = True
+
+    def _remove_key_handling(self) -> None:
+        """Stop intercepting key presses for this trial (idempotent)."""
+        app = QApplication.instance()
+        if app is not None and self._key_filter_installed:
+            app.removeEventFilter(self)
+        self._key_filter_installed = False
+
+    def eventFilter(self, obj: Any, event: QEvent) -> bool:  # type: ignore[override]
+        """Handle ABX keys; defer everything else to Qt."""
+        if event.type() == QEvent.Type.KeyPress and self._handle_key_press(event):
+            return True
+        return super().eventFilter(obj, event)
+
+    def _handle_key_press(self, event: QEvent) -> bool:
+        """A/B/X (or 1/2/3) play an interval; ←/→ answer; Enter submits."""
+        key = event.key()
+
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._on_submit_clicked()
+            return True
+
+        # Play intervals: letters A/B/X or numbers 1/2/3.
+        play_key = {
+            Qt.Key.Key_A: "A", Qt.Key.Key_B: "B", Qt.Key.Key_X: "X",
+            Qt.Key.Key_1: "A", Qt.Key.Key_2: "B", Qt.Key.Key_3: "X",
+        }.get(key)
+        if play_key is not None:
+            self._on_play_clicked(play_key)
+            return True
+
+        # Answer with the arrow keys (A = left, B = right).
+        if key == Qt.Key.Key_Left:
+            self._on_answer_clicked("A")
+            return True
+        if key == Qt.Key.Key_Right:
+            self._on_answer_clicked("B")
+            return True
+
+        return False
+
+    def unblock(self) -> None:  # type: ignore[override]
+        """Remove key handling for this trial, then release the blocking loop."""
+        self._remove_key_handling()
+        super().unblock()
+
+    def closeEvent(self, event: Any) -> None:  # type: ignore[override]
+        """Ensure the key filter is removed when the window actually closes."""
+        if self._allow_close:
+            self._remove_key_handling()
+        super().closeEvent(event)
+
+    # ----------------------------------------------------------------- styles
+    def _apply_playback_button_styles(self) -> None:
+        """Style playback buttons; already-heard ones get an accent border."""
+        for label, btn in self._playback_buttons.items():
+            heard = label in self._played
+            border = (f"2px solid {self._button_selected_bg}" if heard
+                      else f"1px solid {self._button_border}")
+            btn.setStyleSheet(
+                f"QPushButton {{ background-color: {self._button_bg};"
+                f" color: {self._button_fg}; border: {border};"
+                f" border-radius: {self._button_radius}; }}"
+                f"QPushButton:hover {{ background-color: {self._button_hover_bg}; }}"
+            )
+
+    def _apply_answer_button_styles(self) -> None:
+        """Style answer buttons; the selected one is filled with the accent."""
+        for btn in self._answer_buttons.values():
+            if btn is self._selected_answer_button:
+                btn.setStyleSheet(
+                    f"QPushButton {{ background-color: {self._button_selected_bg};"
+                    f" color: {self._button_selected_fg}; border: none;"
+                    f" border-radius: {self._button_radius}; }}"
+                )
+            else:
+                btn.setStyleSheet(
+                    f"QPushButton {{ background-color: {self._button_bg};"
+                    f" color: {self._button_fg};"
+                    f" border: 1px solid {self._button_border};"
+                    f" border-radius: {self._button_radius}; }}"
+                    f"QPushButton:hover {{ background-color: {self._button_hover_bg}; }}"
+                )
+
+    # ---------------------------------------------------------------- results
+    def get_results(self) -> pd.DataFrame:
+        """Return a one-row DataFrame with the trial result.
+
+        Columns:
+        - block, section, trial_id, block_name, section_name
+        - a, b, x : stimulus ids presented as A, B and X
+        - correct : ``"A"`` or ``"B"`` (which answer was right)
+        - selected : ``"A"``/``"B"`` chosen by the participant (or None)
+        - correct_bool : whether the answer was correct
+        - rt : reaction time in seconds (float or None)
+        """
+        row = {
+            k: self.screen.get(k)
+            for k in ["block", "section", "trial_id", "block_name", "section_name"]
+        }
+        row.update(
+            {
+                "a": self._a,
+                "b": self._b,
+                "x": self._x,
+                "correct": self._correct,
+                "selected": self._selected_answer,
+                "correct_bool": None if self._selected_answer is None
+                else (self._selected_answer == self._correct),
+                "rt": float(self._rt) if self._rt is not None else None,
+            }
+        )
+        return pd.DataFrame([row])
