@@ -6,7 +6,7 @@ import time
 from functools import partial
 from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtCore import QEvent, Qt, QTimer
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
@@ -117,6 +117,10 @@ class ABX(_BaseUIWindow):
         self._answer_buttons: Dict[str, QPushButton] = {}
         # Interval labels the participant has played at least once (gates submit).
         self._played: set = set()
+        # Label of the interval currently playing (highlighted green) and the
+        # timer that reverts it to normal once the stimulus finishes.
+        self._playing_label: Optional[str] = None
+        self._play_timer: Optional[QTimer] = None
         self._listen_info_window: Optional[InfoWindow] = None
         # Whether this instance has an app-level key event filter installed.
         self._key_filter_installed = False
@@ -224,12 +228,14 @@ class ABX(_BaseUIWindow):
         # task prompt
         task_label = QLabel(self._resolve_task_text().replace("\n", "  \n"), self)
         task_label.setWordWrap(True)
+        task_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         task_label.setStyleSheet(f"color: {self._fontcolor};")
         task_label.setFont(QFont("Helvetica", task_fontsize))
         layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # playback row: A, B, X (play only, not an answer)
         listen_label = QLabel(self._listen_label_text, self)
+        listen_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         listen_label.setStyleSheet(f"color: {self._fontcolor};")
         listen_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
         layout.addWidget(listen_label, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -251,6 +257,7 @@ class ABX(_BaseUIWindow):
         # answer row: X is the same as A or B
         answer_label = QLabel(self._answer_label_text, self)
         answer_label.setWordWrap(True)
+        answer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         answer_label.setStyleSheet(f"color: {self._fontcolor};")
         answer_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
         layout.addWidget(answer_label, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -274,6 +281,7 @@ class ABX(_BaseUIWindow):
         # submit hint
         submit_label = QLabel(self._submit_hint, self)
         submit_label.setWordWrap(True)
+        submit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         submit_label.setStyleSheet(f"color: {self._fontcolor};")
         submit_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -305,13 +313,61 @@ class ABX(_BaseUIWindow):
 
     # --------------------------------------------------------------- handlers
     def _on_play_clicked(self, label: str, *_args: Any) -> None:
-        """Play the stimulus behind a playback button and mark it heard."""
+        """Play the stimulus behind a playback button.
+
+        The button is highlighted green while it plays and reverts to normal
+        once the stimulus finishes (mirrors the active highlight in NAFC). The
+        label is also recorded so the submit gate can require every interval to
+        have been heard.
+        """
         self._played.add(label)
-        self._apply_playback_button_styles()
         stim_id = {"A": self._a, "B": self._b, "X": self._x}[label]
         if self._debug:
             print(f"Play {label}: {stim_id!r}")
         self._play_stimulus(stim_id)
+
+        # Highlight only the interval that is currently playing.
+        self._playing_label = label
+        self._apply_playback_button_styles()
+        self._schedule_play_revert(label, stim_id)
+
+    def _schedule_play_revert(self, label: str, stim_id: Any) -> None:
+        """Revert ``label`` to normal once its stimulus has finished playing.
+
+        Uses the stimulus duration when the handler exposes it; otherwise leaves
+        the highlight until another interval is played or the trial ends.
+        """
+        if self._play_timer is None:
+            self._play_timer = QTimer(self)
+            self._play_timer.setSingleShot(True)
+            self._play_timer.timeout.connect(self._clear_playing_highlight)
+        else:
+            self._play_timer.stop()
+
+        duration = self._stimulus_duration(stim_id)
+        if duration is not None:
+            self._play_timer.start(max(1, int(duration * 1000)))
+
+    def _clear_playing_highlight(self) -> None:
+        """Drop the currently-playing highlight and restyle the buttons."""
+        self._playing_label = None
+        self._apply_playback_button_styles()
+
+    def _stimulus_duration(self, stim_id: Any) -> Optional[float]:
+        """Best-effort stimulus duration in seconds (None if unknown)."""
+        stimuli = getattr(self.stimuli_handler, "stimuli", None)
+        if not isinstance(stimuli, dict):
+            return None
+        spec = stimuli.get(stim_id, stimuli.get(str(stim_id)))
+        signal = spec.get("signal") if isinstance(spec, dict) else None
+        sampling_rate = (getattr(self.stimuli_handler, "sampling_rate", None)
+                         or getattr(signal, "sampling_rate", None))
+        if signal is None or not sampling_rate:
+            return None
+        try:
+            return signal.time.shape[-1] / float(sampling_rate)
+        except Exception:
+            return None
 
     def _on_answer_clicked(self, answer: str, *_args: Any) -> None:
         """Select ``A`` or ``B`` as the answer (logged on submit)."""
@@ -426,28 +482,44 @@ class ABX(_BaseUIWindow):
 
     def unblock(self) -> None:  # type: ignore[override]
         """Remove key handling for this trial, then release the blocking loop."""
+        self._stop_play_timer()
         self._remove_key_handling()
         super().unblock()
 
     def closeEvent(self, event: Any) -> None:  # type: ignore[override]
         """Ensure the key filter is removed when the window actually closes."""
         if self._allow_close:
+            self._stop_play_timer()
             self._remove_key_handling()
         super().closeEvent(event)
 
+    def _stop_play_timer(self) -> None:
+        """Stop the pending revert timer so it can't restyle deleted widgets
+        after the trial's central widget has been swapped out."""
+        if self._play_timer is not None:
+            self._play_timer.stop()
+
     # ----------------------------------------------------------------- styles
     def _apply_playback_button_styles(self) -> None:
-        """Style playback buttons; already-heard ones get an accent border."""
+        """Style playback buttons; the one currently playing is filled green
+        (like the active tile in NAFC), the rest are normal."""
         for label, btn in self._playback_buttons.items():
-            heard = label in self._played
-            border = (f"2px solid {self._button_selected_bg}" if heard
-                      else f"1px solid {self._button_border}")
-            btn.setStyleSheet(
-                f"QPushButton {{ background-color: {self._button_bg};"
-                f" color: {self._button_fg}; border: {border};"
-                f" border-radius: {self._button_radius}; }}"
-                f"QPushButton:hover {{ background-color: {self._button_hover_bg}; }}"
-            )
+            if label == self._playing_label:
+                # Playing: filled green, no border, no hover change.
+                btn.setStyleSheet(
+                    f"QPushButton {{ background-color: {self._button_selected_bg};"
+                    f" color: {self._button_selected_fg}; border: none;"
+                    f" border-radius: {self._button_radius}; }}"
+                )
+            else:
+                # Resting: light, bordered, with a hover highlight.
+                btn.setStyleSheet(
+                    f"QPushButton {{ background-color: {self._button_bg};"
+                    f" color: {self._button_fg};"
+                    f" border: 1px solid {self._button_border};"
+                    f" border-radius: {self._button_radius}; }}"
+                    f"QPushButton:hover {{ background-color: {self._button_hover_bg}; }}"
+                )
 
     def _apply_answer_button_styles(self) -> None:
         """Style answer buttons; the selected one is filled with the accent."""
