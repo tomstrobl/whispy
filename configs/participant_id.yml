@@ -7,16 +7,33 @@
 # the results, e.g.  results.insert(0, "participant_id", participant_id).
 
 ui:
-  # Window size. Either [pixels_x, pixels_y] or "fullscreen".
-  window_size: fullscreen
-  # Prompt shown above the text field (markdown supported).
-  prompt: "Please enter the **participant ID**:"
-  # Greyed-out hint shown inside the empty text field.
-  placeholder: "e.g. P01"
+  # Window size. Either [pixels_x, pixels_y] or "fullscreen". The window grows
+  # to fit its content, so this is just a starting size.
+  window_size: [600, 520]
+  # Heading shown above the fields (markdown supported).
+  prompt: "Generate your **ID** for anonymously storing your data"
   # Label on the button that starts the experiment.
   submit_button_text: "Start"
-  # Optional: require the id to fully match this regular expression. Leave empty
-  # to accept any non-empty id. Example for "P" followed by digits: "^P[0-9]+$".
-  pattern: ""
-  # Message shown when an empty / non-matching id is submitted.
-  invalid_hint: "Please enter a valid participant ID."
+  # Message shown when a field is empty / does not match its pattern.
+  invalid_hint: "Each field needs exactly one character — a single letter, and a single digit for the birthday."
+
+  # Build the id from several short answers. One text field is shown per entry
+  # (in order) and the answers are joined by `separator` to form the id. Each
+  # field is required; an optional `pattern` (regex) validates that field.
+  # Here every field must be exactly one character: a single letter for the
+  # names ([^\W\d_] matches any Unicode letter, e.g. ä/ö/ü) and a single digit
+  # for the birthday. Remove this block to fall back to a single free-text id.
+  separator: ""
+  fields:
+    - prompt: |
+        Enter the first letter of your mother's name (e.g. **H** for **H**anna)
+      pattern: '^[^\W\d_]$'
+    - prompt: |
+        Enter the first letter of your father's name (e.g. **P** for **P**aul)
+      pattern: '^[^\W\d_]$'
+    - prompt: |
+        Enter the last letter of your name (e.g. **o** for Le**o**)
+      pattern: '^[^\W\d_]$'
+    - prompt: |
+        Enter the second digit of your birthday (e.g. **1** for 3**1**.04.2002)
+      pattern: '^[0-9]$'

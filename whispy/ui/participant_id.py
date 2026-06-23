@@ -29,8 +29,11 @@ FILEPATH = os.path.dirname(os.path.abspath(__file__))
 class ParticipantID(_BaseUIWindow):
     """Prompt once for a participant ID before the experiment starts.
 
-    A single text field is shown; the entered id is returned by :meth:`get_id`
-    so it can be stored alongside the experiment results (e.g.
+    A single text field is shown by default. If the config defines a ``fields:``
+    list, one labeled text field is shown per entry and the id is the answers
+    joined by ``separator`` — e.g. first letters of names plus a birthday digit
+    build an anonymous code. The id is returned by :meth:`get_id` so it can be
+    stored alongside the experiment results (e.g.
     ``results.insert(0, "participant_id", participant_id)``). Like the other
     whispy UIs the look is inherited from ``configs/design.yml`` and may be
     overridden under the ``ui:`` block of ``configs/participant_id.yml``.
@@ -117,6 +120,14 @@ class ParticipantID(_BaseUIWindow):
         self._invalid_hint = str(ui.get(
             "invalid_hint", "Please enter a valid participant ID."))
         self._task_fontsize = max(1, int(ui.get("task_fontsize", 16)))
+        # Optional multi-part id: a list of ``{prompt, placeholder, pattern}``.
+        # When given, one labeled text field is shown per entry and the id is the
+        # answers joined by ``separator`` (so e.g. first letters + a digit build
+        # an anonymous code). Without it, a single field is shown using the
+        # top-level ``prompt``/``placeholder``/``pattern``.
+        fields = ui.get("fields")
+        self._fields = fields if isinstance(fields, list) and fields else None
+        self._separator = str(ui.get("separator", ""))
 
     def _build_ui(self) -> None:
         """Build the central widget: prompt, text field, submit button.
@@ -134,28 +145,44 @@ class ParticipantID(_BaseUIWindow):
         layout.setSpacing(16)
         layout.addStretch(1)
 
-        prompt_label = QLabel(format_markdown(self._prompt), container)
-        prompt_label.setTextFormat(Qt.TextFormat.MarkdownText)
-        prompt_label.setWordWrap(True)
-        prompt_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        prompt_label.setStyleSheet(f"color: {self._fontcolor};")
-        prompt_label.setFont(QFont("Helvetica", self._task_fontsize))
+        # Heading (the top-level prompt). Bold when it sits above several fields.
+        heading = QLabel(format_markdown(self._prompt), container)
+        heading.setTextFormat(Qt.TextFormat.MarkdownText)
+        heading.setWordWrap(True)
+        heading.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        heading.setStyleSheet(f"color: {self._fontcolor};")
+        heading.setFont(QFont("Helvetica", self._task_fontsize,
+                              QFont.Weight.Bold if self._fields else QFont.Weight.Normal))
         # Fills the full width, so word-wrap height is measured correctly.
-        layout.addWidget(prompt_label)
+        layout.addWidget(heading)
 
-        self._input = QLineEdit(container)
-        if self._placeholder:
-            self._input.setPlaceholderText(self._placeholder)
-        self._input.setStyleSheet(
-            f"QLineEdit {{ background-color: {self._response_color};"
-            f" color: {self._input_text_color}; border: 1px solid {self._fontcolor};"
-            f" border-radius: 6px; padding: 6px 8px; }}"
-        )
-        self._input.setFont(QFont("Helvetica", self._task_fontsize))
-        self._input.setFixedWidth(280)
-        # Enter submits, exactly like clicking the button.
-        self._input.returnPressed.connect(self._on_submit_clicked)
-        layout.addWidget(self._input, alignment=Qt.AlignmentFlag.AlignHCenter)
+        # One text field per id part (multi-field), or a single field.
+        self._inputs: list[QLineEdit] = []
+        if self._fields:
+            field_fontsize = max(1, self._task_fontsize - 2)
+            for field in self._fields:
+                fp = field.get("prompt") if isinstance(field, dict) else None
+                if fp:
+                    fl = QLabel(format_markdown(str(fp)), container)
+                    fl.setTextFormat(Qt.TextFormat.MarkdownText)
+                    fl.setWordWrap(True)
+                    fl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+                    fl.setStyleSheet(f"color: {self._fontcolor};")
+                    fl.setFont(QFont("Helvetica", field_fontsize))
+                    layout.addWidget(fl)
+                placeholder = field.get("placeholder", "") if isinstance(field, dict) else ""
+                inp = self._make_input(str(placeholder))
+                layout.addWidget(inp, alignment=Qt.AlignmentFlag.AlignHCenter)
+                self._inputs.append(inp)
+        else:
+            inp = self._make_input(self._placeholder)
+            layout.addWidget(inp, alignment=Qt.AlignmentFlag.AlignHCenter)
+            self._inputs.append(inp)
+
+        # Enter moves to the next field, and submits from the last one.
+        for earlier, later in zip(self._inputs, self._inputs[1:]):
+            earlier.returnPressed.connect(later.setFocus)
+        self._inputs[-1].returnPressed.connect(self._on_submit_clicked)
 
         self._submit_button = QPushButton(self._submit_button_text, container)
         style_qpushbutton(
@@ -172,7 +199,7 @@ class ParticipantID(_BaseUIWindow):
         layout.addStretch(1)
 
         self._host.setCentralWidget(container)
-        self._input.setFocus()
+        self._inputs[0].setFocus()
 
         # Remember the size the content needs (incl. margins) so the window can
         # be grown to fit it. Without this a small configured window clips the
@@ -181,17 +208,42 @@ class ParticipantID(_BaseUIWindow):
         hint = container.sizeHint()
         self._content_min_size = (hint.width(), hint.height())
 
+    def _make_input(self, placeholder: str) -> QLineEdit:
+        """Create a styled, fixed-width text field for one id part."""
+        inp = QLineEdit(self)
+        if placeholder:
+            inp.setPlaceholderText(placeholder)
+        inp.setStyleSheet(
+            f"QLineEdit {{ background-color: {self._response_color};"
+            f" color: {self._input_text_color}; border: 1px solid {self._fontcolor};"
+            f" border-radius: 6px; padding: 6px 8px; }}"
+        )
+        inp.setFont(QFont("Helvetica", self._task_fontsize))
+        inp.setFixedWidth(280)
+        return inp
+
     # --------------------------------------------------------------- handlers
     def _on_submit_clicked(self) -> None:
-        """Validate the entered id and finish, or show a hint if invalid."""
-        text = self._input.text().strip()
+        """Validate every field and finish, or show a hint if invalid."""
+        parts = [inp.text().strip() for inp in self._inputs]
 
         if not self._debug:
-            if not text or (self._pattern and re.fullmatch(self._pattern, text) is None):
+            # every field is required
+            if any(part == "" for part in parts):
+                self._show_invalid_hint()
+                return
+            # optional per-field pattern (multi-field) or overall pattern (single)
+            if self._fields:
+                for field, part in zip(self._fields, parts):
+                    pat = str(field.get("pattern", "") or "") if isinstance(field, dict) else ""
+                    if pat and re.fullmatch(pat, part) is None:
+                        self._show_invalid_hint()
+                        return
+            elif self._pattern and re.fullmatch(self._pattern, parts[0]) is None:
                 self._show_invalid_hint()
                 return
 
-        self._participant_id = text
+        self._participant_id = self._separator.join(parts)
 
         # Standalone window: close it so the simple `ParticipantID().get_id()`
         # usage leaves no lingering window. When a host is reused, just unblock.

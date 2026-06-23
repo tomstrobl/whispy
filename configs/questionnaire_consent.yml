@@ -1,0 +1,80 @@
+# ---------------------------------- Look ----------------------------------- #
+# Colors (fontcolor, window_background_color, response_boxes_color) are
+# inherited from the global theme in configs/design.yml so the questionnaire
+# matches the other listening-test UIs. Only questionnaire-specific layout and
+# sizing live here; add a theme key under `ui:` to override it for this UI only.
+ui:
+# Window size. Either [pixels_x, pixels_y] or "fullscreen"
+  window_size: fullscreen
+  # Questionnaire size.
+  # Percentage with respect to window size.
+  # Use 100% for maximally possible size.
+  questionnaire_size: [50, 85]
+  # If True Sections and questions are enumerated
+  enumerate: True
+  # Spacing between sections and questions in pixel
+  question_spacing: 14
+  section_spacing: 20
+  # width of response boxes in characters
+  width_numeric_response: 10
+  width_text_response: 50
+  text_box_number_of_lines: 5
+  # section / question font sizes (questionnaire-specific)
+  section_fontsize: 16
+  question_fontsize: 12
+
+# ------------------------------ Questionnaire ------------------------------ #
+# The questionnaire can have an arbitrary number of sections. Each section can
+# have an arbitrary number of questions. Sections are intended to provide a
+# visual structure. All `required` questions have to be answered.
+questionnaire:
+
+  # Anonymous IDs are generated in the listening test (the ParticipantID window),
+  # not here. This questionnaire instead records the participant's full name.
+  - section: name
+    prompt: Your name
+    questions:
+      - question: full_name
+        prompt: Enter your full name
+        type: text
+        required: true
+
+  - section: consent
+    prompt: Consent to data publication
+    questions:
+      - question: id_1
+        prompt: |
+          I agree that my anonymous ratings can be published and my demographic
+          data can be used to compute and publish descriptive statistics (e.g., the average
+          age across participants).
+        type: single_choice
+        required: true
+        options:
+          - Yes (continue with the listening experiment)
+          - No (abort the listening experiment)
+      - question: withdrawal
+        prompt: |
+          I understand that I can withdraw my consent at any point before the initial
+          publication of the data using my name given above.
+        type: single_choice
+        required: true
+        options:
+          - "Yes"
+          - "No"
+
+  - section: listening_test_subject_hours
+    prompt: Test subject hours
+    questions:
+      - question: matriculation_number
+        prompt: |
+          Are you studying in the Audio Communication and Technology degree program
+          and would like to have your participation credited as test subject hours?
+        type: single_choice
+        required: true
+        options:
+          - "yes"
+          - "no"
+        other_question:
+          other_question_value: "yes"
+          prompt: Enter your matriculation number
+          type: numeric
