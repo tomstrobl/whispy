@@ -40,11 +40,12 @@ There is currently no test suite, linter, or formatter configured in `pyproject.
 - `configs/stimuli.yml`: handler-scoped (top-level keys like `SoundDevice:`, `OSCHandler:`), mapping stimulus IDs to playback info (e.g. `file:` for `SoundDevice`). Stimulus IDs are saved into experiment results — prefer descriptive names.
 - `configs/drag_and_drop_mushra.yml` / `configs/n_afc.yml`: per-UI layout/behavior (`window_size`, `content_area_size`, autoplay, N-AFC `test:`/wording). Colors/fonts are inherited from `configs/design.yml`; any theme key may still be overridden here. `window_size: "fullscreen"` is a special-cased string.
 - Area sizing: every test sizes its central area as an `[x%, y%]` percentage of the window via the same `content_area_size` key (top-level in `drag_and_drop_mushra.yml`; under `ui:` for N-AFC/ABX/staircase). All share `_BaseUIWindow._resolve_area_size()`, which clamps the percentage between a minimum and the window size minus reserved margins; the area is then centered in the window. Defaults to `[100, 100]` (max available) when the key is absent.
+- `configs/participant_id.yml`: a single `ui:` block for `whispy.ui.ParticipantID`, the one-field window shown once before an experiment to capture a participant id (`prompt`, `placeholder`, `submit_button_text`, optional validation `pattern`, `invalid_hint`; colors/fonts inherited from `design.yml`). `ParticipantID(...).get_id()` returns the entered id; the example notebooks call it before the test starts and write it into the results via `results.insert(0, "participant_id", participant_id)`.
 - `configs/questionnaire.yml`: splits into `ui:` (questionnaire layout/sizing; colors inherited from `design.yml`) and `questionnaire:` (list of `{section, prompt, questions: [...]}`). Supported question `type`s: `text`, `text_box`, `numeric`, `single_choice`, `multiple_choice`. `single_choice` supports an `other_question` sub-block for a free-text "other" option.
 
 ## UI / Qt patterns to preserve
 
-All windows in `whispy/ui/*` (`InfoWindow`, `Questionnaire`, `DragAndDropMUSHRA`, `NAFC`, `ABX`) follow the same shape:
+All windows in `whispy/ui/*` (`InfoWindow`, `ParticipantID`, `Questionnaire`, `DragAndDropMUSHRA`, `NAFC`, `ABX`) follow the same shape:
 
 - A module-level `_qapp` reference is created on first use (`QApplication(sys.argv[:1])`, only if `QApplication.instance() is None`) and kept alive for the process so windows can be constructed/destroyed repeatedly (e.g. in notebooks).
 - When running inside an IPython kernel, `get_ipython().enable_gui("qt6")` is called so the Qt event loop runs alongside the kernel.

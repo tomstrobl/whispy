@@ -27,7 +27,7 @@ SoundDevice:
 test:
   shuffle_ab: true   # randomize which stimulus of a pair is shown as A vs B
 ui:
-  window_size: fullscreen                  # or [width, height] in pixels
+  window_size: fullscreen                  # Window size. Either [pixels_x, pixels_y] or "fullscreen".
   # Content area size (prompt + button rows + submit) as a percentage [x%, y%]
   # of the window, centered. Same key/behavior as every test; 100 = max.
   content_area_size: [60, 80]

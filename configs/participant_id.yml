@@ -1,0 +1,22 @@
+# Participant ID prompt shown once before the experiment starts.
+# The look (colors, fonts, button styling) is inherited from the global theme
+# in configs/design.yml so it matches the listening tests. Override individual
+# theme keys under `ui:` if needed.
+#
+# The entered id is returned by ParticipantID.get_id() so it can be logged with
+# the results, e.g.  results.insert(0, "participant_id", participant_id).
+
+ui:
+  # Window size. Either [pixels_x, pixels_y] or "fullscreen".
+  window_size: fullscreen
+  # Prompt shown above the text field (markdown supported).
+  prompt: "Please enter the **participant ID**:"
+  # Greyed-out hint shown inside the empty text field.
+  placeholder: "e.g. P01"
+  # Label on the button that starts the experiment.
+  submit_button_text: "Start"
+  # Optional: require the id to fully match this regular expression. Leave empty
+  # to accept any non-empty id. Example for "P" followed by digits: "^P[0-9]+$".
+  pattern: ""
+  # Message shown when an empty / non-matching id is submitted.
+  invalid_hint: "Please enter a valid participant ID."
