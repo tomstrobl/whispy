@@ -1,0 +1,177 @@
+# ---------------------------------- Look ----------------------------------- #
+# Colors (fontcolor, window_background_color, response_boxes_color) are
+# inherited from the global theme in configs/design.yml so the questionnaire
+# matches the other listening-test UIs. Only questionnaire-specific layout and
+# sizing live here; add a theme key under `ui:` to override it for this UI only.
+ui:
+# Window size. Either [pixels_x, pixels_y] or "fullscreen"
+  window_size: fullscreen
+  # Questionnaire size.
+  # Percentage with respect to window size.
+  # Use 100% for maximally possible size.
+  questionnaire_size: [50, 50]
+  # If True Sections and questions are enumerated
+  enumerate: false
+  # Spacing between sections and questions in pixel
+  question_spacing: 14
+  section_spacing: 20
+  # width of response boxes in characters
+  width_numeric_response: 10
+  width_text_response: 50
+  text_box_number_of_lines: 10
+  # section / question font sizes (questionnaire-specific)
+  section_fontsize: 16
+  question_fontsize: 12
+
+# ------------------------------ Questionnaire ------------------------------ #
+# The questionnaire can have an arbitrary number of sections. Each section can
+# have an arbitrary number of questions. Sections are intended to provide a
+# visual structure. All `required` questions have to be answered.
+questionnaire:
+  - section: general_information
+    prompt: General information about yourself
+    questions:
+      - question: headphones
+        prompt: What headphones are you using for the test?
+        type: text
+        required: true
+      - question: gender
+        prompt: What gender do you identify with most?
+        type: single_choice
+        required: true
+        options:
+          - Male
+          - Female
+          - Diverse
+          - Prefer not to disclose
+
+      - question: birth_year
+        prompt: What year were you born?
+        type: numeric
+        required: true
+
+      - question: native_language
+        prompt: What is your native language? You can name multiple.
+        type: text
+        required: true
+
+      - question: language_proficiency
+        prompt: Please rate your current level of proficiency in the English language.
+        type: single_choice
+        required: true
+        options:
+          - A1 - Breakthrough Basic User
+          - A2 - Waystage Basic User
+          - B1 - Threshold Independent User
+          - B2 - Vantage Independent User
+          - C1 - Advanced Proficient User
+          - C2 - Mastery Proficient User
+          - Native speaker
+          - Other
+        other_question:
+          other_question_value: Other
+          prompt: Please specify
+          type: text
+
+      - question: hearing_impairment
+        prompt: Do you have a medically diagnosed hearing impairment?
+        type: single_choice
+        required: true
+        options:
+          - "no"
+          - yes, pertains to the right ear
+          - yes, pertains to the left ear
+          - yes, pertains to both ears
+
+  - section: acoustic_musical_experience
+    prompt: Previous acoustic and musical experience
+    questions:
+      - question: acoustics_background
+        prompt: |
+          Do you have an acoustics-related profession or a corresponding training
+          or study background?
+        type: single_choice
+        required: true
+        options: ["Yes", "No"]
+
+      - question: acoustics_experience_years
+        prompt: |
+          How much experience in years do you have with this acoustic-related
+          activity approximately?
+        type: numeric
+        required: true
+
+      - question: music_background
+        prompt: |
+          Do you have a music-related profession or a corresponding educational
+          or study background?
+        type: single_choice
+        required: true
+        options: ["Yes", "No"]
+
+      - question: music_experience_years
+        prompt: How much experience in years do you have with this musical activity?
+        type: numeric
+        required: true
+
+      - question: guided_music_activity
+        prompt: |
+          Have you learned at least one instrument or vocals under guidance,
+          or do you regularly perform music in a group?
+        type: single_choice
+        required: true
+        options: ["Yes", "No"]
+
+      - question: guided_music_activity_years
+        prompt: How much experience in years do you have with this activity approximately?
+        type: numeric
+        required: true
+
+  - section: participation_and_listening
+    prompt: Participation in studies and listening habits
+    questions:
+      - question: prior_hearing_experiment
+        prompt: Have you ever participated in a scientific hearing experiment before?
+        type: single_choice
+        required: true
+        options: ["Yes", "No"]
+
+      - question: number_of_studies
+        prompt: How many such studies have you participated in?
+        type: numeric
+        required: true
+
+      - question: listening_hours_per_day
+        prompt: |
+          In the last 12 months, approximately how many hours per day have you
+          actively listened to music or sound (professionally or privately)?
+        type: numeric
+        required: true
+
+  - section: good_bye
+    prompt: Feedback
+    questions:
+      - question: attribute_clarity
+        prompt: The attributes and their descriptions were clear to me.
+        type: single_choice
+        required: true
+        options:
+          - strongly agree
+          - agree
+          - unsure
+          - disagree
+          - strongly disagree
+      - question: background_noise
+        prompt: Did you have the feeling that background noise disturbed your ratings?
+        type: single_choice
+        required: true
+        options:
+          - "yes"
+          - "no"
+      - question: comments
+        prompt: |
+          If you have any comments, feel free to enter them below
+          (e.g. on the interface or on differences you heard between
+          the conditions).
+        type: text_box
+        required: false
