@@ -82,6 +82,16 @@ class DragAndDropMUSHRA(_BaseUIWindow):
             drag_and_drop_mushra = os.path.join(
                 FILEPATH, "..", "..", "configs", "drag_and_drop_mushra.yml")
 
+        # Support both a flat UI config and a combined experiment file that
+        # nests the UI settings under a `ui:` block (its other blocks —
+        # SoundDevice / attributes / experiment — are consumed elsewhere and
+        # ignored here).
+        if not isinstance(drag_and_drop_mushra, dict):
+            drag_and_drop_mushra = read_config(drag_and_drop_mushra)
+        if isinstance(drag_and_drop_mushra, dict) and isinstance(
+                drag_and_drop_mushra.get("ui"), dict):
+            drag_and_drop_mushra = drag_and_drop_mushra["ui"]
+
         drag_and_drop_mushra = load_design(drag_and_drop_mushra)
 
         # parse config data to get parameters for current task ----------------

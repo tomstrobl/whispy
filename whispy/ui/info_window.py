@@ -245,12 +245,15 @@ class InfoWindow(_BaseUIWindow):
         return max(1, text_width), max(1, text_height)
 
     def _on_continue_clicked(self) -> None:
-        # Non-blocking standalone transient popup: auto-close the window.
-        if not self._blocking and self._host is self:
+        # Standalone popup (owns its window): close it on Continue so it does
+        # not linger. closeEvent also quits any blocking loop, so a blocking
+        # caller still returns after the participant clicks Continue.
+        if self._host is self:
             self._allow_close = True
             QMainWindow.close(self)
             return
-        # Blocking / reused-host: just unblock the caller; window stays open.
+        # Reused host: just unblock the caller; the shared window stays open and
+        # is managed by whoever owns the host.
         self.unblock()
 
     def closeEvent(self, event: QCloseEvent) -> None:

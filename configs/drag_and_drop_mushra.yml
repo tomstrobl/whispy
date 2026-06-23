@@ -1,17 +1,97 @@
-# DragAndDropMUSHRA — layout & behavior.
-# The look (colors, fonts, button styling) is inherited from the global theme
-# in configs/design.yml so every listening test matches. To override a theme
-# key for this UI only, add it here (it takes precedence over design.yml).
+# =============================================================================
+# Drag-and-drop MUSHRA experiment — single configuration file
+# =============================================================================
+# This one file configures the WHOLE drag-and-drop MUSHRA experiment. The only
+# thing configured elsewhere is the shared look of the UIs (configs/design.yml).
+#
+# It is read by four consumers, each picking out the keys it needs:
+#   - SoundDevice          -> the `SoundDevice:` block (which WAV plays per id)
+#   - DragAndDropMUSHRA     -> the `ui:` block (window size, area size, autoplay)
+#   - DragAndDropMUSHRA     -> the `attributes:` block (the rating scales)
+#   - ExperimentScheduler   -> the `experiment:` block (blocks/sections/order)
+#
+# Edit the values below to design your own experiment; you should not need to
+# touch any Python.
 
-# -------------------------------- Layout ----------------------------------- #
-# Window size. Either [pixels_x, pixels_y] or "fullscreen".
-window_size: fullscreen
-# Content (rating) area size as a percentage [x%, y%] of the window, centered.
-# Same key/behavior as the other tests. Use 100 for the maximally possible size.
-content_area_size: [75, 50]
+# ------------------------------- Stimuli ----------------------------------- #
+# Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
+# the notebook). All files must share one sampling rate and must not clip.
+# Ids can be numbers or names; they are saved into the results, so prefer
+# descriptive names for a real experiment.
+SoundDevice:
+  1: { file: stimulus_1.wav }
+  2: { file: stimulus_2.wav }
+  3: { file: stimulus_3.wav }
+  4: { file: stimulus_4.wav }
 
-# -------------------------------- Behaviour -------------------------------- #
-# Play the reference automatically after the test conditions, and the delay
-# (in seconds) before that autoplay.
-autoplay_reference: true
-autoplay_delay: 0.1
+# ----------------------------- MUSHRA window ------------------------------- #
+# `ui` is read by the DragAndDropMUSHRA window. Colors/fonts come from
+# design.yml; anything you set here overrides that global theme.
+ui:
+  # Window size. Either [pixels_x, pixels_y] or "fullscreen".
+  window_size: [1000, 600]
+  # Rating area size as a percentage [x%, y%] of the window, centered.
+  # Use 100 for the maximally possible size.
+  content_area_size: [75, 50]
+  # Play the reference automatically after the test conditions, and the delay
+  # (in seconds) before that autoplay.
+  autoplay_reference: true
+  autoplay_delay: 0.1
+
+# ------------------------------ Attributes --------------------------------- #
+# Each attribute is one rating scale. The `experiment:` sections below pick an
+# attribute by name; its `task` is shown on top of the rating screen and its
+# `values`/`labels` define the scale the tiles are dragged along.
+#   task         : prompt shown on top (markdown; the **bold** part is the name)
+#   description  : extra info shown via the ℹ️ button
+#   values       : the numeric scale the rating is decoded to
+#   labels       : tick labels (use null/~ for unlabeled ticks)
+#   neutral_value: the value origin of the scale
+attributes:
+  difference:
+    task: |
+      Rate the
+      **Difference**
+    description: Existence of a noticeable difference.
+    labels: [none, null, null, null, very large]
+    values: [0, .25, .5, .75, 1]
+    neutral_value: 0
+
+  tone_color_bright-dark:
+    task: |
+      Rate the
+      **Tone color bright-dark**
+    description: Timbral impression which is determined by the ratio of high to low frequency components
+    labels: [darker, null, null, null, brighter]
+    values: [-1, -.5, 0, .5, 1]
+    neutral_value: 0
+
+# ------------------------------ Experiment --------------------------------- #
+# The course of the experiment. It is a list of `block`s; each block holds an
+# optional `block_name` and one or more `section`s. The ExperimentScheduler
+# randomizes the order (blocks, sections, and the test conditions within a
+# section) and yields one rating screen at a time.
+#   section_name : label saved into the results
+#   attribute    : must match a key under `attributes:` above
+#   reference    : the reference stimulus id (must be defined under SoundDevice:)
+#   test         : the stimulus ids to rate against the reference
+experiment:
+  - block:
+      - block_name: Block 1
+      - section:
+          section_name: Section 1
+          attribute: difference
+          reference: 1
+          test: [2, 3]
+      - section:
+          section_name: Section 2
+          attribute: difference
+          reference: 1
+          test: [2, 3]
+  - block:
+      - block_name: Block 2
+      - section:
+          section_name: Section 3
+          attribute: tone_color_bright-dark
+          reference: 1
+          test: [2, 3]

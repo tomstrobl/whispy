@@ -12,14 +12,22 @@ def read_config(file):
 
     Parameters
     ----------
-    file : str
-        Path to the YAML configuration file.
+    file : str, os.PathLike, dict, or list
+        Path to the YAML configuration file. An already-loaded config (``dict``
+        or ``list``) is returned unchanged.
 
     Returns
     -------
     config : dict
-        The configuration.fut
+        The configuration.
     """
+
+    # Allow an already-loaded config (dict/list) to pass through unchanged. This
+    # lets a single combined config be read once and its sub-sections handed to
+    # the individual consumers (e.g. ExperimentScheduler, DragAndDropMUSHRA), so
+    # a whole experiment can be described in one file.
+    if isinstance(file, (dict, list)):
+        return file
 
     # Always decode as UTF-8. Without an explicit encoding, Python uses the
     # locale default (cp1252 on Windows), which fails on the non-ASCII bytes in
