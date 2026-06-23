@@ -28,6 +28,9 @@ test:
   shuffle_ab: true   # randomize which stimulus of a pair is shown as A vs B
 ui:
   window_size: fullscreen                  # or [width, height] in pixels
+  # Content area size (prompt + button rows + submit) as a percentage [x%, y%]
+  # of the window, centered. Same key/behavior as every test; 100 = max.
+  content_area_size: [60, 80]
   submit_hint: "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit."
   submit_button_text: "Submit choice"
 

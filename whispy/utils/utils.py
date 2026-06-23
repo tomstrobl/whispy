@@ -18,7 +18,7 @@ def read_config(file):
     Returns
     -------
     config : dict
-        The configuration.
+        The configuration.fut
     """
 
     # Always decode as UTF-8. Without an explicit encoding, Python uses the

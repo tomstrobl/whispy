@@ -6,6 +6,9 @@
 ui:
   # Window size. Either [pixels_x, pixels_y] or "fullscreen".
   window_size: [1100, 550]
+  # Content area size (task + buttons + submit) as a percentage [x%, y%] of the
+  # window, centered. Same key/behavior as every test; 100 = max available.
+  content_area_size: [75, 80]
   # Hint shown below the choice buttons and the submit-button label.
   submit_hint: "Listen to a stimulus, select one, then submit."
   submit_button_text: "Submit choice"

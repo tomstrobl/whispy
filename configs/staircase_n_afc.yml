@@ -37,6 +37,9 @@ test:
   shuffle_choices: true   # randomize button order so position carries no info
 ui:
   window_size: [1000,600]                  # or [width, height] in pixels
+  # Content area size (task + buttons + submit) as a percentage [x%, y%] of the
+  # window, centered. Same key/behavior as every test; 100 = max available.
+  content_area_size: [75, 80]
   submit_hint: "Press the number keys (or click) to hear each interval, then press Enter to submit your choice."
   submit_button_text: "Submit choice"
 

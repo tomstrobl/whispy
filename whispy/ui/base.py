@@ -151,6 +151,37 @@ class _BaseUIWindow(QMainWindow):
 
         return width, height, False
 
+    @staticmethod
+    def _resolve_area_size(
+        window_size: tuple[int, int],
+        area_pct: object,
+        *,
+        min_size: tuple[int, int],
+        reserved: tuple[int, int],
+    ) -> tuple[int, int]:
+        """Resolve an ``[x%, y%]``-of-window area size into clamped pixels.
+
+        ``area_pct`` is an ``[x_percent, y_percent]`` pair (each clamped to
+        0..100); the result is that percentage of the window dimensions. It is
+        bounded below by ``min_size`` and above by the window size minus
+        ``reserved`` (the space taken by margins / surrounding widgets), so the
+        area never collapses or overflows the window. This is the single sizing
+        rule shared by every listening test (MUSHRA's rating area and the
+        N-AFC/ABX content areas).
+        """
+        win_w, win_h = int(window_size[0]), int(window_size[1])
+        min_w, min_h = int(min_size[0]), int(min_size[1])
+        max_w = max(min_w, win_w - int(reserved[0]))
+        max_h = max(min_h, win_h - int(reserved[1]))
+        try:
+            x_pct = max(0.0, min(100.0, float(area_pct[0]))) / 100.0  # type: ignore[index]
+            y_pct = max(0.0, min(100.0, float(area_pct[1]))) / 100.0  # type: ignore[index]
+        except (TypeError, ValueError, IndexError):
+            x_pct = y_pct = 1.0
+        width = max(min_w, min(max_w, int(win_w * x_pct)))
+        height = max(min_h, min(max_h, int(win_h * y_pct)))
+        return width, height
+
     def _show_host_window(
         self,
         *,

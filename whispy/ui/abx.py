@@ -162,6 +162,10 @@ class ABX(_BaseUIWindow):
         self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
         self._button_spacing = int(ui.get("button_spacing", 8))
         self._button_scale = max(0.0, float(ui.get("button_scale", 1.0)))
+        # Size of the content area (prompt + button rows + submit) as a
+        # percentage [x%, y%] of the window, centered. Same `content_area_size`
+        # key and behavior as every other test; 100 uses the max available size.
+        self._content_area_size = ui.get("content_area_size", [100, 100])
         self._button_bg = str(ui.get("button_background_color", "#ffffff"))
         self._button_fg = str(ui.get("button_text_color", "#2b3550"))
         self._button_border = str(ui.get("button_border_color", "#b9c4dd"))
@@ -221,8 +225,22 @@ class ABX(_BaseUIWindow):
 
         container = QWidget(self)
         container.setStyleSheet(f"background-color: {self._background_color};")
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(14, 14, 14, 14)
+        outer_layout = QVBoxLayout(container)
+        outer_layout.setContentsMargins(14, 14, 14, 14)
+
+        # The actual content lives in a fixed-size widget sized to a percentage
+        # of the window (`content_area_size`) and centered, exactly like the
+        # MUSHRA rating area, so the layout scales the same way across tests.
+        content = QWidget(container)
+        area_w, area_h = self._resolve_area_size(
+            (self._window_width, self._window_height),
+            self._content_area_size,
+            min_size=(300, 200),
+            reserved=(28, 28),
+        )
+        content.setFixedSize(area_w, area_h)
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self._task_spacing)
 
         # task prompt
@@ -302,6 +320,7 @@ class ABX(_BaseUIWindow):
         self._submit_button.clicked.connect(self._on_submit_clicked)
         layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
+        outer_layout.addWidget(content, alignment=Qt.AlignmentFlag.AlignCenter)
         self._host.setCentralWidget(container)
 
     def _resolve_task_text(self) -> str:

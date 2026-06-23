@@ -419,7 +419,7 @@ class _RatingArea(QGraphicsView):
         autoplay_reference = drag_and_drop_mushra["autoplay_reference"]
         autoplay_delay = drag_and_drop_mushra["autoplay_delay"]
         window_size = drag_and_drop_mushra["window_size"]
-        rating_area_size = drag_and_drop_mushra["rating_area_size"]
+        content_area_size = drag_and_drop_mushra["content_area_size"]
 
         self._num_buttons = max(1, num_buttons)
         self._reference = bool(reference)
@@ -471,17 +471,17 @@ class _RatingArea(QGraphicsView):
 
         self._button_area_width: float = 0.0
 
-        # Apply rating_area_size as a percentage of the window dimensions.
+        # Apply content_area_size as a percentage of the window dimensions.
         # Width  bounds: [200 px, window_width  - 44 px (container margins)]
         # Height bounds: [80 px,  window_height - 200 px (margins + other widgets)]
-        _win_w = int(window_size[0])
-        _win_h = int(window_size[1])
-        _min_w, _max_w = 200, max(200, _win_w - 44)
-        _min_h, _max_h = 80,  max(80,  _win_h - 200)
-        _x_pct = max(0.0, min(100.0, float(rating_area_size[0]))) / 100.0
-        _y_pct = max(0.0, min(100.0, float(rating_area_size[1]))) / 100.0
-        self.setFixedWidth( max(_min_w, min(_max_w, int(_win_w * _x_pct))))
-        self.setFixedHeight(max(_min_h, min(_max_h, int(_win_h * _y_pct))))
+        _area_w, _area_h = _BaseUIWindow._resolve_area_size(
+            (int(window_size[0]), int(window_size[1])),
+            content_area_size,
+            min_size=(200, 80),
+            reserved=(44, 200),
+        )
+        self.setFixedWidth(_area_w)
+        self.setFixedHeight(_area_h)
 
         self._sync_scene_to_viewport()
         self._build_tiles()
