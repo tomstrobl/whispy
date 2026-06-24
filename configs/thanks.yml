@@ -1,0 +1,19 @@
+# "Thank you for participating" screen shown once after an experiment finishes.
+# The symmetric counterpart to configs/participant_id.yml (the screen shown
+# before the experiment). Rendered by whispy.ui.InfoWindow at the end of each
+# example notebook.
+#
+# The look (colors, fonts, button styling) is inherited from the global theme in
+# configs/design.yml so it matches the listening tests.
+
+ui:
+  # The message shown to the participant. Markdown is supported.
+  message: |
+    # Thank you for participating!
+
+    Your responses have been saved.
+
+    You may now let the experimenter know that you are finished.
+  # Show the screen fullscreen (matches the experiment windows). Set to false
+  # for a small centered popup.
+  fullscreen: true
