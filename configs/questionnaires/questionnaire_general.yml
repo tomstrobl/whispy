@@ -100,6 +100,10 @@ questionnaire:
           activity approximately?
         type: numeric
         required: true
+        # Only shown when `acoustics_background` was answered "Yes".
+        depends_on:
+          question: acoustics_background
+          value: "Yes"
 
       - question: music_background
         prompt: |
@@ -113,6 +117,10 @@ questionnaire:
         prompt: How much experience in years do you have with this musical activity?
         type: numeric
         required: true
+        # Only shown when `music_background` was answered "Yes".
+        depends_on:
+          question: music_background
+          value: "Yes"
 
       - question: guided_music_activity
         prompt: |
@@ -126,6 +134,10 @@ questionnaire:
         prompt: How much experience in years do you have with this activity approximately?
         type: numeric
         required: true
+        # Only shown when `guided_music_activity` was answered "Yes".
+        depends_on:
+          question: guided_music_activity
+          value: "Yes"
 
   - section: participation_and_listening
     prompt: Participation in studies and listening habits
@@ -140,6 +152,10 @@ questionnaire:
         prompt: How many such studies have you participated in?
         type: numeric
         required: true
+        # Only shown when `prior_hearing_experiment` was answered "Yes".
+        depends_on:
+          question: prior_hearing_experiment
+          value: "Yes"
 
       - question: listening_hours_per_day
         prompt: |

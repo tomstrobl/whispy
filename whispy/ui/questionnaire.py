@@ -48,7 +48,7 @@ class Questionnaire(_BaseUIWindow):
     ----------
     questionnaire : str or None, optional
         Path to the questionnaire YAML file. If ``None``, the default
-        ``configs/questionnaire.yml`` file is used.
+        ``configs/questionnaires/questionnaire.yml`` file is used.
     blocking : bool, optional
         If ``True``, block execution until the window is closed.
     debug : bool, optional
@@ -67,7 +67,7 @@ class Questionnaire(_BaseUIWindow):
 
         if questionnaire is None:
             questionnaire = os.path.join(
-                FILEPATH, "..", "..", "configs", "questionnaire.yml")
+                FILEPATH, "..", "..", "configs", "questionnaires", "questionnaire.yml")
 
         cfg = read_config(questionnaire)
         if not isinstance(cfg, dict):
@@ -248,6 +248,8 @@ class _QuestionnaireMain(QWidget):
 
         form_layout.addStretch(1)
 
+        self._wire_dependencies()
+
         scroll.setWidget(content)
         root_layout.addWidget(scroll)
 
@@ -266,11 +268,37 @@ class _QuestionnaireMain(QWidget):
         controls.addWidget(self.continue_button)
         root_layout.addLayout(controls)
 
+    def _wire_dependencies(self) -> None:
+        """Show/hide questions that declare a `depends_on` on another answer."""
+        widgets_by_id = {entry.widget.question_id: entry.widget for entry in self._entries}
+
+        for entry in self._entries:
+            depends_on = entry.widget.depends_on
+            if depends_on is None:
+                continue
+
+            controller = widgets_by_id.get(depends_on["question"])
+            if controller is None:
+                # Unknown controller id: leave the question visible.
+                continue
+
+            dependent = entry.widget
+
+            def update(_=None, controller=controller, dependent=dependent, depends_on=depends_on) -> None:
+                satisfied = (
+                    controller.is_active()
+                    and _dependency_satisfied(controller.get_answer(), depends_on["values"])
+                )
+                dependent.set_dependency_active(satisfied)
+
+            controller.answerChanged.connect(update)
+            update()
+
     def get_missing_required_labels(self) -> list[str]:
         missing: list[str] = []
         for entry in self._entries:
             widget = entry.widget
-            if widget.required and not widget.is_answered():
+            if widget.is_active() and widget.required and not widget.is_answered():
                 missing.append(widget.prompt)
         return missing
 
@@ -284,13 +312,17 @@ class _QuestionnaireMain(QWidget):
                     "prompt": entry.widget.prompt,
                     "type": entry.widget.question_type,
                     "required": entry.widget.required,
-                    "answer": entry.widget.get_answer(),
+                    "answer": entry.widget.get_answer() if entry.widget.is_active() else None,
                 }
             )
         return pandas.DataFrame(rows)
 
 
 class _BaseQuestionWidget(QWidget):
+
+    # Emitted whenever the answer changes, so dependent questions can update
+    # their visibility (see `depends_on`).
+    answerChanged = pyqtSignal()
 
     def __init__(
         self,
@@ -308,6 +340,8 @@ class _BaseQuestionWidget(QWidget):
         self.prompt = str(question_cfg.get("prompt", self.question_id))
         self.question_type = str(question_cfg.get("type", ""))
         self.required = bool(question_cfg.get("required", False))
+        self.depends_on = _parse_depends_on(question_cfg.get("depends_on"))
+        self._dependency_active = True
         self._ui_cfg = ui_cfg
         self._font_color = font_color
         self._response_color = response_color
@@ -328,6 +362,20 @@ class _BaseQuestionWidget(QWidget):
         self.input_row.setContentsMargins(10, 0, 0, 0)
         self.input_row.setSpacing(4)
         layout.addLayout(self.input_row)
+
+    def is_active(self) -> bool:
+        """Whether this question is currently shown (its `depends_on` is met)."""
+        return self._dependency_active
+
+    def set_dependency_active(self, active: bool) -> None:
+        """Show/hide this question based on whether its `depends_on` is met."""
+        active = bool(active)
+        if active == self._dependency_active:
+            return
+        self._dependency_active = active
+        self.setVisible(active)
+        # Propagate so questions depending on this one can re-evaluate.
+        self.answerChanged.emit()
 
     def is_answered(self) -> bool:
         raise NotImplementedError
@@ -354,6 +402,7 @@ class _TextQuestionWidget(_BaseQuestionWidget):
             f"background-color: {response_color}; color: {font_color}; border: 1px solid {font_color};"
         )
         self.input.setFixedWidth(_char_width(self.input.font(), int(ui_cfg["width_text_response"])))
+        self.input.textChanged.connect(self.answerChanged)
         self.input_row.addWidget(self.input)
 
     def is_answered(self) -> bool:
@@ -385,6 +434,7 @@ class _TextBoxQuestionWidget(_BaseQuestionWidget):
         lines = max(1, int(ui_cfg["text_box_number_of_lines"]))
         line_height = QFontMetrics(self.input.font()).lineSpacing()
         self.input.setFixedHeight(int(line_height * lines + 16))
+        self.input.textChanged.connect(self.answerChanged)
         self.input_row.addWidget(self.input)
 
     def is_answered(self) -> bool:
@@ -415,6 +465,7 @@ class _NumericQuestionWidget(_BaseQuestionWidget):
         validator.setNotation(QDoubleValidator.Notation.StandardNotation)
         self.input.setValidator(validator)
         self.input.setFixedWidth(_char_width(self.input.font(), int(ui_cfg["width_numeric_response"])))
+        self.input.textChanged.connect(self.answerChanged)
         self.input_row.addWidget(self.input)
 
     def _parse_numeric(self) -> Optional[float]:
@@ -470,6 +521,8 @@ class _SingleChoiceQuestionWidget(_BaseQuestionWidget):
             self._group.addButton(button, idx)
             self._buttons.append(button)
             self.input_row.addWidget(button)
+
+        self._group.buttonClicked.connect(self.answerChanged)
 
         self._other_cfg = question_cfg.get("other_question", None)
         self._other_widget: Optional[_BaseQuestionWidget] = None
@@ -573,6 +626,7 @@ class _MultipleChoiceQuestionWidget(_BaseQuestionWidget):
                 f"QCheckBox::indicator:checked {{ background-color: {selected_color}; border: 1px solid {font_color}; }}"
             )
             checkbox.setFont(QFont("Helvetica", question_font_size))
+            checkbox.toggled.connect(self.answerChanged)
             self._checks.append(checkbox)
             self.input_row.addWidget(checkbox)
 
@@ -611,6 +665,42 @@ def _char_width(font: QFont, n_chars: int) -> int:
     metrics = QFontMetrics(font)
     width = metrics.averageCharWidth() * max(1, int(n_chars))
     return max(80, width + 16)
+
+
+def _parse_depends_on(value: Any) -> Optional[dict[str, Any]]:
+    """Normalize a question's `depends_on` config into ``{question, values}``.
+
+    Accepts a mapping with a ``question`` key (the controlling question id) and
+    a ``value`` (single value) or ``values`` (list) the answer must match for
+    this question to be shown. Returns ``None`` when no valid dependency is set.
+    """
+    if not isinstance(value, dict):
+        return None
+
+    question = str(value.get("question", "")).strip()
+    if not question:
+        return None
+
+    raw = value.get("values", value.get("value"))
+    if isinstance(raw, list):
+        values = [_as_option_text(item) for item in raw]
+    elif raw is None:
+        values = []
+    else:
+        values = [_as_option_text(raw)]
+
+    return {"question": question, "values": values}
+
+
+def _dependency_satisfied(answer: Any, expected_values: list[str]) -> bool:
+    """Whether ``answer`` matches one of ``expected_values`` (case-insensitive)."""
+    if not expected_values:
+        return _has_value(answer)
+
+    answers = answer if isinstance(answer, list) else [answer]
+    given = {_as_option_text(a).strip().lower() for a in answers if _has_value(a)}
+    expected = {value.strip().lower() for value in expected_values}
+    return bool(given & expected)
 
 
 def _as_option_text(value: Any) -> str:

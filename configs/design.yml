@@ -5,7 +5,8 @@
 # (DragAndDropMUSHRA, NAFC, Questionnaire, InfoWindow). Each UI loads these
 # values via `whispy.utils.load_design()` and may override individual keys in
 # its own config (configs/n_afc.yml, configs/drag_and_drop_mushra.yml,
-# configs/questionnaire.yml). Change a color here and it changes everywhere.
+# configs/questionnaires/questionnaire.yml). Change a color here and it changes
+# everywhere.
 #
 # Palette: a clean, cool indigo theme on a light slate background.
 
