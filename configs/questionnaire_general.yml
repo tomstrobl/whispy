@@ -9,7 +9,7 @@ ui:
   # Questionnaire size.
   # Percentage with respect to window size.
   # Use 100% for maximally possible size.
-  questionnaire_size: [50, 50]
+  questionnaire_size: [50, 75]
   # If True Sections and questions are enumerated
   enumerate: false
   # Spacing between sections and questions in pixel

@@ -450,6 +450,10 @@ class _SingleChoiceQuestionWidget(_BaseQuestionWidget):
         if not isinstance(options, list):
             options = []
 
+        selected_color = QColor(
+            str(ui_cfg.get("button_selected_background_color", "#5cb874"))
+        ).name()
+
         self._group = QButtonGroup(self)
         self._buttons: list[QRadioButton] = []
         indicator_size = 14
@@ -457,9 +461,9 @@ class _SingleChoiceQuestionWidget(_BaseQuestionWidget):
             text = _as_option_text(option)
             button = QRadioButton(text, self)
             button.setStyleSheet(
-                f"color: {font_color};"
-                f"QRadioButton::indicator {{ background-color: {response_color}; border: 1px solid {font_color}; width: {indicator_size}px; height: {indicator_size}px; }}"
-                f"QRadioButton::indicator:checked {{ background-color: {response_color}; border: 2px solid {font_color}; }}"
+                f"QRadioButton {{ color: {font_color}; }}"
+                f"QRadioButton::indicator {{ background-color: {response_color}; border: 1px solid {font_color}; border-radius: {indicator_size // 2}px; width: {indicator_size}px; height: {indicator_size}px; }}"
+                f"QRadioButton::indicator:checked {{ background-color: {selected_color}; border: 1px solid {font_color}; }}"
             )
             button.setFont(QFont("Helvetica", question_font_size))
             button.setMinimumHeight(max(button.sizeHint().height(), indicator_size + 8))
@@ -554,14 +558,19 @@ class _MultipleChoiceQuestionWidget(_BaseQuestionWidget):
         if not isinstance(options, list):
             options = []
 
+        selected_color = QColor(
+            str(ui_cfg.get("button_selected_background_color", "#5cb874"))
+        ).name()
+        indicator_size = 14
+
         self._checks: list[QCheckBox] = []
         for option in options:
             text = _as_option_text(option)
             checkbox = QCheckBox(text, self)
             checkbox.setStyleSheet(
-                f"color: {font_color};"
-                f"QCheckBox::indicator {{ background-color: {response_color}; border: 1px solid {font_color}; }}"
-                f"QCheckBox::indicator:checked {{ background-color: {response_color}; border: 2px solid {font_color}; }}"
+                f"QCheckBox {{ color: {font_color}; }}"
+                f"QCheckBox::indicator {{ background-color: {response_color}; border: 1px solid {font_color}; width: {indicator_size}px; height: {indicator_size}px; }}"
+                f"QCheckBox::indicator:checked {{ background-color: {selected_color}; border: 1px solid {font_color}; }}"
             )
             checkbox.setFont(QFont("Helvetica", question_font_size))
             self._checks.append(checkbox)
