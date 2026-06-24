@@ -27,7 +27,6 @@ for screen in schedule:
 See the runnable demos in [`examples/`](examples/):
 
 - `examples/drag_and_drop_mushra.ipynb` — MUSHRA-like drag-and-drop rating.
-- `examples/n_afc.ipynb` — a single N-AFC trial, explained step by step.
 - `examples/staircase_n_afc.ipynb` — adaptive staircase driving N-AFC trials.
 
 ## Configuration
