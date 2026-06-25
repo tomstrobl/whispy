@@ -29,35 +29,29 @@ ui:
 # visual structure. All `required` questions have to be answered.
 
 questionnaire:
-
-# Anonymous IDs are generated in the listening test (the ParticipantID window) not here,
-# but if needed:
-
-#  - section: pid
-#    prompt: Generate your ID for anonymously storing your data
-#    questions:
-#      - question: pid_1
-#        prompt: |
-#          Enter the first letter of your mother's name (e.g. **H** for **H**anna)
-#        type: text
-#        required: true
-#      - question: pid_2
-#        prompt: |
-#          Enter the first letter of your father's name (e.g. **P** for **P**aul)
-#        type: text
-#        required: true
-#      - question: pid_3
-#        prompt: |
-#          Enter the last letter of your name (e.g. **o** for Le**o**)
-#        type: text
-#        required: true
-#      - question: pid_4
-#        prompt: |
-#          Enter the second digit of your birthday (e.g. **1** for 3**1**.04.2002)
-#        type: text
-#        required: true
-
-# This questionnaire instead records the participant's full name.
+  - section: pid
+    prompt: Generate your ID for anonymously storing your data
+    questions:
+      - question: pid_1
+        prompt: |
+          Enter the first letter of your mother's name (e.g. **H** for **H**anna)
+        type: text
+        required: true
+      - question: pid_2
+        prompt: |
+          Enter the first letter of your father's name (e.g. **P** for **P**aul)
+        type: text
+        required: true
+      - question: pid_3
+        prompt: |
+          Enter the last letter of your name (e.g. **o** for Le**o**)
+        type: text
+        required: true
+      - question: pid_4
+        prompt: |
+          Enter the second digit of your birthday (e.g. **1** for 3**1**.04.2002)
+        type: text
+        required: true
 
   - section: name
     prompt: Your name
