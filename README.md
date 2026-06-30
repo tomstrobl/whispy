@@ -15,19 +15,29 @@ pip install -e .
 
 ```python
 import whispy
+from whispy.interfaces import SoundDevice
 
-# Randomized course of trials from configs/experiment.yml
-schedule = whispy.ExperimentScheduler("configs/experiment.yml")
+config = "configs/drag_and_drop_mushra.yml"   # one self-contained experiment file
+cfg = whispy.utils.read_config(config)
+handler = SoundDevice(config, "examples/demo_stimuli/mushra")  # reads the SoundDevice: block
 
+# Randomized course of trials from the config's `experiment:` block
+schedule = whispy.ExperimentScheduler(experiment=cfg)
+
+results = None
 for screen in schedule:
-    ui = whispy.ui.DragAndDropMUSHRA(screen=screen)
-    results = ui.get_results()
+    ui = whispy.ui.DragAndDropMUSHRA(
+        screen=screen, stimuli_handler=handler, drag_and_drop_mushra=cfg)
+    results = ui.get_results(results)
 ```
 
-See the runnable demos in [`examples/`](examples/):
+See the runnable demos in [`examples/`](examples/) — each test ships as a minimal
+`building_block_<test>.ipynb` and a full `full_experiment_<test>.ipynb` (consent
+→ test → thank-you):
 
-- `examples/drag_and_drop_mushra.ipynb` — MUSHRA-like drag-and-drop rating.
-- `examples/staircase_n_afc.ipynb` — adaptive staircase driving N-AFC trials.
+- `drag_and_drop_mushra` — MUSHRA-like drag-and-drop rating.
+- `staircase_n_afc` — adaptive staircase driving N-AFC trials.
+- `abx` — ABX discrimination.
 
 ## Configuration
 

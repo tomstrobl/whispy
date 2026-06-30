@@ -204,25 +204,13 @@ class NAFC(_BaseUIWindow):
     def _resolve_task_text(self) -> str:
         """Resolve the on-screen task prompt for this trial.
 
-        A ``task`` given directly in the ``screen`` dict wins, so a trial can
-        carry its prompt inline (e.g. from a single experiment config). Failing
-        that, the prompt is the ``task`` of the ``attribute`` in
-        ``attributes.yml``.
+        A ``task`` given directly in the ``screen`` dict carries the trial's
+        prompt inline (e.g. from a single experiment config). When absent, a
+        generic default is shown.
         """
         inline_task = self.screen.get("task")
         if inline_task:
             return str(inline_task)
-
-        attr_name = self.screen.get("attribute")
-        if attr_name is None:
-            return "N-AFC task"
-        try:
-            attributes = read_config(os.path.join(FILEPATH, "..", "..", "configs", "attributes.yml"))
-        except Exception:
-            return "N-AFC task"
-        attr = attributes.get(attr_name) if isinstance(attributes, dict) else None
-        if isinstance(attr, dict):
-            return str(attr.get("task", "N-AFC task"))
         return "N-AFC task"
 
     def _scale_factor(self) -> float:

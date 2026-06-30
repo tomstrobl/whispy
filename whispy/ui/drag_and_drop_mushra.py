@@ -68,30 +68,37 @@ class DragAndDropMUSHRA(_BaseUIWindow):
 
         self.stimuli_handler: StimuliHandler = stimuli_handler
 
-        # initialize attributes if they were not passed
-        if attributes is None:
-            attributes = os.path.join(
-                FILEPATH, "..", "..", "configs", "attributes.yml")
-
-        attributes = read_config(attributes)
-
-        # read GUI config (use default if not provided). The global theme from
-        # configs/design.yml is the base; the per-UI config only overrides
-        # layout/behavior (and optionally individual theme keys).
+        # read the experiment config (use default if not provided). The global
+        # theme from configs/design.yml is the base; the per-UI config only
+        # overrides layout/behavior (and optionally individual theme keys).
         if drag_and_drop_mushra is None:
             drag_and_drop_mushra = os.path.join(
                 FILEPATH, "..", "..", "configs", "drag_and_drop_mushra.yml")
 
-        # Support both a flat UI config and a combined experiment file that
-        # nests the UI settings under a `ui:` block (its other blocks —
-        # SoundDevice / attributes / experiment — are consumed elsewhere and
-        # ignored here).
+        # A single self-contained experiment config nests everything under
+        # named blocks (`ui:`, `attributes:`, `SoundDevice:`, `experiment:`);
+        # this UI consumes the `ui:` block for layout and the `attributes:`
+        # block for the rating scales. A flat UI config (no `ui:` block) is
+        # also accepted, in which case the scales must come from `attributes`.
         if not isinstance(drag_and_drop_mushra, dict):
             drag_and_drop_mushra = read_config(drag_and_drop_mushra)
-        if isinstance(drag_and_drop_mushra, dict) and isinstance(
-                drag_and_drop_mushra.get("ui"), dict):
-            drag_and_drop_mushra = drag_and_drop_mushra["ui"]
+        combined = drag_and_drop_mushra if isinstance(drag_and_drop_mushra, dict) else {}
 
+        # rating-scale definitions: an explicit `attributes` argument wins,
+        # otherwise fall back to the combined config's `attributes:` block.
+        if attributes is None:
+            attributes = combined.get("attributes")
+        if attributes is None:
+            raise ValueError(
+                "No rating-scale attributes found: pass `attributes=` or "
+                "include an `attributes:` block in the `drag_and_drop_mushra` "
+                "config.")
+        attributes = read_config(attributes)
+
+        # UI layout/theme: the `ui:` block of a combined config if present,
+        # otherwise treat the whole dict as a flat UI config.
+        if isinstance(combined.get("ui"), dict):
+            drag_and_drop_mushra = combined["ui"]
         drag_and_drop_mushra = load_design(drag_and_drop_mushra)
 
         # parse config data to get parameters for current task ----------------

@@ -1,12 +1,7 @@
 from whispy.utils import read_config
 import numpy as np
-import os
 import time
 from typing import Optional, List, Dict
-
-# Directory containing this file.
-# Required for loading the default configs
-FILEPATH = os.path.dirname(os.path.abspath(__file__))
 
 class ExperimentScheduler():
     """
@@ -14,9 +9,11 @@ class ExperimentScheduler():
 
     Parameters
     ----------
-    experiment : str or None, optional
-        Path to the experiment configuration file. If ``None``, the default
-            ``configs/experiment.yml`` from this package is used.
+    experiment : list, dict, or str
+        The experiment definition: a list of blocks, a combined experiment
+        config that nests them under an ``experiment:`` block, or a path to a
+        YAML file containing either. Required (raises ``ValueError`` if
+        ``None``).
     randomize_blocks : bool, optional
         Whether to randomize the order of blocks of the experiment. The default
         is ``True``.
@@ -45,8 +42,10 @@ class ExperimentScheduler():
 
         import whispy
 
-        # create the scheduler
-        scheduler = whispy.ExperimentScheduler()
+        # create the scheduler from a combined experiment config (it reads the
+        # `experiment:` block)
+        scheduler = whispy.ExperimentScheduler(
+            experiment="configs/drag_and_drop_mushra.yml")
 
         # initalize results
         results = None
@@ -97,9 +96,11 @@ def _course(
 
     Parameters
     ----------
-    experiment : str or None, optional
-        Path to the experiment configuration file. If ``None``, the default
-            ``configs/experiment.yml`` from this package is used.
+    experiment : list, dict, or str
+        The experiment definition: a list of blocks, a combined experiment
+        config that nests them under an ``experiment:`` block, or a path to a
+        YAML file containing either. Required (raises ``ValueError`` if
+        ``None``).
     randomize_blocks : bool, optional
         Whether to randomize the order of blocks of the experiment. The default
         is ``True``.
@@ -126,10 +127,19 @@ def _course(
 
     # load config
     if experiment is None:
-        experiment = os.path.join(
-                FILEPATH, '..', 'configs', 'experiment.yml')
+        raise ValueError(
+            "ExperimentScheduler needs an experiment: pass experiment=<list of "
+            "blocks>, the combined experiment config that nests them under an "
+            "`experiment:` block, or a path to a YAML file with either.")
 
     experiment = read_config(experiment)
+    # accept either the experiment list directly or a combined experiment
+    # config that nests it under an `experiment:` block
+    if isinstance(experiment, dict):
+        if "experiment" not in experiment:
+            raise ValueError(
+                "experiment config dict has no `experiment:` block")
+        experiment = experiment["experiment"]
 
     # initialize experimental_course
     experimental_course = []
