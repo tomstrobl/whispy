@@ -1,23 +1,23 @@
 %% whispy architecture — paste into https://mermaid.live to export PNG/SVG
 flowchart TB
     subgraph DRV["Driver — examples/ notebooks"]
-        NB["building_block_*  ·  full_experiment_*<br/>(consent → test → thanks)"]
+        NB["building_block_*  ·  full_experiment_*"]
     end
 
     subgraph CFG["Configuration (YAML) — read_config() / load_design()"]
         direction TB
-        C1["design.yml — shared theme"]
-        C2["drag_and_drop_mushra.yml · staircase_n_afc.yml · abx.yml<br/>self-contained per experiment:<br/>SoundDevice (id→file) · ui · scales/test · experiment"]
-        C5["questionnaires/ — consent · general"]
+        C1["design.yml"]
+        C2["drag_and_drop_mushra.yml · staircase_n_afc.yml · abx.yml"]
+        C5["questionnaire_*.yml"]
         C6["thanks.yml · participant_id.yml"]
     end
 
     subgraph ORCH["Orchestration"]
-        SCH["ExperimentScheduler<br/>randomizes → yields screen dicts"]
-        STC["Staircase<br/>adaptive up/down (GUI-free)"]
+        SCH["ExperimentScheduler<br/>drives MUSHRA<br/>randomizes → yields screen dicts"]
+        STC["Staircase<br/>drives staircase N-AFC<br/>adaptive up/down"]
     end
 
-    subgraph UI["UI layer (PyQt6) — _BaseUIWindow"]
+    subgraph UI["UI layer (PyQt6)"]
         MU["DragAndDropMUSHRA"]
         NA["NAFC"]
         AB["ABX"]
@@ -26,9 +26,9 @@ flowchart TB
         PI["ParticipantID (legacy)"]
     end
 
-    subgraph AUD["Audio interface"]
+    subgraph AUD["Interface"]
         SH["StimuliHandler (ABC)"]
-        SD["SoundDevice → pyfar · sounddevice"]
+        SD["SoundDevice"]
     end
 
     subgraph RES["Results"]
@@ -37,8 +37,8 @@ flowchart TB
     end
 
     NB --> ORCH
-    SCH -->|screen dict| UI
-    STC -->|drives trials| NA
+    SCH -->|screen dicts| MU
+    STC -->|N-AFC trials| NA
     UI -->|"play(stimulus)"| AUD
     SH --> SD
     UI -->|rows / trial| RES

@@ -10,10 +10,6 @@ import numpy as np
 import sounddevice as sd
 import os
 
-# Directory containing this file.
-# Required for loading the default configs
-FILEPATH = os.path.dirname(os.path.abspath(__file__))
-
 
 class StimuliHandler(ABC):
     """Abstract base class for all StimuliHandler."""
@@ -47,27 +43,30 @@ class SoundDevice(StimuliHandler):
 
         Parameters
         ----------
-        stimuli : str or None, optional
-            Path to the stimuli configuration file. If ``None``, the default
-            ``configs/stimuli_sounddevice.yml`` from this package is used.
-        base_dir : str or None, optional
-            Base directory containing the audio files referenced in the stimuli
-            configuration. If ``None``, the default ``stimuli`` directory
-            of this package is used.
+        stimuli : str or dict
+            A config containing a ``SoundDevice:`` block (mapping each stimulus
+            id to ``{file: ...}``) — either a path to the YAML file or an
+            already-loaded dict (e.g. a combined experiment config). Required.
+        base_dir : str
+            Base directory holding the audio files referenced under
+            ``SoundDevice:``. Required.
         loop : bool, optional
             If ``True``, playback loops continuously.
 
         Raises
         ------
         ValueError
-            If loaded stimuli are clipping (maximum absolute value equals 1) or
-            do not share the same sampling rate.
+            If ``stimuli`` or ``base_dir`` is ``None``, if the config has no
+            ``SoundDevice:`` block, or if loaded stimuli clip (maximum absolute
+            value equals 1) or do not share the same sampling rate.
         """
 
         # load config file
         if stimuli is None:
-            stimuli = os.path.join(
-                FILEPATH, '..', '..', 'configs', 'stimuli.yml')
+            raise ValueError(
+                "SoundDevice needs a stimuli config: pass stimuli=<path or "
+                "dict> containing a `SoundDevice:` block (e.g. your combined "
+                "experiment config).")
 
         self.stimuli = read_config(stimuli)
 
@@ -76,11 +75,11 @@ class SoundDevice(StimuliHandler):
 
         self.stimuli = self.stimuli["SoundDevice"]
 
-        # parse base directory containing audio stimuli (the demo WAVs ship
-        # under examples/demo_stimuli/<test>/)
+        # base directory holding the audio files referenced under SoundDevice:
         if base_dir is None:
-            base_dir = os.path.join(
-                FILEPATH, '..', '..', 'examples', 'demo_stimuli', 'mushra')
+            raise ValueError(
+                "SoundDevice needs base_dir: the folder holding the WAVs "
+                "referenced under `SoundDevice:`.")
 
         # load and check audio files
         self.sampling_rate = None
