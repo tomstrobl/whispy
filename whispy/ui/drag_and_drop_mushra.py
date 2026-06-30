@@ -9,9 +9,9 @@ from whispy.utils._utils import format_markdown
 import pandas
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QEvent, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen
 from PyQt6.QtWidgets import (
     QApplication,
@@ -61,6 +61,7 @@ class DragAndDropMUSHRA(_BaseUIWindow):
                 "section_name": "Section 1"}
 
         self.screen = screen
+        self._key_filter_installed = False
 
         # initialize default audio handler if it was not passed
         if stimuli_handler is None:
@@ -112,6 +113,7 @@ class DragAndDropMUSHRA(_BaseUIWindow):
         # number of conditions
         num_buttons = len(screen["test"])
         reference = screen["reference"] is not None
+        self._has_reference = reference
 
         # initialize QT parameters --------------------------------------------
         # set global parameters
@@ -161,6 +163,7 @@ class DragAndDropMUSHRA(_BaseUIWindow):
         self.drag_area.tileActivated.connect(self._on_tile_activated)
         self.drag_area.tileDeactivated.connect(self._on_tile_deactivated)
         self.drag_area.stopClicked.connect(self._on_stop_clicked)
+        self.drag_area.referenceClicked.connect(self._on_reference_clicked)
 
         if parent is None:
             # show window in front of all other windows
@@ -171,6 +174,14 @@ class DragAndDropMUSHRA(_BaseUIWindow):
             )
 
         self.drag_area.continueClicked.connect(self._on_continue_clicked)
+
+        # Route the 'R' key to play the reference on demand (only when this
+        # screen has a reference). An app-level event filter is used so the key
+        # works regardless of focus and across the shared host reused for
+        # successive screens — mirrors the N-AFC keyboard handling.
+        if reference:
+            self._install_key_handling()
+
         # Block code execution outside this class until Continue is clicked
         if blocking:
             self.wait_until_closed()
@@ -202,6 +213,57 @@ class DragAndDropMUSHRA(_BaseUIWindow):
     def _on_stop_clicked(self) -> None:
         if self._debug:
             print("Stop clicked")
+
+    def _on_reference_clicked(self) -> None:
+        """Play the reference stimulus on demand (Reference button / 'R' key)."""
+        self.drag_area.view.play_reference()
+        if self._debug:
+            print("Reference requested")
+
+    # --------------------------------------------------------------- keyboard
+    def _install_key_handling(self) -> None:
+        """Route key presses to this screen via an app-level event filter.
+
+        A staircase/experiment reuses one host window across screens, so an
+        application filter (rather than overriding ``keyPressEvent``) ensures
+        the key reaches the current screen no matter which widget has focus.
+        Removed again when the screen ends.
+        """
+        app = QApplication.instance()
+        if app is not None and not self._key_filter_installed:
+            app.installEventFilter(self)
+            self._key_filter_installed = True
+
+    def _remove_key_handling(self) -> None:
+        """Stop intercepting key presses for this screen (idempotent)."""
+        app = QApplication.instance()
+        if app is not None and self._key_filter_installed:
+            app.removeEventFilter(self)
+        self._key_filter_installed = False
+
+    def eventFilter(self, obj: Any, event: QEvent) -> bool:  # type: ignore[override]
+        """Handle the 'R' shortcut; defer everything else to Qt."""
+        if event.type() == QEvent.Type.KeyPress and self._handle_key_press(event):
+            return True
+        return super().eventFilter(obj, event)
+
+    def _handle_key_press(self, event: QEvent) -> bool:
+        """Play the reference on 'R'; return ``True`` when the key is consumed."""
+        if self._has_reference and event.key() == Qt.Key.Key_R:
+            self._on_reference_clicked()
+            return True
+        return False
+
+    def unblock(self) -> None:  # type: ignore[override]
+        """Remove key handling for this screen, then release the blocking loop."""
+        self._remove_key_handling()
+        super().unblock()
+
+    def closeEvent(self, event: Any) -> None:  # type: ignore[override]
+        """Ensure the key filter is removed when the window actually closes."""
+        if self._allow_close:
+            self._remove_key_handling()
+        super().closeEvent(event)
 
     def _get_stimulus_name(self, tile_name):
         if tile_name == "R":
@@ -263,6 +325,7 @@ class _MainWindow(QWidget):
     tileDeactivated = pyqtSignal(str)
     stopClicked = pyqtSignal()
     continueClicked = pyqtSignal()
+    referenceClicked = pyqtSignal()
 
     def __init__(
         self,
@@ -361,6 +424,16 @@ class _MainWindow(QWidget):
         controls_layout.setContentsMargins(0, 8, 0, 0)
         controls_layout.setSpacing(8)
         controls_layout.addStretch(1)
+
+        # Dedicated reference button (with the 'R' keyboard shortcut), so the
+        # reference is played explicitly on demand instead of auto-playing.
+        if reference:
+            self.reference_button = QPushButton("Reference (R)", self)
+            style_qpushbutton(self.reference_button, button_fontsize,
+                              button_fg, button_bg, button_radius,
+                              button_hover_bg, button_border_color)
+            self.reference_button.clicked.connect(self.referenceClicked)
+            controls_layout.addWidget(self.reference_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.continue_button = QPushButton("Continue", self)
@@ -652,6 +725,19 @@ class _RatingArea(QGraphicsView):
     def deactivate_active_button(self) -> None:
         self._autoplay_timer.stop()
         self._set_active_tile(None, allow_reference_fallback=False)
+
+    def play_reference(self) -> None:
+        """Play the reference on demand: activate the reference tile (which
+        emits ``tileActivated`` -> playback) and cancel any pending autoplay.
+        No-op when this screen has no reference."""
+        if not self._reference:
+            return
+        self._autoplay_timer.stop()
+        # If the reference is already the active tile, deactivate it first so
+        # the button / 'R' key always (re)starts playback from the beginning.
+        if self._active_tile_name == self._neutral_tile_name:
+            self._set_active_tile(None, allow_reference_fallback=False)
+        self._set_active_tile(self._neutral_tile_name, allow_reference_fallback=False)
 
     def all_tiles_activated_once(self) -> bool:
         return set(self._tiles.keys()).issubset(self._activated_once)

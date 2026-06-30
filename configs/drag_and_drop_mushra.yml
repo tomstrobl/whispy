@@ -33,9 +33,11 @@ ui:
   # Rating area size as a percentage [x%, y%] of the window, centered.
   # Use 100 for the maximally possible size.
   content_area_size: [75, 50]
-  # Play the reference automatically after the test conditions, and the delay
-  # (in seconds) before that autoplay.
-  autoplay_reference: true
+  # By default the reference is played explicitly via the dedicated
+  # "Reference (R)" button / the 'R' key, not automatically. Set
+  # `autoplay_reference: true` to instead auto-play it after a test condition
+  # is released; `autoplay_delay` is the delay (in seconds) before that autoplay.
+  autoplay_reference: false
   autoplay_delay: 0.1
 
 # ------------------------------ Attributes --------------------------------- #
