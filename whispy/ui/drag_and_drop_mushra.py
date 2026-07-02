@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .base import _BaseUIWindow, style_qpushbutton
+from .base import _BaseUIWindow, build_progress_widget, style_qpushbutton
 from .info_window import InfoWindow
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import load_design, read_config
@@ -152,6 +152,7 @@ class DragAndDropMUSHRA(_BaseUIWindow):
             values=values,
             labels=labels,
             drag_and_drop_mushra=drag_and_drop_mushra,
+            progress=screen.get("progress"),
             parent=container,
         )
         layout.addWidget(self.drag_area)
@@ -304,14 +305,18 @@ class DragAndDropMUSHRA(_BaseUIWindow):
             ratings[self._get_stimulus_name(tile_name)] = rating
 
 
+        # screen metadata without the `progress` entry (UI-only info injected
+        # by the scheduler; it would otherwise end up as a results column)
+        screen_meta = {k: v for k, v in self.screen.items() if k != "progress"}
+
         if results is None:
             # create empty dataframe with columns from the screen metadata
             results = pandas.DataFrame(
-                columns=list(self.screen.keys()) + ['rating'])
+                columns=list(screen_meta.keys()) + ['rating'])
 
         # fill data frame in long format (one row per test condition)
         for t in self.screen["test"]:
-            row = dict(self.screen)
+            row = dict(screen_meta)
             row["test"] = t
             row["rating"] = ratings[t]
             results.loc[len(results)] = row
@@ -338,6 +343,7 @@ class _MainWindow(QWidget):
         values: Optional[List[float]] = None,
         labels: Optional[List[Optional[str]]] = None,
         drag_and_drop_mushra: Optional[Dict] = None,
+        progress: Optional[object] = None,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
@@ -453,6 +459,31 @@ class _MainWindow(QWidget):
         controls_layout.addWidget(self.continue_button)
         controls_widget.setFixedWidth(self.view.minimumWidth())
         layout.addWidget(controls_widget, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # trial progress ("Trial X of Y") below the controls, when enabled in
+        # the config AND the screen carries progress info (injected by
+        # ExperimentScheduler). Same keys and widget as N-AFC/ABX.
+        if bool(drag_and_drop_mushra.get("show_progress", False)):
+            progress_widget = build_progress_widget(
+                progress,
+                text_template=str(drag_and_drop_mushra.get(
+                    "progress_text", "Trial {current} of {total}")),
+                fontsize=max(1, int(drag_and_drop_mushra.get(
+                    "progress_fontsize") or fontsize)),
+                fontcolor=fontcolor,
+                bar_color=str(drag_and_drop_mushra.get(
+                    "progress_bar_color", "#5cb874")),
+                trough_color=str(drag_and_drop_mushra.get(
+                    "progress_bar_background_color", "#dbe2f1")),
+                parent=self,
+            )
+            if progress_widget is not None:
+                progress_widget.setFixedWidth(
+                    min(300, self.view.minimumWidth()))
+                layout.addSpacing(10)
+                layout.addWidget(
+                    progress_widget, alignment=Qt.AlignmentFlag.AlignHCenter)
+
         layout.addStretch(1)
 
         self.view.tilePressed.connect(self.tilePressed)

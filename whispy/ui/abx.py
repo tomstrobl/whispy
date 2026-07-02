@@ -24,7 +24,7 @@ from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import load_design, read_config
 from whispy.utils._utils import format_markdown
 
-from .base import _BaseUIWindow
+from .base import _BaseUIWindow, build_progress_widget
 from .info_window import InfoWindow
 
 # Directory containing this file. Required for default configs
@@ -200,6 +200,16 @@ class ABX(_BaseUIWindow):
             "submit_hint",
             "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit."))
         self._submit_button_text = str(ui.get("submit_button_text", "Submit choice"))
+        # Trial progress indicator ("Trial X of Y"): shown when enabled AND the
+        # screen dict carries a `progress` entry (set by the notebook's trial
+        # loop). Same keys and widget as every other test.
+        self._show_progress = bool(ui.get("show_progress", False))
+        self._progress_text = str(ui.get("progress_text", "Trial {current} of {total}"))
+        self._progress_fontsize = max(1, int(
+            ui.get("progress_fontsize") or self._hint_fontsize))
+        self._progress_bar_color = str(ui.get("progress_bar_color", "#5cb874"))
+        self._progress_trough_color = str(
+            ui.get("progress_bar_background_color", "#dbe2f1"))
 
     def _prepare_trial(self) -> tuple[Any, Any, Any, str]:
         """Resolve the per-trial A/B/X stimulus ids and the correct answer.
@@ -260,19 +270,36 @@ class ABX(_BaseUIWindow):
             min_size=(300, 200),
             reserved=(28, 28),
         )
-        content.setFixedSize(area_w, area_h)
+        # The content box is extended a little past the configured height so
+        # the progress bar (flush at its bottom edge) sits a bit lower; the
+        # footer spacing below compensates, so the hint and everything above
+        # it keep their position.
+        progress_drop = min(24, max(0, self._window_height - 28 - area_h))
+        content.setFixedSize(area_w, area_h + progress_drop)
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self._task_spacing)
 
-        # task prompt (markdown, like every other whispy prompt)
+        # small offset so the task text sits a little below the top edge
+        layout.addSpacing(self._task_spacing)
+
+        # task prompt (markdown, like every other whispy prompt), pinned to
+        # the top of the content area. The fixed
+        # full-content width makes the word-wrapped height computable, so the
+        # text is never clipped when the stretches compact the layout.
         task_label = QLabel(format_markdown(self._resolve_task_text()), self)
         task_label.setTextFormat(Qt.TextFormat.MarkdownText)
         task_label.setWordWrap(True)
         task_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         task_label.setStyleSheet(f"color: {self._fontcolor};")
         task_label.setFont(QFont("Helvetica", task_fontsize))
+        task_label.setFixedWidth(area_w)
         layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # The stretches (here and below the submit button) center the play/
+        # answer controls + submit between the task text pinned on top and the
+        # footer (hint + progress) pinned to the bottom.
+        layout.addStretch(1)
 
         # playback row: A, B, X (play only, not an answer)
         listen_label = QLabel(format_markdown(self._listen_label_text), self)
@@ -300,6 +327,10 @@ class ABX(_BaseUIWindow):
             self._playback_buttons[label] = btn
         layout.addWidget(play_row, alignment=Qt.AlignmentFlag.AlignHCenter)
 
+        # extra gap so the A/B/X playback buttons sit clearly apart from the
+        # answer section below
+        layout.addSpacing(self._task_spacing * 2)
+
         # answer row: X is the same as A or B
         answer_label = QLabel(format_markdown(self._answer_label_text), self)
         answer_label.setTextFormat(Qt.TextFormat.MarkdownText)
@@ -325,14 +356,9 @@ class ABX(_BaseUIWindow):
         self._apply_playback_button_styles()
         self._apply_answer_button_styles()
 
-        # submit hint (markdown)
-        submit_label = QLabel(format_markdown(self._submit_hint), self)
-        submit_label.setTextFormat(Qt.TextFormat.MarkdownText)
-        submit_label.setWordWrap(True)
-        submit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        submit_label.setStyleSheet(f"color: {self._fontcolor};")
-        submit_label.setFont(QFont("Helvetica", submit_hint_fontsize))
-        layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+        # extra gap so the submit button sits clearly apart from the answer
+        # buttons (on top of the general task_spacing)
+        layout.addSpacing(self._task_spacing * 3)
 
         # submit button (disabled until an answer is selected)
         self._submit_button = QPushButton(self._submit_button_text, self)
@@ -350,7 +376,60 @@ class ABX(_BaseUIWindow):
         self._submit_button.clicked.connect(self._on_submit_clicked)
         layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        outer_layout.addWidget(content, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addStretch(1)
+
+        # Footer pinned to the bottom of the content area: the submit hint and
+        # the trial progress ("Trial X of Y" text + bar) grouped tightly
+        # together, clearly set apart from the controls above.
+        footer = QWidget(content)
+        footer_layout = QVBoxLayout(footer)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        # 16 px hint-to-bar gap plus the extra drop of the bar (see
+        # progress_drop above), so the hint itself does not move down
+        footer_layout.setSpacing(16 + progress_drop)
+
+        # submit hint (markdown), spanning the full content-area width (text
+        # centered) so it wraps into as few lines as possible
+        submit_label = QLabel(format_markdown(self._submit_hint), self)
+        submit_label.setTextFormat(Qt.TextFormat.MarkdownText)
+        submit_label.setWordWrap(True)
+        submit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        submit_label.setStyleSheet(f"color: {self._fontcolor};")
+        submit_label.setFont(QFont("Helvetica", submit_hint_fontsize))
+        submit_label.setFixedWidth(area_w)
+        footer_layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # trial progress ("Trial X of Y"), when enabled and the screen carries
+        # progress info
+        progress_widget = None
+        if self._show_progress:
+            progress_widget = build_progress_widget(
+                self.screen.get("progress"),
+                text_template=self._progress_text,
+                fontsize=max(1, round(self._progress_fontsize * scale)),
+                fontcolor=self._fontcolor,
+                bar_color=self._progress_bar_color,
+                trough_color=self._progress_trough_color,
+                parent=footer,
+            )
+        if progress_widget is not None:
+            progress_widget.setFixedWidth(min(area_w, round(300 * scale)))
+            footer_layout.addWidget(
+                progress_widget, alignment=Qt.AlignmentFlag.AlignHCenter)
+        else:
+            # no bar: fill the extended bottom so the hint stays in place
+            footer_layout.addSpacing(progress_drop)
+
+        layout.addWidget(footer, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # Distribute the free window space around the content area 3:2 (the
+        # block sits a little below the window center). The top share is a
+        # fixed spacer so the content box's downward extension (progress_drop)
+        # only moves its bottom edge, not the block itself.
+        outer_layout.addSpacing(round(
+            0.6 * max(0, self._window_height - 28 - area_h)))
+        outer_layout.addWidget(content, alignment=Qt.AlignmentFlag.AlignHCenter)
+        outer_layout.addStretch(1)
         self._host.setCentralWidget(container)
 
     def _resolve_task_text(self) -> str:

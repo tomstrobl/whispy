@@ -48,12 +48,20 @@ ui:
   content_area_size: [75, 80]
   submit_hint: "Press the number keys (or click) to hear each interval, then press Enter to submit your choice."
   submit_button_text: "Submit choice"
+  # Trial progress bar ("Trial X of Y") below the submit button, so the
+  # participant knows how many trials are left. The staircase fills in the
+  # numbers itself; Y is staircase.max_trials (the upper bound — a run that
+  # converges via max_reversals stops earlier). The text may use {current},
+  # {total} and {remaining}; its look comes from design.yml.
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
   # ---- Font sizes (each scales with the window height) ----
   # One key per text, fully independent of each other.
   task_fontsize: 16              # task prompt at the top
-  submit_hint_fontsize: 12       # keyboard hint below the buttons
+  submit_hint_fontsize: 6       # keyboard hint below the buttons
   button_fontsize: 16            # numbers on the interval buttons
   submit_button_fontsize: 16     # the "Submit choice" button
+  progress_fontsize: 6          # the "Trial X of Y" progress texttask text, the stim
 
 # -------------------------------- Trial ------------------------------------ #
 # Defines what one trial looks like (an "odd one out" N-AFC): the non-target

@@ -220,4 +220,10 @@ def _course(
                      "section_name": section["section_name"],}
                 )
 
+    # attach the position within the whole schedule to every screen, so the
+    # UIs can show a trial-progress bar (`show_progress` in their ui: block)
+    total = len(experimental_course)
+    for position, screen in enumerate(experimental_course, start=1):
+        screen["progress"] = {"current": position, "total": total}
+
     return experimental_course

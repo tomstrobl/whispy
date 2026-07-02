@@ -27,16 +27,22 @@ SoundDevice:
 test:
   shuffle_ab: true   # randomize which stimulus of a pair is shown as A vs B
 ui:
-  window_size: [1000, 800]        # Window size. Either [pixels_x, pixels_y] or "fullscreen".
+  window_size: fullscreen      # Window size. Either [pixels_x, pixels_y] or "fullscreen".
   # Content area size (prompt + button rows + submit) as a percentage [x%, y%]
   # of the window, centered. Same key/behavior as every test; 100 = max.
   content_area_size: [60, 80]
   # Label above the A/B/X playback buttons.
   listen_label: "Listen:"
   # Label above the A/B answer buttons.
-  answer_label: "Your answer — X is the same as:"
+  answer_label: "Your answer - X is the same as:"
   submit_hint: "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit."
   submit_button_text: "Submit choice"
+  # Trial progress bar ("Trial X of Y") below the submit button, so the
+  # participant knows how many trials are left. The notebook's trial loop
+  # fills in the numbers. The text may use {current}, {total} and {remaining};
+  # its look comes from design.yml.
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
   # ---- Font sizes (each scales with the window height) ----
   # One key per text, fully independent of each other.
   task_fontsize: 16              # task prompt at the top
@@ -45,6 +51,7 @@ ui:
   submit_hint_fontsize: 6        # keyboard hint below the buttons
   button_fontsize: 16            # letters on the A/B/X and A/B buttons
   submit_button_fontsize: 16     # the "Submit choice" button
+  progress_fontsize: 6          # the "Trial X of Y" progress text
   # Extra horizontal gap (px) between the A/B pair and the X playback button,
   # setting the reference X apart visually. Scales with the window height.
   x_button_gap: 32

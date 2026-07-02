@@ -39,12 +39,19 @@ ui:
   # is released; `autoplay_delay` is the delay (in seconds) before that autoplay.
   autoplay_reference: false
   autoplay_delay: 0.1
+  # Trial progress bar ("Screen X of Y") below the Stop/Continue buttons, so
+  # the participant knows how many rating screens are left. The text may use
+  # {current}, {total} and {remaining}; its look comes from design.yml
+  # (progress_bar_color / progress_bar_background_color / progress_fontsize).
+  show_progress: true
+  progress_text: "Screen {current} of {total}"
   # ---- Font sizes ----
   # One key per text, fully independent of each other.
   task_fontsize: 16              # task prompt above the rating area
   fontsize: 14                   # scale/tick labels along the rating area
   tile_fontsize: 16              # numbers on the draggable rating tiles
   button_fontsize: 16            # Reference / Stop / Continue buttons
+  progress_fontsize: 11          # the "Screen X of Y" progress text
 
 # ------------------------------ Attributes --------------------------------- #
 # Each attribute is one rating scale. The `experiment:` sections below pick an

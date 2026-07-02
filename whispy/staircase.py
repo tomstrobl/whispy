@@ -158,6 +158,12 @@ class Staircase:
     def next_screen(self) -> Dict[str, Any]:
         """Build the ``screen`` dict for the current level.
 
+        A ``progress`` entry (``{"current": trial number, "total":
+        max_trials}``) is added so the UI can show a trial-progress bar.
+        ``total`` is the upper bound: a run that converges via
+        ``max_reversals`` stops earlier. A ``progress`` already set by
+        ``build_screen`` is kept untouched.
+
         Returns
         -------
         dict
@@ -176,7 +182,12 @@ class Staircase:
                 "yourself from `current_level`.")
         if self._finished:
             raise RuntimeError("staircase has finished; no further trials")
-        return self._build_screen(self.current_level)
+        screen = self._build_screen(self.current_level)
+        if isinstance(screen, dict):
+            screen.setdefault(
+                "progress",
+                {"current": self._trial + 1, "total": self._max_trials})
+        return screen
 
     # --------------------------------------------------------------- driving
     def update(self, correct: bool) -> None:

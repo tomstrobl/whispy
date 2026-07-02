@@ -62,6 +62,13 @@ button_color_active: "#5cb874"       # currently playing (green)
 task_fontsize: 16
 task_spacing: 24
 
+# ------------------------------ Progress bar ------------------------------- #
+# Look of the "Trial X of Y" progress indicator every test can show (each test
+# turns it on/off with `show_progress` in its own ui: block).
+progress_bar_color: "#5cb874"              # filled part (matches the accent)
+progress_bar_background_color: "#dbe2f1"   # unfilled part (trough)
+progress_fontsize: 11                      # the "Trial X of Y" text
+
 # --------------------------- Areas & responses ----------------------------- #
 # MUSHRA rating area surface + value-line color.
 rating_area_background_color: "#dbe2f1"

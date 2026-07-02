@@ -6,7 +6,15 @@ from typing import Optional
 
 from PyQt6.QtCore import QEventLoop, Qt, QTimer
 from PyQt6.QtGui import QCloseEvent, QCursor, QFont, QScreen
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget
+from PyQt6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QMainWindow,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from whispy.utils import load_design
 
@@ -137,6 +145,74 @@ def style_qpushbutton(
     width = hint.width() + max(6, int(font_size * 0.5))
     height = hint.height() + max(4, int(font_size * 0.3))
     button.setFixedSize(width, height)
+
+
+def build_progress_widget(
+    progress: object,
+    *,
+    text_template: str = "Trial {current} of {total}",
+    fontsize: int = 11,
+    fontcolor: str = "#2b2f38",
+    bar_color: str = "#5cb874",
+    trough_color: str = "#dbe2f1",
+    parent: Optional[QWidget] = None,
+) -> Optional[QWidget]:
+    """Build the trial-progress indicator shared by every listening test.
+
+    ``progress`` is the ``progress`` entry of a ``screen`` dict — either a
+    ``{"current": ..., "total": ...}`` mapping or a ``(current, total)`` pair —
+    telling the participant how far into the trial list they are. Returns a
+    small widget (a centered text label over a slim filled bar) or ``None``
+    when ``progress`` is missing/unusable, so callers can simply skip it.
+
+    ``text_template`` is formatted with ``current``, ``total`` and
+    ``remaining`` (``total - current``); a broken template falls back to the
+    default wording instead of raising mid-experiment.
+    """
+    try:
+        if isinstance(progress, dict):
+            current = int(progress["current"])
+            total = int(progress["total"])
+        else:
+            current = int(progress[0])  # type: ignore[index]
+            total = int(progress[1])  # type: ignore[index]
+    except Exception:
+        return None
+    if total < 1:
+        return None
+    current = max(1, min(current, total))
+
+    try:
+        text = str(text_template).format(
+            current=current, total=total, remaining=total - current)
+    except Exception:
+        text = f"Trial {current} of {total}"
+
+    widget = QWidget(parent)
+    layout = QVBoxLayout(widget)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(8)
+
+    label = QLabel(text, widget)
+    label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+    label.setStyleSheet(f"color: {fontcolor}; background-color: transparent;")
+    label.setFont(QFont("Helvetica", max(1, int(fontsize))))
+    layout.addWidget(label)
+
+    bar = QProgressBar(widget)
+    bar.setRange(0, total)
+    bar.setValue(current)
+    bar.setTextVisible(False)
+    bar.setFixedHeight(8)
+    bar.setStyleSheet(
+        f"QProgressBar {{ background-color: {trough_color}; border: none;"
+        f" border-radius: 4px; }}"
+        f"QProgressBar::chunk {{ background-color: {bar_color};"
+        f" border-radius: 4px; }}"
+    )
+    layout.addWidget(bar)
+
+    return widget
 
 
 class _BaseUIWindow(QMainWindow):

@@ -12,12 +12,20 @@ ui:
   # Hint shown below the choice buttons and the submit-button label.
   submit_hint: "Listen to a stimulus, select one, then submit."
   submit_button_text: "Submit choice"
+  # Trial progress bar ("Trial X of Y") below the submit button, so the
+  # participant knows how many trials are left. Shown when the screen dict
+  # carries a `progress` entry (whispy.Staircase adds one automatically; its
+  # total is max_trials, the upper bound). The text may use {current}, {total}
+  # and {remaining}; its look comes from design.yml.
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
   # ---- Font sizes (each scales with the window height) ----
   # One key per text, fully independent of each other.
   task_fontsize: 16              # task prompt at the top
   submit_hint_fontsize: 12       # hint below the choice buttons
   button_fontsize: 16            # numbers on the choice buttons
   submit_button_fontsize: 16     # the "Submit choice" button
+  progress_fontsize: 11          # the "Trial X of Y" progress text
 
 # test-specific defaults
 test:
