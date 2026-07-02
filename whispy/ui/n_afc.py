@@ -104,6 +104,7 @@ class NAFC(_BaseUIWindow):
         # `ui:` block only overrides wording, window size, or individual colors.
         self._ui_cfg = load_design(cfg.get("ui"))
         self._test_cfg = cfg.get("test", {})
+        self._screen_setting = self._ui_cfg.get("screen")
         self._resolve_config()
 
         # trial choices and selection state

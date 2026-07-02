@@ -101,6 +101,7 @@ class DragAndDropMUSHRA(_BaseUIWindow):
         if isinstance(combined.get("ui"), dict):
             drag_and_drop_mushra = combined["ui"]
         drag_and_drop_mushra = load_design(drag_and_drop_mushra)
+        self._screen_setting = drag_and_drop_mushra.get("screen")
 
         # parse config data to get parameters for current task ----------------
         # current attribute and rating scale

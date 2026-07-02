@@ -76,6 +76,7 @@ class Questionnaire(_BaseUIWindow):
         # The global theme from configs/design.yml is the base; the per-UI
         # `ui:` block only overrides layout/sizing (and optionally colors).
         self._ui_cfg = load_design(cfg.get("ui"))
+        self._screen_setting = self._ui_cfg.get("screen")
         self._questionnaire_cfg = cfg.get("questionnaire", [])
         if not isinstance(self._questionnaire_cfg, list):
             raise ValueError("The 'questionnaire' key must be a list.")

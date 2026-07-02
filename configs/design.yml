@@ -11,8 +11,19 @@
 # Palette: a clean, cool indigo theme on a light slate background.
 
 # ------------------------------- Window ------------------------------------ #
+# Which screen (monitor) every whispy window opens on. All windows of one
+# experiment (participant id, info screens, questionnaires, the test itself)
+# share this, so nothing ends up on a second monitor. Options:
+#   "primary"      -> the OS primary screen (default)
+#   "cursor"       -> the screen currently containing the mouse pointer
+#   0, 1, 2, ...   -> screen index as reported by Qt (0 is usually primary)
+#   "<name>"       -> a screen by name, e.g. "DELL U2720Q" (substring is fine)
+# Invalid or unavailable values silently fall back to the primary screen, so a
+# missing second monitor can never keep an experiment from opening. Can be
+# overridden per UI in its own config's ui: block like any other design key.
+screen: primary
 # Default window size. Either [pixels_x, pixels_y] or "fullscreen".
-window_size: [1000, 700]
+window_size: fullscreen
 # Overall surface + text.
 window_background_color: "#eef1f7"   # light cool gray
 fontcolor: "#2b2f38"                 # dark slate (used for body text)

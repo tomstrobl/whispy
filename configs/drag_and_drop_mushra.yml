@@ -29,7 +29,7 @@ SoundDevice:
 # design.yml; anything you set here overrides that global theme.
 ui:
   # Window size. Either [pixels_x, pixels_y] or "fullscreen".
-  window_size: [1000, 600]
+  window_size: fullscreen
   # Rating area size as a percentage [x%, y%] of the window, centered.
   # Use 100 for the maximally possible size.
   content_area_size: [75, 50]

@@ -9,7 +9,7 @@ from typing import Optional
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCloseEvent, QColor, QFont, QTextDocument
-from PyQt6.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QMainWindow, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 # Module-level registry of top-level InfoWindows that are not stored by the user.
 # This keeps them alive so they don't get garbage collected before the user closes them.
@@ -97,6 +97,7 @@ class InfoWindow(_BaseUIWindow):
             fontcolor = str(design.get("fontcolor", "#FFFFFF"))
         if background_color is None:
             background_color = str(design.get("window_background_color", "#2b2b2b"))
+        self._screen_setting = design.get("screen")
         self._fullscreen = fullscreen
         self._center = center
         self._fontsize = max(1, int(fontsize))
@@ -175,7 +176,7 @@ class InfoWindow(_BaseUIWindow):
 
         if parent is None:
             if self._fullscreen:
-                width, height = self._primary_screen_size()
+                width, height = self._target_screen_size()
                 self._show_host_window(
                     width=width, height=height, fullscreen=True,
                     background_color=background_color)
@@ -189,7 +190,7 @@ class InfoWindow(_BaseUIWindow):
             self.wait_until_closed()
 
     def _resize_to_content(self) -> None:
-        screen_geometry = QApplication.primaryScreen().availableGeometry()
+        screen_geometry = self._target_screen().availableGeometry()
         max_width = max(self._minimum_width, math.floor(screen_geometry.width() * _SCREEN_MARGIN_FACTOR))
         max_height = max(30, math.floor(screen_geometry.height() * _SCREEN_MARGIN_FACTOR))
 
@@ -226,10 +227,10 @@ class InfoWindow(_BaseUIWindow):
             self._host.adjustSize()
 
     def _center_on_screen(self) -> None:
-        frame_geometry = self._host.frameGeometry()
-        screen_center = QApplication.primaryScreen().availableGeometry().center()
-        frame_geometry.moveCenter(screen_center)
-        self._host.move(frame_geometry.topLeft())
+        # Re-center with the now-accurate frame geometry, staying on the
+        # target screen (a popup shown over a running test stays on the
+        # test's screen, see _BaseUIWindow._target_screen()).
+        self._move_host_to_screen(self._target_screen())
 
     def _measure_markdown(self, markdown_text: str) -> tuple[int, int]:
         doc = QTextDocument()

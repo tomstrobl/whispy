@@ -71,6 +71,7 @@ class ParticipantID(_BaseUIWindow):
         # The global theme from configs/design.yml is the base; the per-UI
         # `ui:` block only overrides wording, window size, or individual colors.
         self._ui_cfg = load_design(cfg.get("ui"))
+        self._screen_setting = self._ui_cfg.get("screen")
 
         self._participant_id: Optional[str] = None
         self._info_window: Optional[InfoWindow] = None

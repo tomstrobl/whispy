@@ -5,8 +5,10 @@ import os
 from typing import Optional
 
 from PyQt6.QtCore import QEventLoop, Qt, QTimer
-from PyQt6.QtGui import QCloseEvent, QFont
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton
+from PyQt6.QtGui import QCloseEvent, QCursor, QFont, QScreen
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget
+
+from whispy.utils import load_design
 
 
 # Module-level QApplication reference kept alive for the process lifetime so
@@ -51,6 +53,55 @@ def ensure_qapplication() -> QApplication:
 
     return app
 
+
+def resolve_screen(setting: object = None) -> QScreen:
+    """Resolve a config-driven screen setting into a ``QScreen``.
+
+    ``setting`` may be:
+
+    - ``None`` / ``"primary"``: the OS primary screen (the default).
+    - ``"cursor"`` / ``"mouse"``: the screen currently containing the mouse
+      pointer (useful to open the test wherever the experimenter is working).
+    - an integer index into ``QApplication.screens()`` (``0``, ``1``, ...).
+    - a string naming a screen (exact match first, then substring,
+      case-insensitive), e.g. ``"DELL U2720Q"``.
+
+    This is a failsafe resolver: any unknown, out-of-range, or otherwise
+    invalid value falls back to the primary screen instead of raising, so a
+    misconfigured ``screen:`` key can never prevent an experiment window from
+    opening.
+    """
+    ensure_qapplication()
+    primary = QApplication.primaryScreen()
+    screens = QApplication.screens()
+
+    if setting is None or isinstance(setting, bool) or not screens:
+        return primary
+
+    if isinstance(setting, str):
+        name = setting.strip()
+        lowered = name.lower()
+        if lowered in ("", "primary", "default"):
+            return primary
+        if lowered in ("cursor", "mouse", "current"):
+            return QApplication.screenAt(QCursor.pos()) or primary
+        try:
+            setting = int(name)
+        except ValueError:
+            for screen in screens:
+                if screen.name().lower() == lowered:
+                    return screen
+            for screen in screens:
+                if lowered in screen.name().lower():
+                    return screen
+            return primary
+
+    if isinstance(setting, int):
+        if 0 <= setting < len(screens):
+            return screens[setting]
+        return primary
+
+    return primary
 
 
 def style_qpushbutton(
@@ -113,16 +164,44 @@ class _BaseUIWindow(QMainWindow):
         self._blocking = bool(blocking)
         self._debug = bool(debug)
         self._allow_close = bool(debug)
+        # Which screen (monitor) this UI opens on. Concrete UIs overwrite this
+        # with the `screen:` key of their merged design/config before showing;
+        # ``None`` falls back to the global default from configs/design.yml
+        # (and ultimately to the primary screen), see ``_target_screen()``.
+        self._screen_setting: object = None
 
     @staticmethod
     def _is_fullscreen_window_size(window_size: object) -> bool:
         """Return whether the config value requests fullscreen mode."""
         return isinstance(window_size, str) and window_size.strip().lower() == "fullscreen"
 
-    @staticmethod
-    def _primary_screen_size() -> tuple[int, int]:
-        """Return the primary screen's available width and height."""
-        geometry = QApplication.primaryScreen().availableGeometry()
+    def _target_screen(self) -> QScreen:
+        """Return the screen every window of this experiment should open on.
+
+        A host window that is already visible stays on whichever screen it
+        currently occupies (so trials reusing a shared host, and popups shown
+        over it, never jump to another monitor). Otherwise the configured
+        ``screen:`` setting is resolved, falling back to the global default
+        from ``configs/design.yml`` and ultimately to the primary screen.
+        """
+        if self._host.isVisible():
+            # Call QWidget.screen() unbound: test UIs (NAFC/ABX/MUSHRA) store
+            # their trial dict as `self.screen`, shadowing the Qt method.
+            screen = QWidget.screen(self._host)
+            if screen is not None:
+                return screen
+
+        setting = self._screen_setting
+        if setting is None:
+            try:
+                setting = load_design().get("screen")
+            except Exception:
+                setting = None
+        return resolve_screen(setting)
+
+    def _target_screen_size(self) -> tuple[int, int]:
+        """Return the target screen's available width and height."""
+        geometry = self._target_screen().availableGeometry()
         return geometry.width(), geometry.height()
 
     def _resolve_window_size(
@@ -134,7 +213,7 @@ class _BaseUIWindow(QMainWindow):
     ) -> tuple[int, int, bool]:
         """Resolve config-driven window sizing into concrete dimensions."""
         if self._is_fullscreen_window_size(window_size):
-            width, height = self._primary_screen_size()
+            width, height = self._target_screen_size()
             return width, height, True
 
         width, height = fallback
@@ -182,6 +261,36 @@ class _BaseUIWindow(QMainWindow):
         height = max(min_h, min(max_h, int(win_h * y_pct)))
         return width, height
 
+    def _move_host_to_screen(self, screen: QScreen) -> None:
+        """Associate the host window with ``screen`` and center it there.
+
+        The top-left corner is clamped into the screen's available geometry so
+        the window (and its title bar) always stays reachable, even when it is
+        larger than the target screen.
+        """
+        host = self._host
+        try:
+            # Associate the widget with the screen so the native window is
+            # created there (must happen before the first show to be reliable).
+            host.setScreen(screen)
+        except Exception:
+            pass
+        handle = host.windowHandle()
+        if handle is not None and handle.screen() is not screen:
+            try:
+                handle.setScreen(screen)
+            except Exception:
+                pass
+
+        available = screen.availableGeometry()
+        frame = host.frameGeometry()
+        frame.moveCenter(available.center())
+        x = max(available.left(),
+                min(frame.left(), available.right() - frame.width() + 1))
+        y = max(available.top(),
+                min(frame.top(), available.bottom() - frame.height() + 1))
+        host.move(x, y)
+
     def _show_host_window(
         self,
         *,
@@ -190,7 +299,12 @@ class _BaseUIWindow(QMainWindow):
         fullscreen: bool = False,
         background_color = None,
     ) -> None:
-        """Show and activate the host window using the resolved presentation mode."""
+        """Show and activate the host window using the resolved presentation mode.
+
+        The window is always placed on the configured target screen (see
+        ``_target_screen()``) so every window of one experiment opens on the
+        same monitor, instead of wherever the OS last remembered a window.
+        """
         if width is not None and height is not None:
             self._host.resize(width, height)
 
@@ -198,10 +312,30 @@ class _BaseUIWindow(QMainWindow):
         if background_color:
             self._host.setStyleSheet(f"background-color: {background_color};")
 
+        screen = self._target_screen()
+        # Place the window on the target screen while it is still hidden;
+        # fullscreen then engages on that screen.
+        self._move_host_to_screen(screen)
+
         if fullscreen:
             self._host.showFullScreen()
+            # Failsafe: if the platform still put the fullscreen window on
+            # another screen, reassign it via the native window handle (which
+            # moves fullscreen windows in Qt 6). Never move() a fullscreen
+            # window - that can drop it out of fullscreen on macOS.
+            handle = self._host.windowHandle()
+            if handle is not None and handle.screen() is not screen:
+                try:
+                    handle.setScreen(screen)
+                except Exception:
+                    pass
         else:
             self._host.show()
+            # Failsafe: some window managers restore a remembered position on
+            # another monitor during show; re-pin after the window exists.
+            # (QWidget.screen() unbound: `self.screen` may be the trial dict.)
+            if QWidget.screen(self._host) is not screen:
+                self._move_host_to_screen(screen)
 
         self._host.raise_()
         self._host.activateWindow()

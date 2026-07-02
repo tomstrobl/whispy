@@ -7,9 +7,9 @@
 # the results, e.g.  results.insert(0, "participant_id", participant_id).
 
 ui:
-  # Window size. Either [pixels_x, pixels_y] or "fullscreen". The window grows
-  # to fit its content, so this is just a starting size.
-  window_size: [600, 520]
+  # Window size. Either [pixels_x, pixels_y] or "fullscreen". When windowed,
+  # the window grows to fit its content, so a pixel size is just a start.
+  window_size: fullscreen
   # Heading shown above the fields (markdown supported).
   prompt: "Generate your **ID** for anonymously storing your data"
   # Label on the button that starts the experiment.
