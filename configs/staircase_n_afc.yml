@@ -35,6 +35,12 @@ SoundDevice:
 test:
   n_choices: 3            # number of intervals (must match the trial below)
   shuffle_choices: true   # randomize button order so position carries no info
+  single_replay: false    # true = each interval plays at most twice (first
+                          # listen + one replay); false = unlimited replays
+  autoplay: false         # true = each trial starts by playing all intervals
+                          # once in button order (counts as the mandatory first
+                          # listen); a click/keypress interrupts the run-through
+  autoplay_gap: 0.3       # seconds of silence between autoplayed intervals
 ui:
   window_size: fullscreen      # Window size. Either [pixels_x, pixels_y] or "fullscreen".
   # Content area size (task + buttons + submit) as a percentage [x%, y%] of the

@@ -53,14 +53,6 @@ questionnaire:
         type: text
         required: true
 
-  - section: name
-    prompt: Your name
-    questions:
-      - question: full_name
-        prompt: Enter your full name
-        type: text
-        required: true
-
   - section: consent
     prompt: Consent to data publication
     questions:

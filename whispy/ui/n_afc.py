@@ -6,7 +6,7 @@ import time
 from functools import partial
 from typing import Any, Dict, List, Optional
 
-from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtCore import QEvent, Qt, QTimer
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
@@ -119,6 +119,23 @@ class NAFC(_BaseUIWindow):
         # intervals (e.g. two standards in an odd-one-out trial) must all be
         # heard.
         self._listened: set = set()
+        # With `test.single_replay: true` each interval plays at most twice:
+        # the first (mandatory) listen plus one replay. Counted per button,
+        # like `_listened`, so duplicated stimulus ids are limited per interval.
+        self._single_replay = bool(self._test_cfg.get("single_replay", False))
+        self._play_counts: Dict[QPushButton, int] = {}
+        # With `test.autoplay: true` every trial starts by playing all
+        # intervals once in button order (so after Submit the next trial's
+        # stimuli play by themselves). The run-through counts as the mandatory
+        # first listen (and as the first play for `single_replay`); any
+        # click/keypress interrupts it and hands control to the participant.
+        self._autoplay = bool(self._test_cfg.get("autoplay", False))
+        self._autoplay_gap = max(0.0, float(self._test_cfg.get("autoplay_gap", 0.3)))
+        self._autoplay_index = 0
+        self._autoplay_button: Optional[QPushButton] = None
+        self._autoplay_timer = QTimer(self)
+        self._autoplay_timer.setSingleShot(True)
+        self._autoplay_timer.timeout.connect(self._on_autoplay_timeout)
         self._listen_info_window: Optional[InfoWindow] = None
         # Whether this instance has an app-level key event filter installed.
         # Tracked so it is installed/removed exactly once per trial (see
@@ -157,6 +174,11 @@ class NAFC(_BaseUIWindow):
 
         # start time for reaction time measurement
         self._start_time = time.time()
+
+        # Kick off the automatic run-through once the trial is on screen (the
+        # timer fires after Qt has processed the show/swap of the window).
+        if self._autoplay:
+            self._autoplay_timer.start(max(0, round(self._autoplay_gap * 1000)))
 
         if blocking:
             self.wait_until_closed()
@@ -322,6 +344,8 @@ class NAFC(_BaseUIWindow):
         The trailing ``*_args`` absorbs the ``checked`` boolean that Qt's
         ``clicked`` signal appends after the bound ``stim_id``/``button``.
         """
+        # The participant took over: stop a running automatic run-through.
+        self._cancel_autoplay()
         self._selected = stim_id
         self._selected_button = button
         self._listened.add(button)
@@ -329,6 +353,13 @@ class NAFC(_BaseUIWindow):
         self._apply_choice_button_styles()
         if self._debug:
             print(f"Selected: {stim_id!r} (type={type(stim_id).__name__})")
+        # `single_replay` caps playback at two plays per interval (first listen
+        # + one replay); further clicks/keys still select, but stay silent.
+        if self._single_replay and self._play_counts.get(button, 0) >= 2:
+            if self._debug:
+                print(f"single_replay: no plays left for {stim_id!r}")
+            return
+        self._play_counts[button] = self._play_counts.get(button, 0) + 1
         self._play_stimulus(stim_id)
 
     def _play_stimulus(self, stim_id: Any) -> None:
@@ -352,6 +383,63 @@ class NAFC(_BaseUIWindow):
         except Exception as exc:
             if self._debug:
                 print(f"playback failed for {stim_id!r} (fallback tried): {exc}")
+
+    # --------------------------------------------------------------- autoplay
+    def _stimulus_duration(self, stim_id: Any) -> float:
+        """Duration of a stimulus in seconds, for sequencing the autoplay.
+
+        Read from the loaded ``SoundDevice`` signal; for other handlers (which
+        expose no duration) a 1 s fallback keeps the run-through moving.
+        """
+        if isinstance(self.stimuli_handler, SoundDevice):
+            stimuli = self.stimuli_handler.stimuli
+            entry = stimuli.get(stim_id) or stimuli.get(str(stim_id))
+            if entry is not None and "signal" in entry:
+                signal = entry["signal"]
+                return float(signal.n_samples) / float(signal.sampling_rate)
+        return 1.0
+
+    def _on_autoplay_timeout(self) -> None:
+        """Play the next interval of the automatic run-through."""
+        # Past the last interval: end the run-through.
+        if self._autoplay_index >= len(self._choice_buttons):
+            self._autoplay_button = None
+            self._apply_choice_button_styles()
+            # A looping handler would repeat the last interval forever.
+            if isinstance(self.stimuli_handler, SoundDevice) and self.stimuli_handler.loop:
+                try:
+                    self.stimuli_handler.stop()
+                except Exception:
+                    pass
+            # Reaction time is measured from when the participant can act on
+            # what they heard, i.e. from the end of the run-through.
+            self._start_time = time.time()
+            return
+
+        button = self._choice_buttons[self._autoplay_index]
+        stim_id = self._choices[self._autoplay_index]
+        self._autoplay_index += 1
+
+        # An autoplayed interval counts as heard (gates submit) and as the
+        # first play for `single_replay`.
+        self._listened.add(button)
+        self._play_counts[button] = self._play_counts.get(button, 0) + 1
+
+        # Highlight the interval that is playing so the participant can map
+        # what they hear to the buttons.
+        self._autoplay_button = button
+        self._apply_choice_button_styles()
+        self._play_stimulus(stim_id)
+
+        delay = self._stimulus_duration(stim_id) + self._autoplay_gap
+        self._autoplay_timer.start(max(0, round(delay * 1000)))
+
+    def _cancel_autoplay(self) -> None:
+        """Stop the automatic run-through and clear its highlight (idempotent)."""
+        self._autoplay_timer.stop()
+        if self._autoplay_button is not None:
+            self._autoplay_button = None
+            self._apply_choice_button_styles()
 
     def _on_submit_clicked(self) -> None:
         """Finalize the currently selected choice and end the trial.
@@ -444,12 +532,14 @@ class NAFC(_BaseUIWindow):
 
     def unblock(self) -> None:  # type: ignore[override]
         """Remove key handling for this trial, then release the blocking loop."""
+        self._cancel_autoplay()
         self._remove_key_handling()
         super().unblock()
 
     def closeEvent(self, event: Any) -> None:  # type: ignore[override]
         """Ensure the key filter is removed when the window actually closes."""
         if self._allow_close:
+            self._cancel_autoplay()
             self._remove_key_handling()
         super().closeEvent(event)
 
@@ -461,6 +551,15 @@ class NAFC(_BaseUIWindow):
                 btn.setStyleSheet(
                     f"QPushButton {{ background-color: {self._button_selected_bg};"
                     f" color: {self._button_selected_fg}; border: none;"
+                    f" border-radius: {self._button_radius}; }}"
+                )
+            elif btn is self._autoplay_button:
+                # Currently autoplaying: shown in the hover color so the
+                # participant can tell which interval they are hearing.
+                btn.setStyleSheet(
+                    f"QPushButton {{ background-color: {self._button_hover_bg};"
+                    f" color: {self._button_fg};"
+                    f" border: 1px solid {self._button_border};"
                     f" border-radius: {self._button_radius}; }}"
                 )
             else:

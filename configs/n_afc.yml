@@ -23,3 +23,12 @@ ui:
 test:
   n_choices: 3
   shuffle_choices: true
+  # If true, each interval can be heard at most twice: the first (mandatory)
+  # listen plus a single replay. False allows unlimited replays.
+  single_replay: false
+  # If true, every trial starts by playing all intervals once in button order
+  # (the playing button is highlighted). This counts as the mandatory first
+  # listen (and as the first play for single_replay); clicking or pressing a
+  # key interrupts the run-through.
+  autoplay: false
+  autoplay_gap: 0.3   # seconds of silence between autoplayed intervals
