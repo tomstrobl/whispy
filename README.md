@@ -47,7 +47,7 @@ stimuli through the audio *interface*, and every screen's answers are collected
 into a results table.
 
 ```mermaid
-%%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"14px","lineColor":"#6b7280"},"flowchart":{"curve":"natural","nodeSpacing":55,"rankSpacing":70,"padding":12,"htmlLabels":false,"useMaxWidth":true}}}%%
+%%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"14px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
 flowchart TB
     subgraph DRV["Driver — examples/ notebooks"]
         NB["building_block_*  ·  full_experiment_*"]
@@ -55,15 +55,15 @@ flowchart TB
 
     subgraph CFG["Configuration (YAML)"]
         direction TB
-        C1["design.yml"]
-        C2["drag_and_drop_mushra.yml · staircase_n_afc.yml · abx.yml"]
-        C5["questionnaire_*.yml"]
-        C6["thanks.yml"]
+        C1["design.yml (shared theme incl. progress bar)"]
+        C2["drag_and_drop_mushra.yml · staircase_n_afc.yml · abx.yml · n_afc.yml"]
+        C3["welcome.yml · thanks.yml"]
+        C4["questionnaires/*.yml"]
     end
 
     subgraph ORCH["Orchestration"]
-        SCH["ExperimentScheduler<br/>drives MUSHRA<br/>randomizes → yields screen dicts"]
-        STC["Staircase<br/>drives staircase N-AFC<br/>adaptive up/down"]
+        SCH["ExperimentScheduler<br/>drives MUSHRA<br/>randomizes → yields screen dicts<br/>(incl. trial progress)"]
+        STC["Staircase<br/>drives staircase N-AFC<br/>adaptive up/down (incl. trial progress)"]
     end
 
     subgraph UI["UI layer (PyQt6)"]
@@ -85,17 +85,21 @@ flowchart TB
         SR["save_results() → examples/results/*.csv"]
     end
 
-    NB --> ORCH
-    SCH -->|screen dicts| MU
-    STC -->|N-AFC trials| NA
-    UI -->|"play(stimulus)"| AUD
+    NB --> SCH
+    NB --> STC
+    NB -->|"ABX trials"| AB
+    SCH -->|"screen dicts"| MU
+    STC -->|"N-AFC trials"| NA
+    UI -->|"play(stimulus)"| SH
     SH --> SD
-    UI -->|rows / trial| RES
+    UI -->|"rows / trial"| GR
     GR --> SR
 
     CFG -. feeds every layer .-> ORCH
     CFG -.-> UI
     CFG -.-> AUD
+    C3 -.-> IN
+    C4 -.-> QU
 
     classDef cfg fill:#E9C46A,stroke:#C9A227,stroke-width:1.5px,color:#5a4708;
     classDef orch fill:#E76F51,stroke:#c0492f,stroke-width:1.5px,color:#fff;
@@ -103,7 +107,7 @@ flowchart TB
     classDef aud fill:#264653,stroke:#16303a,stroke-width:1.5px,color:#fff;
     classDef res fill:#8AB17D,stroke:#5e8a4f,stroke-width:1.5px,color:#22331b;
     classDef drv fill:#2D3142,stroke:#1b1d28,stroke-width:1.5px,color:#fff;
-    class C1,C2,C5,C6 cfg;
+    class C1,C2,C3,C4 cfg;
     class SCH,STC orch;
     class MU,NA,AB,QU,IN,PI ui;
     class SH,SD aud;
@@ -118,7 +122,7 @@ flowchart TB
     style RES fill:#E9F0E5,stroke:#8AB17D,stroke-width:1.5px,color:#3f5a33;
 
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
-    linkStyle 7,8,9 stroke:#caa83f,stroke-width:1.4px;
+    linkStyle 9,10,11,12,13 stroke:#caa83f,stroke-width:1.4px;
 ```
 
 > The same diagram lives in [`docs/architecture.mmd`](docs/architecture.mmd) —
