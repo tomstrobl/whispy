@@ -168,9 +168,17 @@ class NAFC(_BaseUIWindow):
         self._fontcolor = str(ui.get("fontcolor", "#e8eaed"))
         self._background_color = str(ui.get("window_background_color", "#2b2b2b"))
         self._task_fontsize = max(1, int(ui.get("task_fontsize", 16)))
+        # Smaller font for the keyboard hint below the buttons.
+        # `hint_fontsize` is the shared explanatory-text size (same key as
+        # ABX); `submit_hint_fontsize` overrides it for the hint specifically.
+        self._hint_fontsize = max(1, int(ui.get("hint_fontsize", 11)))
+        self._submit_hint_fontsize = max(1, int(
+            ui.get("submit_hint_fontsize") or self._hint_fontsize))
         self._task_spacing = int(ui.get("task_spacing", 12))
         self._button_size = int(ui.get("button_size", 56))
         self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
+        self._submit_button_fontsize = max(1, int(
+            ui.get("submit_button_fontsize") or self._button_fontsize))
         # Extra multiplier on top of the automatic window-size scaling, so the
         # button size can be dialed up/down without changing the base sizes.
         self._button_scale = max(0.0, float(ui.get("button_scale", 1.0)))
@@ -232,7 +240,9 @@ class NAFC(_BaseUIWindow):
         scale = self._scale_factor()
         button_size = round(self._button_size * scale)
         button_fontsize = max(1, round(self._button_fontsize * scale))
+        submit_button_fontsize = max(1, round(self._submit_button_fontsize * scale))
         task_fontsize = max(1, round(self._task_fontsize * scale))
+        submit_hint_fontsize = max(1, round(self._submit_hint_fontsize * scale))
 
         container = QWidget(self)
         container.setStyleSheet(f"background-color: {self._background_color};")
@@ -283,13 +293,13 @@ class NAFC(_BaseUIWindow):
         submit_label.setTextFormat(Qt.TextFormat.MarkdownText)
         submit_label.setWordWrap(True)
         submit_label.setStyleSheet(f"color: {self._fontcolor};")
-        submit_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
+        submit_label.setFont(QFont("Helvetica", submit_hint_fontsize))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # submit button (disabled until a choice is selected)
         self._submit_button = QPushButton(self._submit_button_text, self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._submit_button.setFont(QFont("Helvetica", button_fontsize))
+        self._submit_button.setFont(QFont("Helvetica", submit_button_fontsize))
         self._submit_button.setStyleSheet(
             f"QPushButton {{ background-color: {self._button_bg}; color: {self._button_fg};"
             f" border: 1px solid {self._button_border}; border-radius: {self._button_radius};"

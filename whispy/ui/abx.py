@@ -160,12 +160,25 @@ class ABX(_BaseUIWindow):
         self._background_color = str(ui.get("window_background_color", "#2b2b2b"))
         self._task_fontsize = max(1, int(ui.get("task_fontsize", 16)))
         # Smaller font for the explanatory texts around the controls (the
-        # listen/answer labels and the submit hint).
+        # listen/answer labels and the submit hint). `hint_fontsize` sets all
+        # three at once; each can be overridden individually.
         self._hint_fontsize = max(1, int(ui.get("hint_fontsize", 11)))
+        self._listen_label_fontsize = max(1, int(
+            ui.get("listen_label_fontsize") or self._hint_fontsize))
+        self._answer_label_fontsize = max(1, int(
+            ui.get("answer_label_fontsize") or self._hint_fontsize))
+        self._submit_hint_fontsize = max(1, int(
+            ui.get("submit_hint_fontsize") or self._hint_fontsize))
         self._task_spacing = int(ui.get("task_spacing", 12))
         self._button_size = int(ui.get("button_size", 56))
         self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
+        self._submit_button_fontsize = max(1, int(
+            ui.get("submit_button_fontsize") or self._button_fontsize))
         self._button_spacing = int(ui.get("button_spacing", 8))
+        # Extra horizontal gap (px) between the A/B pair and the X button in
+        # the playback row, on top of button_spacing; X is the reference, so
+        # it is set apart visually. Scales with the window like the buttons.
+        self._x_button_gap = max(0, int(ui.get("x_button_gap", 32)))
         self._button_scale = max(0.0, float(ui.get("button_scale", 1.0)))
         # Size of the content area (prompt + button rows + submit) as a
         # percentage [x%, y%] of the window, centered. Same `content_area_size`
@@ -226,8 +239,11 @@ class ABX(_BaseUIWindow):
         scale = self._scale_factor()
         button_size = round(self._button_size * scale)
         button_fontsize = max(1, round(self._button_fontsize * scale))
+        submit_button_fontsize = max(1, round(self._submit_button_fontsize * scale))
         task_fontsize = max(1, round(self._task_fontsize * scale))
-        hint_fontsize = max(1, round(self._hint_fontsize * scale))
+        listen_label_fontsize = max(1, round(self._listen_label_fontsize * scale))
+        answer_label_fontsize = max(1, round(self._answer_label_fontsize * scale))
+        submit_hint_fontsize = max(1, round(self._submit_hint_fontsize * scale))
 
         container = QWidget(self)
         container.setStyleSheet(f"background-color: {self._background_color};")
@@ -263,7 +279,7 @@ class ABX(_BaseUIWindow):
         listen_label.setTextFormat(Qt.TextFormat.MarkdownText)
         listen_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         listen_label.setStyleSheet(f"color: {self._fontcolor};")
-        listen_label.setFont(QFont("Helvetica", hint_fontsize))
+        listen_label.setFont(QFont("Helvetica", listen_label_fontsize))
         layout.addWidget(listen_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         play_row = QWidget(self)
@@ -271,6 +287,10 @@ class ABX(_BaseUIWindow):
         play_layout.setContentsMargins(0, 6, 0, 6)
         play_layout.setSpacing(self._button_spacing)
         for label in ("A", "B", "X"):
+            if label == "X":
+                # Extra gap before X: it is the reference, not part of the
+                # A/B pair, so set it apart visually.
+                play_layout.addSpacing(round(self._x_button_gap * scale))
             btn = QPushButton(label, self)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setFixedSize(button_size, button_size)
@@ -286,7 +306,7 @@ class ABX(_BaseUIWindow):
         answer_label.setWordWrap(True)
         answer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         answer_label.setStyleSheet(f"color: {self._fontcolor};")
-        answer_label.setFont(QFont("Helvetica", hint_fontsize))
+        answer_label.setFont(QFont("Helvetica", answer_label_fontsize))
         layout.addWidget(answer_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         answer_row = QWidget(self)
@@ -311,13 +331,13 @@ class ABX(_BaseUIWindow):
         submit_label.setWordWrap(True)
         submit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         submit_label.setStyleSheet(f"color: {self._fontcolor};")
-        submit_label.setFont(QFont("Helvetica", hint_fontsize))
+        submit_label.setFont(QFont("Helvetica", submit_hint_fontsize))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # submit button (disabled until an answer is selected)
         self._submit_button = QPushButton(self._submit_button_text, self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._submit_button.setFont(QFont("Helvetica", button_fontsize))
+        self._submit_button.setFont(QFont("Helvetica", submit_button_fontsize))
         self._submit_button.setStyleSheet(
             f"QPushButton {{ background-color: {self._button_bg}; color: {self._button_fg};"
             f" border: 1px solid {self._button_border}; border-radius: {self._button_radius};"

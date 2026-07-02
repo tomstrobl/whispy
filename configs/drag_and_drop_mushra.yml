@@ -39,6 +39,12 @@ ui:
   # is released; `autoplay_delay` is the delay (in seconds) before that autoplay.
   autoplay_reference: false
   autoplay_delay: 0.1
+  # ---- Font sizes ----
+  # One key per text, fully independent of each other.
+  task_fontsize: 16              # task prompt above the rating area
+  fontsize: 14                   # scale/tick labels along the rating area
+  tile_fontsize: 16              # numbers on the draggable rating tiles
+  button_fontsize: 16            # Reference / Stop / Continue buttons
 
 # ------------------------------ Attributes --------------------------------- #
 # Each attribute is one rating scale. The `experiment:` sections below pick an

@@ -27,16 +27,28 @@ SoundDevice:
 test:
   shuffle_ab: true   # randomize which stimulus of a pair is shown as A vs B
 ui:
-  window_size: fullscreen                  # Window size. Either [pixels_x, pixels_y] or "fullscreen".
+  window_size: fullscreen          # Window size. Either [pixels_x, pixels_y] or "fullscreen".
   # Content area size (prompt + button rows + submit) as a percentage [x%, y%]
   # of the window, centered. Same key/behavior as every test; 100 = max.
   content_area_size: [60, 80]
+  # Label above the A/B/X playback buttons.
+  listen_label: "Listen:"
+  # Label above the A/B answer buttons.
+  answer_label: "Your answer — X is the same as:"
   submit_hint: "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit."
   submit_button_text: "Submit choice"
-  # Font size for the explanatory texts around the controls (the listen/answer
-  # labels and the submit hint); the task prompt uses task_fontsize instead.
-  # Scales with the window like every other font.
-  hint_fontsize: 11
+  # ---- Font sizes (each scales with the window height) ----
+  # One key per text, fully independent of each other.
+  task_fontsize: 16              # task prompt at the top
+  listen_label_fontsize: 12      # "Listen:"
+  answer_label_fontsize: 12      # "Your answer — X is the same as:"
+  submit_hint_fontsize: 6        # keyboard hint below the buttons
+  button_fontsize: 16            # letters on the A/B/X and A/B buttons
+  submit_button_fontsize: 16     # the "Submit choice" button
+  # Extra horizontal gap (px) between the A/B pair and the X playback button,
+  # setting the reference X apart visually. Scales with the window height.
+  x_button_gap: 32
+
 
 # -------------------------------- Trial ------------------------------------ #
 # Shared prompt/metadata for every ABX trial. X is a copy of A or B (drawn at

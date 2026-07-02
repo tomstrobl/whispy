@@ -498,7 +498,10 @@ class _RatingArea(QGraphicsView):
             raise ValueError("drag_and_drop_mushra config is required")
 
         button_size = drag_and_drop_mushra["button_size"]
-        button_fontsize = drag_and_drop_mushra["button_fontsize"]
+        # The draggable tiles have their own font-size key; it falls back to
+        # button_fontsize (which styles the Reference/Stop/Continue buttons).
+        tile_fontsize = (drag_and_drop_mushra.get("tile_fontsize")
+                         or drag_and_drop_mushra["button_fontsize"])
         button_spacing = drag_and_drop_mushra["button_spacing"]
         rating_area_background_color = drag_and_drop_mushra["rating_area_background_color"]
         window_background_color = drag_and_drop_mushra["window_background_color"]
@@ -515,7 +518,7 @@ class _RatingArea(QGraphicsView):
         self._num_buttons = max(1, num_buttons)
         self._reference = bool(reference)
         self._button_size = max(8.0, float(button_size))
-        self._button_fontsize = max(1, int(button_fontsize))
+        self._button_fontsize = max(1, int(tile_fontsize))
         self._button_spacing = max(0.0, float(button_spacing))
         self._rating_area_background_color = rating_area_background_color
         self._window_background_color = window_background_color

@@ -12,6 +12,12 @@ ui:
   # Hint shown below the choice buttons and the submit-button label.
   submit_hint: "Listen to a stimulus, select one, then submit."
   submit_button_text: "Submit choice"
+  # ---- Font sizes (each scales with the window height) ----
+  # One key per text, fully independent of each other.
+  task_fontsize: 16              # task prompt at the top
+  submit_hint_fontsize: 12       # hint below the choice buttons
+  button_fontsize: 16            # numbers on the choice buttons
+  submit_button_fontsize: 16     # the "Submit choice" button
 
 # test-specific defaults
 test:

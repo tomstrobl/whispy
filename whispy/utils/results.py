@@ -62,10 +62,12 @@ def _next_number(results_dir: Path, name: str) -> str:
     Zero-padded to a maximum of 4 digits (``0001``..``9999``); going past 9999
     raises (a participant id should be used long before that). Matches both
     ``{name}_{NNN}.csv`` and ``{name}_{NNN}_{timestamp}.csv`` (the leading
-    numeric group is the index); participant-id files like ``{name}_HPo1_...``
-    are ignored because that group is not all digits.
+    numeric group is the index). The index group is capped at 4 digits so
+    legacy timestamp-only files like ``{name}_20260622_173240.csv`` are not
+    mistaken for an index; participant-id files like ``{name}_HPo1_...`` are
+    ignored because that group is not all digits.
     """
-    pattern = re.compile(rf"^{re.escape(name)}_(\d+)(?:_\d+)*\.csv$")
+    pattern = re.compile(rf"^{re.escape(name)}_(\d{{1,4}})(?:_\d+)*\.csv$")
     used = [int(m.group(1)) for f in results_dir.glob(f"{name}_*.csv")
             if (m := pattern.match(f.name))]
     nxt = (max(used) + 1) if used else 1

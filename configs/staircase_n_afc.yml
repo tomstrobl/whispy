@@ -42,6 +42,12 @@ ui:
   content_area_size: [75, 80]
   submit_hint: "Press the number keys (or click) to hear each interval, then press Enter to submit your choice."
   submit_button_text: "Submit choice"
+  # ---- Font sizes (each scales with the window height) ----
+  # One key per text, fully independent of each other.
+  task_fontsize: 16              # task prompt at the top
+  submit_hint_fontsize: 12       # keyboard hint below the buttons
+  button_fontsize: 16            # numbers on the interval buttons
+  submit_button_fontsize: 16     # the "Submit choice" button
 
 # -------------------------------- Trial ------------------------------------ #
 # Defines what one trial looks like (an "odd one out" N-AFC): the non-target
