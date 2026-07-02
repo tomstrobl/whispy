@@ -10,8 +10,8 @@ flowchart TB
         direction TB
         C1["design.yml"]
         C2["drag_and_drop_mushra.yml · staircase_n_afc.yml · abx.yml"]
-        C5["questionnaire_*.yml"]
-        C6["thanks.yml"]
+        C3["welcome.yml · thanks.yml"]
+        C4["questionnaires/*.yml"]
     end
 
     subgraph ORCH["Orchestration"]
@@ -49,6 +49,7 @@ flowchart TB
     CFG -. feeds every layer .-> ORCH
     CFG -.-> UI
     CFG -.-> AUD
+    C3 -.-> IN
 
     classDef cfg fill:#E9C46A,stroke:#C9A227,stroke-width:1.5px,color:#5a4708;
     classDef orch fill:#E76F51,stroke:#c0492f,stroke-width:1.5px,color:#fff;
@@ -56,7 +57,7 @@ flowchart TB
     classDef aud fill:#264653,stroke:#16303a,stroke-width:1.5px,color:#fff;
     classDef res fill:#8AB17D,stroke:#5e8a4f,stroke-width:1.5px,color:#22331b;
     classDef drv fill:#2D3142,stroke:#1b1d28,stroke-width:1.5px,color:#fff;
-    class C1,C2,C5,C6 cfg;
+    class C1,C2,C3,C4 cfg;
     class SCH,STC orch;
     class MU,NA,AB,QU,IN,PI ui;
     class SH,SD aud;
@@ -73,4 +74,4 @@ flowchart TB
 
     %% edges: data flow in grey, the dotted config feeds in soft gold
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
-    linkStyle 7,8,9 stroke:#caa83f,stroke-width:1.4px;
+    linkStyle 7,8,9,10 stroke:#caa83f,stroke-width:1.4px;

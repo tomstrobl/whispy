@@ -125,14 +125,6 @@ flowchart TB
 > the editable source you can paste into [mermaid.live](https://mermaid.live) to
 > export a PNG/SVG for slides. Keep the two in sync when you change it.
 
-## Configuration
-
-All UIs are configured from YAML in [`configs/`](configs/). The shared look of
-every UI lives in [`configs/design.yml`](configs/design.yml) (the single global
-theme); per-UI files hold layout/behavior and may override individual theme
-keys. See `CLAUDE.md` for a full description of the configuration conventions
-and architecture.
-
 ## License
 
 MIT — see [`LICENSE`](LICENSE).
