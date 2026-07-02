@@ -22,6 +22,7 @@ import pandas as pd
 
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import load_design, read_config
+from whispy.utils._utils import format_markdown
 
 from .base import _BaseUIWindow
 from .info_window import InfoWindow
@@ -158,6 +159,9 @@ class ABX(_BaseUIWindow):
         self._fontcolor = str(ui.get("fontcolor", "#e8eaed"))
         self._background_color = str(ui.get("window_background_color", "#2b2b2b"))
         self._task_fontsize = max(1, int(ui.get("task_fontsize", 16)))
+        # Smaller font for the explanatory texts around the controls (the
+        # listen/answer labels and the submit hint).
+        self._hint_fontsize = max(1, int(ui.get("hint_fontsize", 11)))
         self._task_spacing = int(ui.get("task_spacing", 12))
         self._button_size = int(ui.get("button_size", 56))
         self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
@@ -223,6 +227,7 @@ class ABX(_BaseUIWindow):
         button_size = round(self._button_size * scale)
         button_fontsize = max(1, round(self._button_fontsize * scale))
         task_fontsize = max(1, round(self._task_fontsize * scale))
+        hint_fontsize = max(1, round(self._hint_fontsize * scale))
 
         container = QWidget(self)
         container.setStyleSheet(f"background-color: {self._background_color};")
@@ -244,8 +249,9 @@ class ABX(_BaseUIWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self._task_spacing)
 
-        # task prompt
-        task_label = QLabel(self._resolve_task_text().replace("\n", "  \n"), self)
+        # task prompt (markdown, like every other whispy prompt)
+        task_label = QLabel(format_markdown(self._resolve_task_text()), self)
+        task_label.setTextFormat(Qt.TextFormat.MarkdownText)
         task_label.setWordWrap(True)
         task_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         task_label.setStyleSheet(f"color: {self._fontcolor};")
@@ -253,10 +259,11 @@ class ABX(_BaseUIWindow):
         layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # playback row: A, B, X (play only, not an answer)
-        listen_label = QLabel(self._listen_label_text, self)
+        listen_label = QLabel(format_markdown(self._listen_label_text), self)
+        listen_label.setTextFormat(Qt.TextFormat.MarkdownText)
         listen_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         listen_label.setStyleSheet(f"color: {self._fontcolor};")
-        listen_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
+        listen_label.setFont(QFont("Helvetica", hint_fontsize))
         layout.addWidget(listen_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         play_row = QWidget(self)
@@ -274,11 +281,12 @@ class ABX(_BaseUIWindow):
         layout.addWidget(play_row, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # answer row: X is the same as A or B
-        answer_label = QLabel(self._answer_label_text, self)
+        answer_label = QLabel(format_markdown(self._answer_label_text), self)
+        answer_label.setTextFormat(Qt.TextFormat.MarkdownText)
         answer_label.setWordWrap(True)
         answer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         answer_label.setStyleSheet(f"color: {self._fontcolor};")
-        answer_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
+        answer_label.setFont(QFont("Helvetica", hint_fontsize))
         layout.addWidget(answer_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         answer_row = QWidget(self)
@@ -297,12 +305,13 @@ class ABX(_BaseUIWindow):
         self._apply_playback_button_styles()
         self._apply_answer_button_styles()
 
-        # submit hint
-        submit_label = QLabel(self._submit_hint, self)
+        # submit hint (markdown)
+        submit_label = QLabel(format_markdown(self._submit_hint), self)
+        submit_label.setTextFormat(Qt.TextFormat.MarkdownText)
         submit_label.setWordWrap(True)
         submit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         submit_label.setStyleSheet(f"color: {self._fontcolor};")
-        submit_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))
+        submit_label.setFont(QFont("Helvetica", hint_fontsize))
         layout.addWidget(submit_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # submit button (disabled until an answer is selected)

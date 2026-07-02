@@ -22,6 +22,7 @@ import pandas as pd
 
 from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import load_design, read_config
+from whispy.utils._utils import format_markdown
 
 from .base import _BaseUIWindow
 from .info_window import InfoWindow
@@ -253,8 +254,9 @@ class NAFC(_BaseUIWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self._task_spacing)
 
-        # task prompt
-        task_label = QLabel(self._resolve_task_text().replace("\n", "  \n"), self)
+        # task prompt (markdown, like every other whispy prompt)
+        task_label = QLabel(format_markdown(self._resolve_task_text()), self)
+        task_label.setTextFormat(Qt.TextFormat.MarkdownText)
         task_label.setWordWrap(True)
         task_label.setStyleSheet(f"color: {self._fontcolor};")
         task_label.setFont(QFont("Helvetica", task_fontsize))
@@ -276,8 +278,9 @@ class NAFC(_BaseUIWindow):
         self._apply_choice_button_styles()
         layout.addWidget(buttons_row, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        # submit hint
-        submit_label = QLabel(self._submit_hint, self)
+        # submit hint (markdown)
+        submit_label = QLabel(format_markdown(self._submit_hint), self)
+        submit_label.setTextFormat(Qt.TextFormat.MarkdownText)
         submit_label.setWordWrap(True)
         submit_label.setStyleSheet(f"color: {self._fontcolor};")
         submit_label.setFont(QFont("Helvetica", max(1, task_fontsize - 1)))

@@ -1,0 +1,22 @@
+# "Welcome" screen shown once before an experiment starts (before consent).
+# The symmetric counterpart to configs/thanks.yml (the screen shown after the
+# experiment finishes). Rendered by whispy.ui.InfoWindow at the start of each
+# full-experiment notebook.
+#
+# The look (colors, fonts, button styling) is inherited from the global theme in
+# configs/design.yml so it matches the listening tests.
+
+ui:
+  # The message shown to the participant. Markdown is supported.
+  message: |
+    # Welcome!
+
+    Thank you for taking part in this listening experiment.
+
+    Please make yourself comfortable and put on the headphones.
+    If anything is unclear at any point, just ask the experimenter.
+
+    Click **Continue** when you are ready to begin.
+  # Show the screen fullscreen (matches the experiment windows). Set to false
+  # for a small centered popup.
+  fullscreen: true

@@ -33,6 +33,10 @@ ui:
   content_area_size: [60, 80]
   submit_hint: "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit."
   submit_button_text: "Submit choice"
+  # Font size for the explanatory texts around the controls (the listen/answer
+  # labels and the submit hint); the task prompt uses task_fontsize instead.
+  # Scales with the window like every other font.
+  hint_fontsize: 11
 
 # -------------------------------- Trial ------------------------------------ #
 # Shared prompt/metadata for every ABX trial. X is a copy of A or B (drawn at
