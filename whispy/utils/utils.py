@@ -18,8 +18,9 @@ def read_config(file):
 
     Returns
     -------
-    config : dict
-        The configuration.
+    config : dict or list
+        The configuration (whatever the YAML top level holds; the package
+        configs are mappings).
     """
 
     # Allow an already-loaded config (dict/list) to pass through unchanged. This

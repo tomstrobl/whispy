@@ -7,7 +7,7 @@
 # "target" levels whose bump frequency differs from the standard; the targets
 # are ordered from the smallest frequency difference (hardest to tell apart)
 # to the largest (easiest). This matches the adaptive staircase in
-# examples/staircase_n_afc.ipynb (standard = 1, levels = [2, 3, 4, ...], which
+# examples/building_block_staircase_n_afc.ipynb (standard = 1, levels = [2, 3, 4, ...], which
 # starts easy and shrinks the frequency difference as it steps down).
 #
 # This is intentionally separate from examples/demo_stimuli/mushra/generate_mushra_stimuli.py,

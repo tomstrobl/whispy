@@ -27,14 +27,14 @@ class ExperimentScheduler():
         Maximum number of conditions to display per GUI screen. The default is
         ``7``.
     random_seed : int, optional
-        Seed for random number generator. If ``None``, the current internet
-        time in seconds ``time.time()`` is used.
+        Seed for random number generator. If ``None``, the current system
+        time in seconds (``time.time()``) is used.
 
-    Returns
-    -------
-    schedule:
-        Experimental schedule class. Contains the schedule in
-        `schedule.schedule` and can be iterated to run the experiment.
+    Attributes
+    ----------
+    schedule : list of dict
+        The generated schedule, one "screen" dict per GUI screen (see
+        ``_course`` for the keys). Iterating the scheduler iterates this list.
 
     Examples
     --------
@@ -57,7 +57,7 @@ class ExperimentScheduler():
             print(screen)
 
             # run a drag and drop MUSHRA-like experiment
-            mushra_like = whispy.DragAndDropMushra(screen)
+            mushra_like = whispy.ui.DragAndDropMUSHRA(screen=screen)
 
             # update results
             results = mushra_like.get_results(results)
@@ -114,15 +114,17 @@ def _course(
         Maximum number of conditions to display per GUI screen. The default is
         ``7``.
     random_seed : int, optional
-        Seed for random number generator. If ``None``, the current internet
-        time in seconds ``time.time()`` is used.
+        Seed for random number generator. If ``None``, the current system
+        time in seconds (``time.time()``) is used.
 
     Returns
     -------
     experimental_course: list of dict
-        Experimental course as a list. Each element contains the keys
-        blocks, sections, references, test conditions, and flags indicating
-        block/section changes.
+        One "screen" dict per GUI screen, with the keys ``block``,
+        ``section``, ``reference``, ``test``, ``block_changed``,
+        ``section_changed``, ``attribute``, ``block_name``, ``section_name``
+        and ``progress`` (``{"current": ..., "total": ...}``, the screen's
+        position in the whole schedule for the trial-progress bar).
     """
 
     # load config

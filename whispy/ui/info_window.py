@@ -53,9 +53,12 @@ class InfoWindow(_BaseUIWindow):
         Font size for the text and button.
     fontcolor : str, optional
         Text color.
+    background_color : str, optional
+        Window background color. Like ``fontsize``/``fontcolor`` it falls
+        back to the global theme (``configs/design.yml``).
     fullscreen : bool, optional
-        If ``True``, show the window fullscreen using the primary screen
-        geometry.
+        If ``True``, show the window fullscreen on the target screen (the
+        ``screen:`` setting of ``configs/design.yml``).
     minimum_width : int, optional
         Minimum width for the content block in pixel.
     center : bool, optional

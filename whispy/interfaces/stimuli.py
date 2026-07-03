@@ -12,7 +12,7 @@ import os
 
 
 class StimuliHandler(ABC):
-    """Abstract base class for all StimuliHandler."""
+    """Abstract base class for all stimulus handlers (playback backends)."""
     @abstractmethod
     def play(self, stimulus: str) -> None:
         """Play a configured stimulus.
@@ -128,8 +128,9 @@ class SoundDevice(StimuliHandler):
 
         Parameters
         ----------
-        stimulus : str
-            The name of the stimulus as defined in the stimuli configuration
+        stimulus : str, optional
+            Ignored by this backend (sounddevice stops all playback at once);
+            accepted so all handlers share the same call signature.
         """
         # NOTE: `stimulus` is not required here to stop the playback. But
         #       it might be required by other handlers that must share the same

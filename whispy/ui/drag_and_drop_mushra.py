@@ -32,6 +32,45 @@ from PyQt6.QtWidgets import (
 FILEPATH = os.path.dirname(os.path.abspath(__file__))
 
 class DragAndDropMUSHRA(_BaseUIWindow):
+    """MUSHRA-like rating UI with drag-and-drop tiles.
+
+    The participant drags one numbered tile per test stimulus onto a
+    horizontal rating scale (defined by the ``attributes:`` block of the
+    experiment config, keyed by ``screen["attribute"]``); pressing a tile
+    plays its stimulus. An optional reference is played via the dedicated
+    Reference button / the 'R' key. Continue is blocked until every tile has
+    been listened to at least once and placed on the scale.
+
+    Parameters
+    ----------
+    screen : dict, optional
+        Rating-screen description as yielded by
+        :class:`whispy.ExperimentScheduler`: ``reference``, ``test`` (list of
+        stimulus ids), ``attribute`` and metadata (``block``, ``section``,
+        ``block_name``, ``section_name``, ``progress``). If not provided a
+        minimal default is used for quick testing.
+    stimuli_handler : StimuliHandler, optional
+        Handler used to play stimuli. If ``None``, ``SoundDevice()`` is used.
+    attributes : str or dict, optional
+        Rating-scale definitions (attribute name -> ``{task, description,
+        values, labels, neutral_value}``), as a path or dict. Overrides the
+        ``attributes:`` block of ``drag_and_drop_mushra``; required if that
+        config has none.
+    drag_and_drop_mushra : str or dict, optional
+        The experiment config — either a combined config (its ``ui:`` and
+        ``attributes:`` blocks are extracted) or a flat UI config. Path or
+        already-loaded dict. If ``None``, ``configs/drag_and_drop_mushra.yml``
+        from the package is used. Colors/fonts fall back to
+        ``configs/design.yml``.
+    blocking : bool, optional
+        If ``True``, block until the screen is completed (Continue clicked).
+    debug : bool, optional
+        If ``True``, the window close button is enabled, debug prints are
+        emitted and the listen/placement gates are relaxed.
+    parent : QMainWindow, optional
+        If provided, reuse that UI's host window instead of opening a new one
+        (keeps a running experiment in the same window across screens).
+    """
 
     def __init__(
         self,
@@ -295,8 +334,15 @@ class DragAndDropMUSHRA(_BaseUIWindow):
     def get_results(
             self,
             results: Optional[pandas.DataFrame] = None
-            ) -> Dict[str, Dict[str, float | bool]]:
+            ) -> pandas.DataFrame:
+        """Return the ratings in long form (one row per test stimulus).
 
+        Each row combines the screen metadata (all ``screen`` keys except
+        ``progress``) with a ``test`` (stimulus id) and a ``rating`` column;
+        ratings are decoded from tile position back into the attribute's
+        value scale. Pass the running DataFrame back in to accumulate results
+        across screens.
+        """
         # ratings coded by the names of the GUI buttons/tiles
         ratings_raw = self.drag_area.view.get_values()
         # decode to stimulus names

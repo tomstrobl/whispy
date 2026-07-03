@@ -54,9 +54,10 @@ class ABX(_BaseUIWindow):
         ``section``, ``trial_id``, ``block_name``, ``section_name``.
     stimuli_handler : StimuliHandler, optional
         Handler used to play stimuli. If ``None``, ``SoundDevice()`` is used.
-    abx_config : str, optional
-        Path to the ABX YAML config. If ``None``, ``configs/abx.yml`` from the
-        package is used.
+    abx_config : str or dict, optional
+        The ABX config — a YAML path or an already-loaded dict (its ``ui:``
+        and ``test:`` blocks are used). If ``None``, ``configs/abx.yml`` from
+        the package is used.
     blocking : bool, optional
         If ``True``, block until the trial is submitted.
     debug : bool, optional

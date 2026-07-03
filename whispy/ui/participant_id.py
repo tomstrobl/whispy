@@ -32,11 +32,15 @@ class ParticipantID(_BaseUIWindow):
     A single text field is shown by default. If the config defines a ``fields:``
     list, one labeled text field is shown per entry and the id is the answers
     joined by ``separator`` — e.g. first letters of names plus a birthday digit
-    build an anonymous code. The id is returned by :meth:`get_id` so it can be
-    stored alongside the experiment results (e.g.
-    ``results.insert(0, "participant_id", participant_id)``). Like the other
-    whispy UIs the look is inherited from ``configs/design.yml`` and may be
-    overridden under the ``ui:`` block of ``configs/participant_id.yml``.
+    build an anonymous code. The id is returned by :meth:`get_id`, e.g. to pass
+    as ``participant_id=`` to :func:`whispy.utils.save_results` (which bakes it
+    into the result file name). Like the other whispy UIs the look is inherited
+    from ``configs/design.yml`` and may be overridden under the ``ui:`` block of
+    ``configs/participant_id.yml``.
+
+    Note: the example notebooks no longer use this window — their participant
+    id comes from the consent questionnaire via
+    :func:`whispy.utils.participant_id_from_consent`. Kept as an alternative.
 
     Parameters
     ----------

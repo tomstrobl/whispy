@@ -47,9 +47,11 @@ class NAFC(_BaseUIWindow):
         provided a minimal default is used for quick testing.
     stimuli_handler : StimuliHandler, optional
         Handler used to play stimuli. If ``None``, ``SoundDevice()`` is used.
-    n_afc_config : str, optional
-        Path to the N-AFC YAML config. If ``None``, ``configs/n_afc.yml`` from
-        the package is used.
+    n_afc_config : str or dict, optional
+        The N-AFC config — a YAML path or an already-loaded dict (e.g. a
+        combined experiment config such as ``configs/staircase_n_afc.yml``;
+        its ``ui:`` and ``test:`` blocks are used). If ``None``,
+        ``configs/n_afc.yml`` from the package is used.
     blocking : bool, optional
         If ``True``, block until the trial is submitted (via
         ``wait_until_closed``).

@@ -122,8 +122,9 @@ class ScaleTest(_BaseUIWindow):
         ``block_name``, ``section_name``, ``progress``.
     stimuli_handler : StimuliHandler, optional
         Handler used to play stimuli. If ``None``, ``SoundDevice()`` is used.
-    scale_test_config : str, optional
-        Path to the scale-testing YAML config. If ``None``,
+    scale_test_config : str or dict, optional
+        The scale-testing config — a YAML path or an already-loaded dict (its
+        ``ui:`` and ``questions:`` blocks are used). If ``None``,
         ``configs/scale_testing.yml`` from the package is used.
     blocking : bool, optional
         If ``True``, block until the trial is submitted.

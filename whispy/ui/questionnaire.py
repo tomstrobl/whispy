@@ -46,15 +46,19 @@ class Questionnaire(_BaseUIWindow):
 
     Parameters
     ----------
-    questionnaire : str or None, optional
-        Path to the questionnaire YAML file. If ``None``, the default
-        ``configs/questionnaires/questionnaire.yml`` file is used.
+    questionnaire : str or dict, optional
+        The questionnaire config (its ``ui:`` and ``questionnaire:`` blocks
+        are used) — a YAML path or an already-loaded dict. If ``None``, the
+        default ``configs/questionnaires/questionnaire.yml`` file is used.
     blocking : bool, optional
         If ``True``, block execution until the window is closed.
     debug : bool, optional
         If ``False``, the window close button is disabled and the questionnaire
         can only be closed via Continue after all required answers are
         provided.
+    parent : QMainWindow, optional
+        If provided, reuse that UI's host window instead of opening a new one
+        (the host's central widget is swapped in place).
     """
 
     def __init__(self,
