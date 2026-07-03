@@ -66,7 +66,8 @@ ui:
   submit_button_fontsize: 16     # the "Submit choice" button
   progress_fontsize: 6          # the "Trial X of Y" progress text
   # Vertical gap (px) between the submit button and the keyboard hint below
-  # it. Cannot go below task_spacing (the layout's base spacing, default 12).
+  # it. Cannot go below task_spacing (the layout's base spacing — 24 via
+  # design.yml unless overridden here).
   submit_hint_spacing: 45
 
 

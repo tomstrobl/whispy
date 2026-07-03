@@ -208,16 +208,18 @@ def _course(
                 t_end = min(n_conditions, t_start + max_conditions_per_gui)
 
                 # append current line of the experiment
+                # `reference` and `attribute` are MUSHRA-specific; sections of
+                # other tests (e.g. scale testing) simply omit them -> None.
                 experimental_course.append(
                     {"block": int(b_idx),
                      "section": int(s_idx),
-                     "reference": section["reference"],
+                     "reference": section.get("reference"),
                      "test": conditions[t_start:t_end],
                      "block_changed": bool(block_changed),
                      "section_changed": bool(section_changed),
-                     "attribute": section["attribute"],
+                     "attribute": section.get("attribute"),
                      "block_name": block_name[0],
-                     "section_name": section["section_name"],}
+                     "section_name": section.get("section_name"),}
                 )
 
     # attach the position within the whole schedule to every screen, so the

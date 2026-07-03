@@ -1,0 +1,152 @@
+# =============================================================================
+# Scale-testing experiment — single configuration file
+# =============================================================================
+# This one file configures the WHOLE scale-testing experiment. The only thing
+# configured elsewhere is the shared look of the UIs (configs/design.yml).
+#
+# It is read by three consumers, each picking out the keys it needs:
+#   - SoundDevice   -> the `SoundDevice:` block (which WAV plays for each id)
+#   - ScaleTest     -> the `ui:` and `questions:` blocks
+#   - the scheduler -> the `experiment:` block (blocks/sections/stimuli)
+#
+# On every screen the participant hears ONE stimulus (a single play button)
+# and rates it on every question listed under `questions:` — each question is
+# either a row of Likert-style buttons or a slider.
+#
+# Edit the values below to design your own experiment; you should not need to
+# touch any Python.
+
+# ------------------------------- Stimuli ----------------------------------- #
+# Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
+# the notebook). All files must share one sampling rate and must not clip.
+# Stimulus ids are written into the results — prefer descriptive names.
+SoundDevice:
+  smooth_dark:   { file: smooth_dark.wav }
+  smooth_bright: { file: smooth_bright.wav }
+  rough_dark:    { file: rough_dark.wav }
+  rough_bright:  { file: rough_bright.wav }
+
+# ------------------------------ Questions ---------------------------------- #
+# The rating scales stacked below the play button, shown in this order on
+# EVERY screen. Each question carries:
+#   id                 -> results column `question` (defaults to q1, q2, ...)
+#   prompt             -> the wording above the scale (markdown)
+#   scale_type         -> free label recorded in the results (e.g. likert,
+#                         continuous); purely descriptive
+#   interaction_method -> "buttons" (one selectable button per integer step),
+#                         "slider" (continuous horizontal slider) or
+#                         "bipolar_slider" (slider for a negative-to-positive
+#                         range, zero tick in the middle, no directional fill)
+#   scale_range        -> [min, max]; buttons get one button per integer step
+#                         (a negative-to-positive range like [-5, 5] puts the
+#                         0 button in the middle)
+#   labels             -> optional wording: TWO entries are endpoint labels
+#                         (left/right of the scale); for buttons, one entry
+#                         PER STEP puts a small label under each button; a
+#                         bipolar_slider takes THREE entries as
+#                         [left, center, right] (center under the zero tick)
+questions:
+  - id: roughness
+    prompt: "How **rough** does the sound feel?"
+    scale_type: likert
+    interaction_method: buttons
+    scale_range: [1, 5]
+    labels: ["smooth", "rough"]
+  - id: brightness
+    prompt: "How **bright** is the sound?"
+    scale_type: continuous
+    interaction_method: slider
+    scale_range: [0, 100]
+    labels: ["dark", "bright"]
+  - id: pleasantness
+    prompt: "How **pleasant** is the sound?"
+    scale_type: likert
+    interaction_method: buttons
+    scale_range: [1, 5]
+    labels: ["very unpleasant", "unpleasant", "neutral", "pleasant", "very pleasant"]
+  - id: sharpness
+    prompt: "Compared to a neutral tone, is the sound **softer or sharper**?"
+    scale_type: bipolar
+    interaction_method: buttons
+    scale_range: [-5, 5]
+    labels: ["softer", "sharper"]
+
+# ---------------------------- ScaleTest window ------------------------------ #
+# Colors/fonts come from design.yml; anything under `ui:` overrides that
+# global theme for this experiment.
+ui:
+  window_size: fullscreen      # Window size. Either [pixels_x, pixels_y] or "fullscreen".
+  # Content area size (task + play button + questions + submit) as a
+  # percentage [x%, y%] of the window, centered. Same key/behavior as every
+  # test; 100 = max available.
+  content_area_size: [70, 90]
+  # Share (0..1) of the free vertical window space placed above the content
+  # area: 0 = flush at the top, 0.5 = centered, 1 = at the bottom.
+  content_top_share: 0.6
+  # Task prompt shown at the top of every screen (the notebook puts it on the
+  # screen dict from the `trial:` block below).
+  play_button_text: "► Play"
+  submit_hint: "Press Space (or click Play) to listen, rate every scale, then press Enter to submit."
+  submit_button_text: "Submit ratings"
+  # Trial progress bar ("Trial X of Y") below the submit button. The numbers
+  # come from the screen dict (`progress`), which the notebook fills in. The
+  # text may use {current}, {total} and {remaining}; look from design.yml.
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
+  # ---- Font sizes (each scales with the window height) ----
+  # One key per text, fully independent of each other.
+  task_fontsize: 16              # task prompt at the top
+  question_fontsize: 8          # the question prompts above each scale
+  scale_label_fontsize: 8        # endpoint / per-step labels on the scales
+  button_fontsize: 8            # numbers on the Likert-style scale buttons
+  play_button_fontsize: 14       # the play button
+  submit_button_fontsize: 14     # the "Submit ratings" button
+  submit_hint_fontsize: 6        # keyboard hint below the submit button
+  progress_fontsize: 6           # the "Trial X of Y" progress text
+  # ---- Geometry ----
+  scale_button_size: 30          # side length (px) of one scale button
+  question_spacing: 20           # vertical gap (px) between stacked questions
+  # Vertical gap (px) between a question's prompt text and its scale (the
+  # buttons/slider) below it. Exact: no minimum applies here.
+  prompt_scale_spacing: 40
+  # Maximum height of the scrollable questions area, as a percentage of the
+  # window height. The area never exceeds the questions' natural height; this
+  # caps it further — questions taller than the cap scroll (bar on the
+  # right). 100 = no extra cap.
+  questions_area_height: 40
+  # Alignment of the question prompts inside the content area: "left" or
+  # "center". The scale rows (buttons/slider) are always centered.
+  question_alignment: left
+  # Thin horizontal line between the stacked questions. Its color defaults to
+  # the shared button-border tone; override with question_separator_color.
+  show_question_separator: true
+  # Vertical gap (px) between the submit button and the keyboard hint below
+  # it. Cannot go below task_spacing (the layout's base spacing — 24 via
+  # design.yml unless overridden here).
+  submit_hint_spacing: 16
+  # Vertical gap (px) between the task text and the play button below it.
+  # Same rule: cannot go below task_spacing (24 via design.yml).
+  play_button_spacing: 100
+  # ---- Slider look (defaults derive from the shared design.yml palette) ----
+  # slider_groove_color: "#dbe2f1"   # the unfilled track
+  # slider_fill_color: "#5cb874"     # the filled part left of the handle
+  # slider_handle_color: "#5cb874"   # the drag handle
+  # slider_tick_color: "#b9c4dd"     # the zero tick of bipolar sliders
+
+# -------------------------------- Trial ------------------------------------ #
+# Shared prompt shown at the top of every screen.
+trial:
+  task: "Listen to the sound and rate it on every scale below."
+
+# ------------------------------ Experiment --------------------------------- #
+# Which stimuli are rated, grouped into blocks/sections exactly like the
+# MUSHRA `experiment:` block (consumed by whispy.ExperimentScheduler; the
+# notebook then presents each section's stimuli one per screen, in the
+# scheduler's randomized order). `reference`/`attribute` are not used by
+# scale testing and are simply omitted.
+experiment:
+  - block:
+      - block_name: timbre
+      - section:
+          section_name: synthetic tones
+          test: [smooth_dark, smooth_bright, rough_dark, rough_bright]

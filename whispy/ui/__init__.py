@@ -4,6 +4,7 @@ from .questionnaire import Questionnaire
 from .drag_and_drop_mushra import DragAndDropMUSHRA
 from .n_afc import NAFC
 from .abx import ABX
+from .scale_testing import ScaleTest
 
 __all__ = [
     'InfoWindow',
@@ -12,4 +13,5 @@ __all__ = [
     'DragAndDropMUSHRA',
     'NAFC',
     'ABX',
+    'ScaleTest',
 ]

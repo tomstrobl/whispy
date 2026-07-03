@@ -59,7 +59,8 @@ ui:
   # setting the reference X apart visually. Scales with the window height.
   x_button_gap: 32
   # Vertical gap (px) between the submit button and the keyboard hint below
-  # it. Cannot go below task_spacing (the layout's base spacing, default 12).
+  # it. Cannot go below task_spacing (the layout's base spacing — 24 via
+  # design.yml unless overridden here).
   submit_hint_spacing: 16
 
 
