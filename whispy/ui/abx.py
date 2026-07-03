@@ -170,6 +170,16 @@ class ABX(_BaseUIWindow):
         self._submit_hint_fontsize = max(1, int(
             ui.get("submit_hint_fontsize") or self._hint_fontsize))
         self._task_spacing = int(ui.get("task_spacing", 12))
+        # Gap (px) between the submit button and the hint below it. Defaults
+        # to task_spacing (the layout's base item spacing), which is also the
+        # effective minimum.
+        self._submit_hint_spacing = int(
+            ui.get("submit_hint_spacing", self._task_spacing))
+        # Share (0..1) of the free vertical window space placed ABOVE the
+        # content area: 0 = flush at the top, 0.5 = centered, 1 = at the
+        # bottom. Values outside 0..1 are clamped.
+        self._content_top_share = min(1.0, max(0.0, float(
+            ui.get("content_top_share", 0.6))))
         self._button_size = int(ui.get("button_size", 56))
         self._button_fontsize = max(1, int(ui.get("button_fontsize", 14)))
         self._submit_button_fontsize = max(1, int(
@@ -296,9 +306,9 @@ class ABX(_BaseUIWindow):
         task_label.setFixedWidth(area_w)
         layout.addWidget(task_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        # The stretches (here and below the submit button) center the play/
-        # answer controls + submit between the task text pinned on top and the
-        # footer (hint + progress) pinned to the bottom.
+        # The stretches (here and below the answer row) center the play/
+        # answer controls between the task text pinned on top and the
+        # submit button + footer (hint + progress) pinned to the bottom.
         layout.addStretch(1)
 
         # playback row: A, B, X (play only, not an answer)
@@ -338,6 +348,9 @@ class ABX(_BaseUIWindow):
         answer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         answer_label.setStyleSheet(f"color: {self._fontcolor};")
         answer_label.setFont(QFont("Helvetica", answer_label_fontsize))
+        # Fixed full-content width (like the task label) so the word-wrapped
+        # height is computable and the text is never clipped.
+        answer_label.setFixedWidth(area_w)
         layout.addWidget(answer_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         answer_row = QWidget(self)
@@ -356,11 +369,10 @@ class ABX(_BaseUIWindow):
         self._apply_playback_button_styles()
         self._apply_answer_button_styles()
 
-        # extra gap so the submit button sits clearly apart from the answer
-        # buttons (on top of the general task_spacing)
-        layout.addSpacing(self._task_spacing * 3)
+        layout.addStretch(1)
 
-        # submit button (disabled until an answer is selected)
+        # submit button (disabled until an answer is selected), pinned to the
+        # bottom of the content area, right above the hint
         self._submit_button = QPushButton(self._submit_button_text, self)
         self._submit_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self._submit_button.setFont(QFont("Helvetica", submit_button_fontsize))
@@ -376,14 +388,15 @@ class ABX(_BaseUIWindow):
         self._submit_button.clicked.connect(self._on_submit_clicked)
         layout.addWidget(self._submit_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        layout.addStretch(1)
-
         # Footer pinned to the bottom of the content area: the submit hint and
         # the trial progress ("Trial X of Y" text + bar) grouped tightly
         # together, clearly set apart from the controls above.
         footer = QWidget(content)
         footer_layout = QVBoxLayout(footer)
-        footer_layout.setContentsMargins(0, 0, 0, 0)
+        # The top margin tops up the layout's base task_spacing to the
+        # configured submit-button-to-hint gap (submit_hint_spacing).
+        footer_layout.setContentsMargins(
+            0, max(0, self._submit_hint_spacing - self._task_spacing), 0, 0)
         # 16 px hint-to-bar gap plus the extra drop of the bar (see
         # progress_drop above), so the hint itself does not move down
         footer_layout.setSpacing(16 + progress_drop)
@@ -422,12 +435,13 @@ class ABX(_BaseUIWindow):
 
         layout.addWidget(footer, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        # Distribute the free window space around the content area 3:2 (the
-        # block sits a little below the window center). The top share is a
-        # fixed spacer so the content box's downward extension (progress_drop)
-        # only moves its bottom edge, not the block itself.
+        # Distribute the free window space around the content area according
+        # to content_top_share (default 0.6, so the block sits a little below
+        # the window center). The top share is a fixed spacer so the content
+        # box's downward extension (progress_drop) only moves its bottom edge,
+        # not the block itself.
         outer_layout.addSpacing(round(
-            0.6 * max(0, self._window_height - 28 - area_h)))
+            self._content_top_share * max(0, self._window_height - 28 - area_h)))
         outer_layout.addWidget(content, alignment=Qt.AlignmentFlag.AlignHCenter)
         outer_layout.addStretch(1)
         self._host.setCentralWidget(container)

@@ -9,6 +9,9 @@ ui:
   # Content area size (task + buttons + submit) as a percentage [x%, y%] of the
   # window, centered. Same key/behavior as every test; 100 = max available.
   content_area_size: [75, 80]
+  # Share (0..1) of the free vertical window space placed above the content
+  # area: 0 = flush at the top, 0.5 = centered, 1 = at the bottom.
+  content_top_share: 0.6
   # Hint shown below the choice buttons and the submit-button label.
   submit_hint: "Listen to a stimulus, select one, then submit."
   submit_button_text: "Submit choice"
@@ -26,6 +29,9 @@ ui:
   button_fontsize: 16            # numbers on the choice buttons
   submit_button_fontsize: 16     # the "Submit choice" button
   progress_fontsize: 11          # the "Trial X of Y" progress text
+  # Vertical gap (px) between the submit button and the keyboard hint below
+  # it. Cannot go below task_spacing (the layout's base spacing, default 12).
+  submit_hint_spacing: 12
 
 # test-specific defaults
 test:
