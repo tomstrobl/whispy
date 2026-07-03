@@ -59,6 +59,8 @@ button_color_active: "#5cb874"       # currently playing (green)
 
 # ------------------------------- Task text --------------------------------- #
 # Prompt shown on top of a rating / N-AFC screen and the gap below it (px).
+# The fontsize scales up with the window height (reference: 600 px) in every
+# test, so it is the size at the reference height, never rendered smaller.
 task_fontsize: 16
 task_spacing: 24
 

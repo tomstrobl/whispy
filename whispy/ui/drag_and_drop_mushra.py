@@ -352,6 +352,15 @@ class _MainWindow(QWidget):
 
         task_fontsize = drag_and_drop_mushra["task_fontsize"]
         task_spacing = drag_and_drop_mushra["task_spacing"]
+        # Scale the task prompt with the window height like the other tests
+        # (1.0 at the 600 px reference height, never below the configured
+        # size). `window_size` is already resolved to pixels at this point.
+        try:
+            window_height = float(drag_and_drop_mushra["window_size"][1])
+        except (KeyError, TypeError, ValueError, IndexError):
+            window_height = 600.0
+        scale = max(1.0, window_height / 600.0)
+        task_fontsize = max(1, round(int(task_fontsize) * scale))
         fontsize = drag_and_drop_mushra["fontsize"]
         button_fontsize = drag_and_drop_mushra["button_fontsize"]
         fontcolor = drag_and_drop_mushra["fontcolor"]
@@ -383,7 +392,7 @@ class _MainWindow(QWidget):
         self.task_label.setWordWrap(True)
         self.task_label.setTextFormat(Qt.TextFormat.MarkdownText)
         self.task_label.setStyleSheet(
-            f"color: {fontcolor}; font-size: {max(1, int(task_fontsize))}pt;"
+            f"color: {fontcolor}; font-size: {task_fontsize}pt;"
         )
 
         self.info_button = QPushButton("ℹ️", self)

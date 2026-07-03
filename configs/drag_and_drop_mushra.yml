@@ -36,6 +36,7 @@ ui:
   # (design.yml default: [75, 80]).
   content_area_size: [75, 50]
   progress_fontsize: 11          # "Screen X of Y" text (design.yml: 6)
+  # task_fontsize: 16            # rating prompt on top (design.yml: 16)
   # By default the reference is played explicitly via the dedicated
   # "Reference (R)" button / the 'R' key, not automatically. Set
   # `autoplay_reference: true` to instead auto-play it after a test condition
