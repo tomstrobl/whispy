@@ -75,16 +75,15 @@ questions:
 # Colors/fonts come from design.yml; anything under `ui:` overrides that
 # global theme for this experiment.
 ui:
-  window_size: fullscreen      # Window size. Either [pixels_x, pixels_y] or "fullscreen".
-  # Content area size (task + play button + questions + submit) as a
-  # percentage [x%, y%] of the window, centered. Same key/behavior as every
-  # test; 100 = max available.
+  # The look (window size, fonts, spacings, the scale/question geometry, the
+  # scrollable questions area, slider colors, ...) lives in configs/design.yml;
+  # add any design key here to override it for this experiment only. This
+  # block keeps the wording plus three per-experiment layout overrides.
+  # ScaleTest uses a slightly different content area and smaller buttons than
+  # the design.yml defaults.
   content_area_size: [70, 90]
-  # Share (0..1) of the free vertical window space placed above the content
-  # area: 0 = flush at the top, 0.5 = centered, 1 = at the bottom.
-  content_top_share: 0.6
-  # Task prompt shown at the top of every screen (the notebook puts it on the
-  # screen dict from the `trial:` block below).
+  button_fontsize: 8             # numbers on the scale buttons (design.yml: 16)
+  submit_button_fontsize: 14     # the "Submit ratings" button (design.yml: 16)
   play_button_text: "► Play"
   submit_hint: "Press Space (or click Play) to listen, rate every scale, then press Enter to submit."
   submit_button_text: "Submit ratings"
@@ -93,45 +92,6 @@ ui:
   # text may use {current}, {total} and {remaining}; look from design.yml.
   show_progress: true
   progress_text: "Trial {current} of {total}"
-  # ---- Font sizes (each scales with the window height) ----
-  # One key per text, fully independent of each other.
-  task_fontsize: 16              # task prompt at the top
-  question_fontsize: 8          # the question prompts above each scale
-  scale_label_fontsize: 8        # endpoint / per-step labels on the scales
-  button_fontsize: 8            # numbers on the Likert-style scale buttons
-  play_button_fontsize: 14       # the play button
-  submit_button_fontsize: 14     # the "Submit ratings" button
-  submit_hint_fontsize: 6        # keyboard hint below the submit button
-  progress_fontsize: 6           # the "Trial X of Y" progress text
-  # ---- Geometry ----
-  scale_button_size: 30          # side length (px) of one scale button
-  question_spacing: 20           # vertical gap (px) between stacked questions
-  # Vertical gap (px) between a question's prompt text and its scale (the
-  # buttons/slider) below it. Exact: no minimum applies here.
-  prompt_scale_spacing: 40
-  # Maximum height of the scrollable questions area, as a percentage of the
-  # window height. The area never exceeds the questions' natural height; this
-  # caps it further — questions taller than the cap scroll (bar on the
-  # right). 100 = no extra cap.
-  questions_area_height: 40
-  # Alignment of the question prompts inside the content area: "left" or
-  # "center". The scale rows (buttons/slider) are always centered.
-  question_alignment: left
-  # Thin horizontal line between the stacked questions. Its color defaults to
-  # the shared button-border tone; override with question_separator_color.
-  show_question_separator: true
-  # Vertical gap (px) between the submit button and the keyboard hint below
-  # it. Cannot go below task_spacing (the layout's base spacing — 24 via
-  # design.yml unless overridden here).
-  submit_hint_spacing: 16
-  # Vertical gap (px) between the task text and the play button below it.
-  # Same rule: cannot go below task_spacing (24 via design.yml).
-  play_button_spacing: 100
-  # ---- Slider look (defaults derive from the shared design.yml palette) ----
-  # slider_groove_color: "#dbe2f1"   # the unfilled track
-  # slider_fill_color: "#5cb874"     # the filled part left of the handle
-  # slider_handle_color: "#5cb874"   # the drag handle
-  # slider_tick_color: "#b9c4dd"     # the zero tick of bipolar sliders
 
 # -------------------------------- Trial ------------------------------------ #
 # Shared prompt shown at the top of every screen.

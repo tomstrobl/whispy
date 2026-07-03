@@ -28,11 +28,14 @@ SoundDevice:
 # `ui` is read by the DragAndDropMUSHRA window. Colors/fonts come from
 # design.yml; anything you set here overrides that global theme.
 ui:
-  # Window size. Either [pixels_x, pixels_y] or "fullscreen".
-  window_size: fullscreen
-  # Rating area size as a percentage [x%, y%] of the window, centered.
-  # Use 100 for the maximally possible size.
+  # The look (window size, fonts, tile fontsize, ...) lives in
+  # configs/design.yml; add any design key here to override it for this
+  # experiment only. This block keeps the wording/behavior plus two
+  # per-experiment layout overrides.
+  # Rating area size as a percentage [x%, y%] of the window, centered
+  # (design.yml default: [75, 80]).
   content_area_size: [75, 50]
+  progress_fontsize: 11          # "Screen X of Y" text (design.yml: 6)
   # By default the reference is played explicitly via the dedicated
   # "Reference (R)" button / the 'R' key, not automatically. Set
   # `autoplay_reference: true` to instead auto-play it after a test condition
@@ -45,13 +48,6 @@ ui:
   # (progress_bar_color / progress_bar_background_color / progress_fontsize).
   show_progress: true
   progress_text: "Screen {current} of {total}"
-  # ---- Font sizes ----
-  # One key per text, fully independent of each other.
-  task_fontsize: 16              # task prompt above the rating area
-  fontsize: 14                   # scale/tick labels along the rating area
-  tile_fontsize: 16              # numbers on the draggable rating tiles
-  button_fontsize: 16            # Reference / Stop / Continue buttons
-  progress_fontsize: 11          # the "Screen X of Y" progress text
 
 # ------------------------------ Attributes --------------------------------- #
 # Each attribute is one rating scale. The `experiment:` sections below pick an
