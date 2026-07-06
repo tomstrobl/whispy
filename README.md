@@ -1,17 +1,79 @@
 # whispy
 
-A config-driven Python toolkit for running listening tests / perceptual
-experiments. It provides PyQt6 UIs (drag-and-drop MUSHRA-like rating, N-AFC,
+A config-driven Python toolkit for running listening tests and/or perceptual
+experiments. 
+It provides PyQt6 UIs (drag-and-drop MUSHRA-like rating, N-AFC,
 questionnaires, info screens) and audio playback via `sounddevice` / `pyfar`,
 all driven by YAML configuration.
+The tests run in jupyter notebooks and either predefined full experiments can 
+be chosen or individual test setups can be compiled from the building blocks. 
+
+Available predefined test setups:
+
+- ABX
+- Mushra (Drag and drop)
+- Staircase N-AFC
+
+## User Interface
+
+The welcome screen, first seen by the participant (can be configured in <welcome.yml>):
+![Welcome screen](/images/welcome_screen.png)
+The ID and consent screen. There the participant sets his own ID, gives (or rejects)
+the use of the respective data and is able to collect listening hours needed as a 
+Audiocommunication and -technoligy student:
+![ID and consent screen](/images/ID_and_consent_screen.png)
+The ABX-test screen:
+![ABX Test screen](/images/ABX_test_screen.png)
+A drag-and-drop-MUSHRA Info-window explaining the following task:
+![drag and drop MUSHRA info window](/images/Info_window_MUSHRA.png)
+The drag-and-drop-MUSHRA-test screen:
+![Drag and drop MUSHRA test screen](/images/d_a_d_MUSHRA_screen.png)
+The Staircase N-AFC-test screen
+![Staircase N-AFC test screen](/images/Staircase_N_ACF_Test_screen.png)
+The thank you screen (the shown greeting can be configured in <thanks.yml>):
+![Thank you screen](/images/Thank_you_screen.png)
 
 ## Installation
+
+Clone the repository to your local mashine. Navigate with `cd` to your desired 
+folder and run:
+```
+git clone https://github.com/tomstrobl/whispy.git
+```
+Next, run:
 
 ```bash
 pip install -e .
 ```
+in your terminal to install all required packages. After this you can open the 
+jupyter notebooks in your prefered IDE and the whispy-blocks are executable.
 
-## Quick start
+### Requirements
+
+Whispy runs in:
+*already tested*
+- Visual Studio Code
+- 
+
+and works with:
+- python verions >= 3.13.13 
+- anaconda >= 22.9.0
+
+
+## Usage
+
+See the runnable demos in [`examples/`](examples/) — each test ships as a minimal
+`building_block_<test>.ipynb` and a full `full_experiment_<test>.ipynb` (consent
+→ test → thank-you):
+
+- `drag_and_drop_mushra` — MUSHRA-like drag-and-drop rating.
+- `staircase_n_afc` — adaptive staircase driving N-AFC trials.
+- `abx` — ABX discrimination.
+
+Each building_block_<test>.ipynb and full_experiment_<test>.ipynb provides additional 
+instructions for smooth use.
+
+### Quick start
 
 ```python
 import whispy
@@ -31,20 +93,12 @@ for screen in schedule:
     results = ui.get_results(results)
 ```
 
-See the runnable demos in [`examples/`](examples/) — each test ships as a minimal
-`building_block_<test>.ipynb` and a full `full_experiment_<test>.ipynb` (consent
-→ test → thank-you):
-
-- `drag_and_drop_mushra` — MUSHRA-like drag-and-drop rating.
-- `staircase_n_afc` — adaptive staircase driving N-AFC trials.
-- `abx` — ABX discrimination.
-
 ## Architecture
 
-A notebook (the *driver*) reads one self-contained YAML config, an *orchestrator*
+A jupyter-notebook (the *driver*) reads one self-contained YAML config, an *orchestrator*
 turns it into a sequence of screens, a *UI* presents each screen and plays its
-stimuli through the audio *interface*, and every screen's answers are collected
-into a results table.
+stimuli through the audio *interface*, and every screen's answers are collected 
+into a results table, combined with a participants ID.
 
 ```mermaid
 %%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"14px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
@@ -90,16 +144,14 @@ flowchart TB
     NB -->|"ABX trials"| AB
     SCH -->|"screen dicts"| MU
     STC -->|"N-AFC trials"| NA
-    UI -->|"play(stimulus)"| SH
     SH --> SD
+    UI -->|"play(stimulus)"| SH
     UI -->|"rows / trial"| GR
     GR --> SR
 
-    CFG -. feeds every layer .-> ORCH
-    CFG -.-> UI
     CFG -.-> AUD
-    C3 -.-> IN
-    C4 -.-> QU
+    CFG -.-> UI 
+    CFG -. feeds every layer .-> ORCH
 
     classDef cfg fill:#E9C46A,stroke:#C9A227,stroke-width:1.5px,color:#5a4708;
     classDef orch fill:#E76F51,stroke:#c0492f,stroke-width:1.5px,color:#fff;
@@ -114,6 +166,7 @@ flowchart TB
     class GR,SR res;
     class NB drv;
 
+    %% soft per-cluster background tints (a light wash of each group's colour)
     style DRV fill:#ECEDF1,stroke:#2D3142,stroke-width:1.5px,color:#2D3142;
     style CFG fill:#FBF3DC,stroke:#E9C46A,stroke-width:1.5px,color:#5a4708;
     style ORCH fill:#FBE5DE,stroke:#E76F51,stroke-width:1.5px,color:#7a2e1c;
@@ -121,13 +174,22 @@ flowchart TB
     style AUD fill:#DEE5E8,stroke:#264653,stroke-width:1.5px,color:#264653;
     style RES fill:#E9F0E5,stroke:#8AB17D,stroke-width:1.5px,color:#3f5a33;
 
+    %% edges: data flow in grey, the dotted config feeds in soft gold
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
-    linkStyle 9,10,11,12,13 stroke:#caa83f,stroke-width:1.4px;
+    linkStyle 9,10,11 stroke:#caa83f,stroke-width:1.4px;
 ```
 
 > The same diagram lives in [`docs/architecture.mmd`](docs/architecture.mmd) —
 > the editable source you can paste into [mermaid.live](https://mermaid.live) to
 > export a PNG/SVG for slides. Keep the two in sync when you change it.
+
+## Authors and acknowledgement
+
+Brinkmann, Fabian
+Strobl, Tom
+Goldfuss, Jonathan
+Ventura, Aron Manuel
+Will, Maximilian 
 
 ## License
 

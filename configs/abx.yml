@@ -74,6 +74,6 @@ pairs:
 # ----------------------------- Experiment ---------------------------------- #
 # How the notebook turns the pairs into a trial list.
 experiment:
-  repetitions: 6        # how many times each pair is presented
+  repetitions: 2        # how many times each pair is presented
   shuffle_trials: true  # randomize the order of all trials
   seed: 0               # RNG seed for reproducible order / X assignment
