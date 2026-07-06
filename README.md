@@ -17,21 +17,34 @@ Available predefined test setups:
 ## User Interface
 
 The welcome screen, first seen by the participant (can be configured in <welcome.yml>):
-![Welcome screen](/images/welcome_screen.png)
+
+<img src="/images/welcome_screen.png" width="600" alt="Welcome screen">
+
 The ID and consent screen. There the participant sets his own ID, gives (or rejects)
 the use of the respective data and is able to collect listening hours needed as a 
 Audiocommunication and -technoligy student:
-![ID and consent screen](/images/ID_and_consent_screen.png)
+
+<img src="/images/ID_and_consent_screen.png" width="600" alt="Welcome screen">
+
 The ABX-test screen:
-![ABX Test screen](/images/ABX_test_screen.png)
+
+<img src="/images/ABX_test_screen.png" width="600" alt="Welcome screen">
+
 A drag-and-drop-MUSHRA Info-window explaining the following task:
-![drag and drop MUSHRA info window](/images/Info_window_MUSHRA.png)
+
+<img src="/images/Info_window_MUSHRA.png" width="200" alt="Welcome screen">
+
 The drag-and-drop-MUSHRA-test screen:
-![Drag and drop MUSHRA test screen](/images/d_a_d_MUSHRA_screen.png)
+
+<img src="/images/d_a_d_MUSHRA_screen.png" width="600" alt="Welcome screen">
+
 The Staircase N-AFC-test screen
-![Staircase N-AFC test screen](/images/Staircase_N_ACF_Test_screen.png)
+
+<img src="/images/Staircase_N_ACF_Test_screen.png" width="600" alt="Welcome screen">
+
 The thank you screen (the shown greeting can be configured in <thanks.yml>):
-![Thank you screen](/images/Thank_you_screen.png)
+
+<img src="/images/Thank_you_screen.png" width="600" alt="Welcome screen">
 
 ## Installation
 
@@ -185,11 +198,11 @@ flowchart TB
 
 ## Authors and acknowledgement
 
-Brinkmann, Fabian
-Strobl, Tom
-Goldfuss, Jonathan
-Ventura, Aron Manuel
-Will, Maximilian 
+Brinkmann, Fabian; 
+Strobl, Tom; 
+Goldfuss, Jonathan; 
+Ventura, Aron Manuel; 
+Will, Maximilian; 
 
 ## License
 
