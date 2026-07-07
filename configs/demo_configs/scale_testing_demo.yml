@@ -1,5 +1,5 @@
 # =============================================================================
-# Audience demo - scale testing on funny sounds (per-stimulus questions)
+# Audience demo - scale testing on movie quotes (per-stimulus questions)
 # =============================================================================
 # Demo variant of configs/scale_testing.yml, used by
 # examples/full_experiment_audience_demo.ipynb. Demonstrates per-stimulus
@@ -10,30 +10,29 @@
 #   - ScaleTest     -> the `ui:` and `per_stimulus_questions:` blocks
 #   - the scheduler -> the `experiment:` block
 #
-# Three funny/memorable clips rated on different scales:
-#   - boing (5 questions): energy, familiarity, weirdness, funniness, ringtone
-#   - sad_trombone (3 questions): sadness, funniness, effectiveness
-#   - alien_chatter (1 question): alien/weirdness
+# Three famous movie quotes rated on different scales:
+#   - reservoir_dogs (5 questions): outrage, funniness, tipping, intensity, familiarity
+#   - box_of_chocolates (3 questions): sentimentality, wisdom, agreement
+#   - jack_sparrow (1 question): recognizability
 #
 # This demonstrates that stimuli can be rated independently on different scales.
 
 # ------------------------------- Stimuli ----------------------------------- #
-# WAVs live in examples/demo_stimuli/audience_demo/ (regenerate with
-# generate_audience_demo_stimuli.py).
+# WAVs live in examples/demo_stimuli/audience_demo/movie_quotes/.
 SoundDevice:
-  boing:         { file: boing.wav }          # cartoon spring
-  sad_trombone:  { file: sad_trombone.wav }   # wah wah wah waaah
-  alien_chatter: { file: alien_chatter.wav }  # random bleeps (spare)
+  reservoir_dogs:    { file: movie_quotes/reservoir_dogs.wav }     # Reservoir Dogs
+  box_of_chocolates: { file: movie_quotes/box_of_chocolates.wav }  # Forrest Gump
+  jack_sparrow:      { file: movie_quotes/jack_sparrow.wav }       # Pirates of the Caribbean
 
 # ------------------------------ Questions ---------------------------------- #
 # Demonstrate per-stimulus questions: different stimuli rated on different scales.
-# Each stimulus below has its own set of questions, showing that boing gets 5
-# questions, sad_trombone gets 3, and alien_chatter gets just 1.
+# Each stimulus below has its own set of questions, showing that reservoir_dogs
+# gets 5 questions, box_of_chocolates gets 3, and jack_sparrow gets just 1.
 
 # Global fallback (not used here since all stimuli have per_stimulus_questions)
 questions:
   - id: weirdness
-    prompt: "How **weird** is this sound?"
+    prompt: "How **weird** is this quote?"
     scale_type: likert
     interaction_method: buttons
     scale_range: [1, 7]
@@ -41,66 +40,67 @@ questions:
 
 # Per-stimulus questions: each stimulus rated on different scales
 per_stimulus_questions:
-  boing:
-    # 5 questions for the boing sound
-    - id: weirdness
-      prompt: "How **weird** is this sound?"
+  reservoir_dogs:
+    # 5 questions for the Reservoir Dogs tipping scene
+    # ("- I don't tip. - You don't believe in tipping?")
+    - id: outrage
+      prompt: "How **scandalous** is refusing to tip?"
       scale_type: likert
       interaction_method: buttons
       scale_range: [1, 7]
-      labels: ["not weird at all", "extremely weird"]
+      labels: ["perfectly fine", "absolutely scandalous"]
     - id: funniness
-      prompt: "How **funny** is this sound?"
+      prompt: "How **funny** is this exchange?"
       scale_type: continuous
       interaction_method: slider
       scale_range: [0, 100]
       labels: ["not funny", "hilarious"]
-    - id: ringtone
-      prompt: "Would you set this sound as your **ringtone**?"
+    - id: tipping
+      prompt: "And you? Do you **believe** in tipping?"
       scale_type: bipolar
       interaction_method: buttons
       scale_range: [-5, 5]
-      labels: ["never", "absolutely"]
-    - id: energy
-      prompt: "How **energetic** does this sound feel?"
+      labels: ["not at all", "absolutely"]
+    - id: intensity
+      prompt: "How **heated** does this exchange feel?"
       scale_type: likert
       interaction_method: buttons
       scale_range: [1, 5]
-      labels: ["low energy", "high energy"]
+      labels: ["calm", "very heated"]
     - id: familiarity
-      prompt: "How **familiar** is this sound?"
+      prompt: "How often have you **seen or heard** this scene before?"
       scale_type: likert
       interaction_method: buttons
       scale_range: [1, 5]
-      labels: ["never heard", "rarely", "sometimes", "often", "all the time"]
-  sad_trombone:
-    # 3 questions for the sad trombone
-    - id: sadness
-      prompt: "How **sad** does this sound?"
+      labels: ["never", "rarely", "sometimes", "often", "all the time"]
+  box_of_chocolates:
+    # 3 questions for the Forrest Gump quote
+    - id: sentimentality
+      prompt: "How **sentimental** does this quote feel?"
       scale_type: continuous
       interaction_method: slider
       scale_range: [0, 100]
-      labels: ["not sad", "extremely sad"]
-    - id: funniness
-      prompt: "How **funny** is this sound?"
+      labels: ["not sentimental", "extremely sentimental"]
+    - id: wisdom
+      prompt: "How much **life wisdom** is in this quote?"
       scale_type: likert
       interaction_method: buttons
       scale_range: [1, 5]
-      labels: ["not funny", "very funny"]
-    - id: effectiveness
-      prompt: "How **effective** is this as a \"fail\" sound?"
+      labels: ["none at all", "deeply wise"]
+    - id: agreement
+      prompt: "Is life really like a box of chocolates?"
       scale_type: bipolar
       interaction_method: buttons
       scale_range: [-5, 5]
-      labels: ["not effective", "extremely effective"]
-  alien_chatter:
-    # 1 question for the alien chatter (minimal)
-    - id: weirdness
-      prompt: "How **alien** does this sound?"
+      labels: ["definitely not", "absolutely"]
+  jack_sparrow:
+    # 1 question for the Jack Sparrow quote (minimal)
+    - id: recognizability
+      prompt: "How **recognizable** is this movie quote?"
       scale_type: likert
       interaction_method: buttons
       scale_range: [1, 7]
-      labels: ["very human-like", "extremely alien"]
+      labels: ["no idea which movie", "instantly recognizable"]
 
 # ---------------------------- ScaleTest window ------------------------------ #
 ui:
@@ -115,17 +115,17 @@ ui:
 
 # -------------------------------- Trial ------------------------------------ #
 trial:
-  task: "Listen to the sound and rate it on every scale below."
+  task: "Listen to the movie quote and rate it on every scale below."
 
 # ------------------------------ Experiment --------------------------------- #
 # Which stimuli are rated (one per screen, order randomized by the scheduler).
 # Three stimuli demonstrate per-stimulus questions:
-#   - boing: 5 questions (energy, familiarity, weirdness, funniness, ringtone)
-#   - sad_trombone: 3 questions (sadness, funniness, effectiveness)
-#   - alien_chatter: 1 question (weirdness/alien)
+#   - reservoir_dogs: 5 questions (outrage, funniness, tipping, intensity, familiarity)
+#   - box_of_chocolates: 3 questions (sentimentality, wisdom, agreement)
+#   - jack_sparrow: 1 question (recognizability)
 experiment:
   - block:
-      - block_name: funny sounds
+      - block_name: movie quotes
       - section:
-          section_name: novelty audio
-          test: [boing, sad_trombone, alien_chatter]
+          section_name: famous quotes
+          test: [reservoir_dogs, box_of_chocolates, jack_sparrow]
