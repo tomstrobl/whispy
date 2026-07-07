@@ -1,0 +1,49 @@
+# =============================================================================
+# Audience demo - ABX discrimination (short & fun)
+# =============================================================================
+# Demo variant of configs/abx.yml, used by
+# examples/full_experiment_audience_demo.ipynb. Same three consumers:
+#   - SoundDevice  -> the `SoundDevice:` block (which WAV plays for each id)
+#   - ABX window   -> the `test:` and `ui:` blocks (passed as `abx_config`)
+#   - the notebook -> the `trial:`, `pairs:` and `experiment:` blocks
+#
+# Two clearly different pairs, one presentation each -> 2 quick trials that
+# showcase the ABX window (A/B/X playback buttons + A/B answer) in ~1 minute.
+
+# ------------------------------- Stimuli ----------------------------------- #
+# WAVs live in examples/demo_stimuli/audience_demo/ (regenerate with
+# generate_audience_demo_stimuli.py).
+SoundDevice:
+  major_chord:  { file: major_chord.wav }   # C major triad ("happy")
+  minor_chord:  { file: minor_chord.wav }   # C minor triad ("sad")
+  steady_tone:  { file: steady_tone.wav }   # plain 440 Hz tone
+  vibrato_tone: { file: vibrato_tone.wav }  # same tone with strong vibrato
+
+# ---------------------------- ABX window ----------------------------------- #
+test:
+  shuffle_ab: true   # randomize which stimulus of a pair is shown as A vs B
+ui:
+  content_area_size: [60, 80]
+  listen_label: "Listen:"
+  answer_label: "Your answer - X is the same as:"
+  submit_hint: "Play A, B and X (keys A/B/X), choose with ←/→, then press Enter to submit. \n You can also click the buttons with the mouse."
+  submit_button_text: "Submit choice"
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
+
+# -------------------------------- Trial ------------------------------------ #
+trial:
+  task: "Is **X** the same as **A** or **B**?"
+  block_name: Audience demo
+
+# -------------------------------- Pairs ------------------------------------ #
+# Each pair is one A/B comparison; `name` labels it in the results.
+pairs:
+  - { a: major_chord, b: minor_chord, name: happy vs sad chord }
+  - { a: steady_tone, b: vibrato_tone, name: steady vs vibrato }
+
+# ----------------------------- Experiment ---------------------------------- #
+experiment:
+  repetitions: 1        # one presentation per pair -> 2 trials total
+  shuffle_trials: true
+  seed: 7

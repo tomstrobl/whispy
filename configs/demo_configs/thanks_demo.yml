@@ -1,0 +1,23 @@
+# "Thank you" screen for the audience demo
+# (examples/full_experiment_audience_demo.ipynb). Demo variant of
+# configs/thanks.yml - shown once after the experiment finishes.
+#
+# The look (colors, fonts, button styling) is inherited from the global theme
+# in configs/design.yml so it matches the listening tests.
+
+ui:
+  # The message shown to the audience. Markdown is supported.
+  message: |
+    # That's it - thank you!
+
+    You just completed a full listening experiment:
+    consent, an adaptive staircase, ABX, and scale ratings.
+
+    Your responses were saved as CSV files named with your **anonymous
+    participant ID** - the experimenter will show them to you now.
+
+    *Built with whispy: one notebook, a handful of YAML files, zero code
+    changes.*
+  # Show the screen fullscreen (matches the experiment windows). Set to false
+  # for a small centered popup.
+  fullscreen: true
