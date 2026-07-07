@@ -46,7 +46,7 @@ ui:
   # add any design key here to override it for this experiment only. This
   # block keeps the wording plus two per-experiment layout overrides.
   # Share of the free vertical space above the content area (design.yml: 0.6).
-  content_top_share: 0.8
+  content_top_share: 0.9
   # Gap between the submit button and the hint below it (design.yml: 16).
   submit_hint_spacing: 45
   submit_hint: "Press the number keys (or click) to hear each interval, \n then press Enter to submit your choice."

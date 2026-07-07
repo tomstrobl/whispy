@@ -33,7 +33,7 @@ test:
   n_choices: 2            # 2-AFC: one standard interval, one target interval
   shuffle_choices: true   # randomize button order so position carries no info
   single_replay: false    # unlimited replays (keep the demo forgiving)
-  autoplay: true          # each trial starts by playing both intervals once -
+  autoplay: false          # each trial starts by playing both intervals once -
                           # keeps a live demo moving without extra clicks
   autoplay_gap: 0.3       # seconds of silence between autoplayed intervals
 ui:

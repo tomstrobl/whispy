@@ -189,8 +189,10 @@ Two more building blocks provide the framing around a test:
 - `building_block_welcome_and_thanks.ipynb` - the welcome screen shown before
   everything and the thank-you screen shown at the end
   (`configs/welcome.yml`, `configs/thanks.yml`).
-- `building_block_consent.ipynb` - the consent questionnaire that also
-  creates the anonymous participant ID (section 9).
+- `building_block_questionnaire.ipynb` - runs any questionnaire config
+  (demo: the general pre-experiment survey); run it with the consent
+  questionnaire (`configs/questionnaires/questionnaire_consent.yml`) and it
+  also creates the anonymous participant ID (section 9).
 
 **To build your own custom experiment**, create a new notebook and paste
 cells from the building blocks in the order you want (welcome → consent →
