@@ -13,12 +13,12 @@ ui:
     You are about to take part in a **real perceptual listening experiment** -
     exactly the kind whispy is built to run.
 
-    In the next ~6 minutes you will:
+    In the next 6-10 minutes you will:
 
-    1. give (mock) consent and receive an **anonymous participant ID**,
-    2. hunt for your **pitch-discrimination threshold** in an adaptive test,
-    3. play a quick round of **ABX** ("is X the same as A or B?"),
-    4. rate some **questionable sounds** on very serious scientific scales.
+    1. give (mock) consent and receive an **anonymous participant ID**
+    2. hunt for your **pitch-discrimination threshold** in an adaptive test
+    3. play a quick round of **ABX** 
+    4. rate some **questionable sounds** on very serious scientific scales
 
     Everything you see is driven by small YAML config files - no code was
     edited to build this experiment.

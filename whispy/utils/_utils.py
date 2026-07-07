@@ -39,7 +39,6 @@ def format_markdown(text: str) -> str:
             re.match(r"^\s*([-+*]|\d+[.)])\s+", line)
             and not re.match(r"^\s*([-+*]|\d+[.)])\s+", next_line)
             and next_line.strip()
-            and next_line.strip() != "&nbsp;"
         ):
             out.append("\n\n")
         else:

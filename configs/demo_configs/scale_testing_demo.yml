@@ -1,47 +1,106 @@
 # =============================================================================
-# Audience demo - scale testing on funny sounds
+# Audience demo - scale testing on funny sounds (per-stimulus questions)
 # =============================================================================
 # Demo variant of configs/scale_testing.yml, used by
-# examples/full_experiment_audience_demo.ipynb. Same three consumers:
+# examples/full_experiment_audience_demo.ipynb. Demonstrates per-stimulus
+# questions: same three consumers, but each stimulus is rated on different
+# scales.
+#
 #   - SoundDevice   -> the `SoundDevice:` block (which WAV plays for each id)
-#   - ScaleTest     -> the `ui:` and `questions:` blocks
+#   - ScaleTest     -> the `ui:` and `per_stimulus_questions:` blocks
 #   - the scheduler -> the `experiment:` block
 #
-# Two funny/memorable clips rated on three humorous scales - one question per
-# interaction method (buttons, slider, bipolar_slider) so the audience sees
-# every scale widget in ~1 minute.
+# Three funny/memorable clips rated on different scales:
+#   - boing (5 questions): energy, familiarity, weirdness, funniness, ringtone
+#   - sad_trombone (3 questions): sadness, funniness, effectiveness
+#   - alien_chatter (1 question): alien/weirdness
+#
+# This demonstrates that stimuli can be rated independently on different scales.
 
 # ------------------------------- Stimuli ----------------------------------- #
 # WAVs live in examples/demo_stimuli/audience_demo/ (regenerate with
-# generate_audience_demo_stimuli.py). `alien_chatter` is a spare: add it to
-# the `test:` list below for a third screen.
+# generate_audience_demo_stimuli.py).
 SoundDevice:
   boing:         { file: boing.wav }          # cartoon spring
   sad_trombone:  { file: sad_trombone.wav }   # wah wah wah waaah
   alien_chatter: { file: alien_chatter.wav }  # random bleeps (spare)
 
 # ------------------------------ Questions ---------------------------------- #
-# The scales stacked below the play button, shown in this order on EVERY
-# screen (see configs/scale_testing.yml for the full key reference).
+# Demonstrate per-stimulus questions: different stimuli rated on different scales.
+# Each stimulus below has its own set of questions, showing that boing gets 5
+# questions, sad_trombone gets 3, and alien_chatter gets just 1.
+
+# Global fallback (not used here since all stimuli have per_stimulus_questions)
 questions:
   - id: weirdness
     prompt: "How **weird** is this sound?"
     scale_type: likert
     interaction_method: buttons
-    scale_range: [1, 5]
+    scale_range: [1, 7]
     labels: ["not weird at all", "extremely weird"]
-  - id: funniness
-    prompt: "How **funny** is this sound?"
-    scale_type: continuous
-    interaction_method: slider
-    scale_range: [0, 100]
-    labels: ["not funny", "hilarious"]
-  - id: ringtone
-    prompt: "Would you set this sound as your **ringtone**?"
-    scale_type: bipolar
-    interaction_method: bipolar_slider
-    scale_range: [-5, 5]
-    labels: ["never", "unsure", "absolutely"]
+
+# Per-stimulus questions: each stimulus rated on different scales
+per_stimulus_questions:
+  boing:
+    # 5 questions for the boing sound
+    - id: weirdness
+      prompt: "How **weird** is this sound?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 7]
+      labels: ["not weird at all", "extremely weird"]
+    - id: funniness
+      prompt: "How **funny** is this sound?"
+      scale_type: continuous
+      interaction_method: slider
+      scale_range: [0, 100]
+      labels: ["not funny", "hilarious"]
+    - id: ringtone
+      prompt: "Would you set this sound as your **ringtone**?"
+      scale_type: bipolar
+      interaction_method: buttons
+      scale_range: [-5, 5]
+      labels: ["never", "absolutely"]
+    - id: energy
+      prompt: "How **energetic** does this sound feel?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 5]
+      labels: ["low energy", "high energy"]
+    - id: familiarity
+      prompt: "How **familiar** is this sound?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 5]
+      labels: ["never heard", "rarely", "sometimes", "often", "all the time"]
+  sad_trombone:
+    # 3 questions for the sad trombone
+    - id: sadness
+      prompt: "How **sad** does this sound?"
+      scale_type: continuous
+      interaction_method: slider
+      scale_range: [0, 100]
+      labels: ["not sad", "extremely sad"]
+    - id: funniness
+      prompt: "How **funny** is this sound?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 5]
+      labels: ["not funny", "very funny"]
+    - id: effectiveness
+      prompt: "How **effective** is this as a \"fail\" sound?"
+      scale_type: bipolar
+      interaction_method: buttons
+      scale_range: [-5, 5]
+      labels: ["not effective", "extremely effective"]
+  alien_chatter:
+    # 1 question for the alien chatter (minimal)
+    - id: weirdness
+      prompt: "How **alien** does this sound?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 7]
+      labels: ["very human-like", "extremely alien"]
 
 # ---------------------------- ScaleTest window ------------------------------ #
 ui:
@@ -60,9 +119,13 @@ trial:
 
 # ------------------------------ Experiment --------------------------------- #
 # Which stimuli are rated (one per screen, order randomized by the scheduler).
+# Three stimuli demonstrate per-stimulus questions:
+#   - boing: 5 questions (energy, familiarity, weirdness, funniness, ringtone)
+#   - sad_trombone: 3 questions (sadness, funniness, effectiveness)
+#   - alien_chatter: 1 question (weirdness/alien)
 experiment:
   - block:
       - block_name: funny sounds
       - section:
           section_name: novelty audio
-          test: [boing, sad_trombone]
+          test: [boing, sad_trombone, alien_chatter]

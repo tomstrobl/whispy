@@ -27,8 +27,26 @@ SoundDevice:
   rough_bright:  { file: rough_bright.wav }
 
 # ------------------------------ Questions ---------------------------------- #
-# The rating scales stacked below the play button, shown in this order on
-# EVERY screen. Each question carries:
+# The rating scales stacked below the play button. You can:
+#
+#   A) Use a GLOBAL questions list (shown on EVERY screen):
+#      questions:
+#        - id: roughness
+#          ...
+#
+#   B) Use PER-STIMULUS questions (each stimulus rated on different scales):
+#      questions:
+#        _default:  # fallback for stimuli without a dedicated list
+#          - id: roughness
+#            ...
+#        smooth_dark:
+#          - id: roughness
+#            ...
+#        smooth_bright:
+#          - id: brightness
+#            ...
+#
+# Each question carries:
 #   id                 -> results column `question` (defaults to q1, q2, ...)
 #   prompt             -> the wording above the scale (markdown)
 #   scale_type         -> free label recorded in the results (e.g. likert,
@@ -45,6 +63,8 @@ SoundDevice:
 #                         PER STEP puts a small label under each button; a
 #                         bipolar_slider takes THREE entries as
 #                         [left, center, right] (center under the zero tick)
+
+# Global questions list: shown on every screen
 questions:
   - id: roughness
     prompt: "How **rough** does the sound feel?"
@@ -70,6 +90,51 @@ questions:
     interaction_method: buttons
     scale_range: [-5, 5]
     labels: ["softer", "sharper"]
+
+# Uncomment below to use PER-STIMULUS questions instead of the global list above.
+# The notebook will look up these per-stimulus definitions and pass them to ScaleTest.
+#
+# per_stimulus_questions:
+#   smooth_dark:
+#     - id: roughness
+#       prompt: "How **rough** does the sound feel?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["smooth", "rough"]
+#   smooth_bright:
+#     - id: brightness
+#       prompt: "How **bright** is the sound?"
+#       scale_type: continuous
+#       interaction_method: slider
+#       scale_range: [0, 100]
+#       labels: ["dark", "bright"]
+#     - id: pleasantness
+#       prompt: "How **pleasant** is the sound?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["very unpleasant", "unpleasant", "neutral", "pleasant", "very pleasant"]
+#     - id: sharpness
+#       prompt: "Compared to a neutral tone, is the sound **softer or sharper**?"
+#       scale_type: bipolar
+#       interaction_method: buttons
+#       scale_range: [-5, 5]
+#       labels: ["softer", "sharper"]
+#   rough_dark:
+#     - id: roughness
+#       prompt: "How **rough** does the sound feel?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["smooth", "rough"]
+#   rough_bright:
+#     - id: roughness
+#       prompt: "How **rough** does the sound feel?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["smooth", "rough"]
 
 # ---------------------------- ScaleTest window ------------------------------ #
 # Colors/fonts come from design.yml; anything under `ui:` overrides that
