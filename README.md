@@ -75,6 +75,10 @@ and works with:
 
 ## Usage
 
+**New to whispy (or to Python)?** Start with the step-by-step
+[User Manual](docs/USER_MANUAL.md) — it covers installation, running the
+demos, designing your own experiment via the YAML configs, and troubleshooting.
+
 See the runnable demos in [`examples/`](examples/) — each test ships as a minimal
 `building_block_<test>.ipynb` and a full `full_experiment_<test>.ipynb` (consent
 → test → thank-you):
