@@ -182,7 +182,7 @@ need to edit the Python in the notebooks.**
 | **ABX** | Can two sounds be told apart at all? Participant hears A, B, and X (a copy of A or B) and says which one X matches. Chance level is 50 %. | `building_block_abx.ipynb`, `full_experiment_abx.ipynb` | `configs/abx.yml` |
 | **MUSHRA (drag & drop)** | How do several versions of a sound *rate* against a reference (e.g. audio quality)? Participant drags one tile per stimulus onto a rating scale. | `building_block_drag_and_drop_mushra.ipynb`, `full_experiment_drag_and_drop_mushra.ipynb` | `configs/drag_and_drop_mushra.yml` |
 | **Staircase N-AFC** | What is the *threshold* of hearing a difference? An adaptive procedure makes trials harder after correct answers and easier after mistakes; each trial is an N-alternative forced choice ("which of these N sounds is the odd one out?"). | `building_block_staircase_n_afc.ipynb`, `full_experiment_staircase_n_afc.ipynb` | `configs/staircase_n_afc.yml` |
-| **Scale testing** | How does a single sound score on one or more rating scales (Likert buttons or sliders)? One stimulus per screen, several questions stacked below it. | `building_block_scale_testing.ipynb` (building block only) | `configs/scale_testing.yml` |
+| **Scale testing** | How does a single sound score on one or more rating scales (Likert buttons or sliders)? One stimulus per screen, several questions stacked below it. | `building_block_scale_testing.ipynb`, `full_experiment_scale_testing.ipynb` | `configs/scale_testing.yml` |
 
 Two more building blocks provide the framing around a test:
 
