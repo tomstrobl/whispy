@@ -10,45 +10,26 @@ be chosen or individual test setups can be compiled from the building blocks.
 
 Available predefined test setups:
 
-- ABX
-- Mushra (Drag and drop)
-- Staircase N-AFC
+- $\underline{ABX} \\$ 
+Simple comparison test to distinguish perceptual differences. A reference signal and a manipulated signal is randomly assigned to A and B and also to X and the participants task is to identify whether A is equal to X or B is equal to X.
 
-## User Interface
+- $\underline{MUSHRA\ (drag\ and\ drop)} \\$
+MUltiple Stimuli with Hidden Reference and Anchor - test, a standardized methodology used to evaluate the perceived quality of intermediate-to-high quality audio systems, such as audio codecs, generative speech models, and spatial audio. Defined by the ITU-R BS. 1534 recommendation, it allows listeners to compare multiple audio samples simultaneously against a known reference and rate them on a continuous scale from 0 to 100 (e.g., rate a difference) or -50 to 50 (e.g., lower or higher comparison).
+In this case (drag-and-drop) the participant can drag and drop the test stimuli into a rating area which allows for a more natural interaction.
 
-The welcome screen, first seen by the participant (can be configured in <welcome.yml>):
+- $\underline{Staircase\ N-AFC} \\$
+n-AFC (n-Alternative Forced Choice): In every trial, the participant is presented with n options (usually 2, 3, or 4). For example, in a 3-AFC test, the participant is given three stimuli (e.g., three different flavors, or three time intervals) and is "forced" to choose which one is different or more intense, even if they have to guess. This prevents participants from relying on arbitrary "yes/no" criteria.$\\$
+Staircase (Up-Down) Method: This is the adaptive testing algorithm. The test gets harder when the participant gets answers right and easier when they get answers wrong.
 
-<img src="/images/welcome_screen.png" width="600" alt="Welcome screen">
+- $\underline{Scale test} \\$
+Rating test for a given stimulus (e.g., "How rough is this tone?") $\\$
 
-The ID and consent screen. There the participant sets his own ID, gives (or rejects)
-the use of the respective data and is able to collect listening hours needed as a 
-Audiocommunication and -technoligy student:
+#### *`Every test can be tailored in the respective <test>.yml config-files to meet the individual requirenments.`*
 
-<img src="/images/ID_and_consent_screen.png" width="600" alt="Welcome screen">
-
-The ABX-test screen:
-
-<img src="/images/ABX_test_screen.png" width="600" alt="Welcome screen">
-
-A drag-and-drop-MUSHRA Info-window explaining the following task:
-
-<img src="/images/Info_window_MUSHRA.png" width="200" alt="Welcome screen">
-
-The drag-and-drop-MUSHRA-test screen:
-
-<img src="/images/d_a_d_MUSHRA_screen.png" width="600" alt="Welcome screen">
-
-The Staircase N-AFC-test screen
-
-<img src="/images/Staircase_N_ACF_Test_screen.png" width="600" alt="Welcome screen">
-
-The thank you screen (the shown greeting can be configured in <thanks.yml>):
-
-<img src="/images/Thank_you_screen.png" width="600" alt="Welcome screen">
 
 ## Installation
 
-Clone the repository to your local mashine. Navigate with `cd` to your desired 
+Clone the repository to your local machine. Navigate with `cd` to your desired 
 folder and run:
 ```
 git clone https://github.com/tomstrobl/whispy.git
@@ -63,15 +44,9 @@ jupyter notebooks in your prefered IDE and the whispy-blocks are executable.
 
 ### Requirements
 
-Whispy runs in:
-*already tested*
-- Visual Studio Code
-- 
-
-and works with:
+works with:
 - python verions >= 3.13.13 
 - anaconda >= 22.9.0
-
 
 ## Usage
 
@@ -83,28 +58,9 @@ See the runnable demos in [`examples/`](examples/) — each test ships as a mini
 - `staircase_n_afc` — adaptive staircase driving N-AFC trials.
 - `abx` — ABX discrimination.
 
-Each building_block_<test>.ipynb and full_experiment_<test>.ipynb provides additional 
+Each building_block_<test>.ipynb- and full_experiment_<test>.ipynb-file provides additional 
 instructions for smooth use.
 
-### Quick start
-
-```python
-import whispy
-from whispy.interfaces import SoundDevice
-
-config = "configs/drag_and_drop_mushra.yml"   # one self-contained experiment file
-cfg = whispy.utils.read_config(config)
-handler = SoundDevice(config, "examples/demo_stimuli/mushra")  # reads the SoundDevice: block
-
-# Randomized course of trials from the config's `experiment:` block
-schedule = whispy.ExperimentScheduler(experiment=cfg)
-
-results = None
-for screen in schedule:
-    ui = whispy.ui.DragAndDropMUSHRA(
-        screen=screen, stimuli_handler=handler, drag_and_drop_mushra=cfg)
-    results = ui.get_results(results)
-```
 
 ## Architecture
 
@@ -195,6 +151,17 @@ flowchart TB
 > The same diagram lives in [`docs/architecture.mmd`](docs/architecture.mmd) —
 > the editable source you can paste into [mermaid.live](https://mermaid.live) to
 > export a PNG/SVG for slides. Keep the two in sync when you change it.
+
+
+## Example User Interfaces
+
+The ABX-test screen:
+
+<img src="/images/ABX_test_screen.png" width="500" alt="Welcome screen">
+
+The drag-and-drop-MUSHRA-test screen:
+
+<img src="/images/d_a_d_MUSHRA_screen.png" width="500" alt="Welcome screen">
 
 ## Authors and acknowledgement
 
