@@ -5,7 +5,7 @@
 # thing configured elsewhere is the shared look of the UIs (configs/design.yml).
 #
 # It is read by four consumers, each picking out the keys it needs:
-#   - SoundDevice          -> the `SoundDevice:` block (which WAV plays per id)
+#   - the stimuli handler   -> `SoundDevice:` or `OSCHandler:`, picked by `output:`
 #   - DragAndDropMUSHRA     -> the `ui:` block (window size, area size, autoplay)
 #   - DragAndDropMUSHRA     -> the `attributes:` block (the rating scales)
 #   - ExperimentScheduler   -> the `experiment:` block (blocks/sections/order)
@@ -13,16 +13,36 @@
 # Edit the values below to design your own experiment; you should not need to
 # touch any Python.
 
+# --------------------------- Output backend --------------------------------- #
+# Which stimuli handler `build_stimuli_handler()` builds: "sounddevice" (play
+# the WAVs below) or "osc" (send an OSC message per stimulus instead - see
+# OSCHandler: below). Switching is just this one key; the MUSHRA window code
+# stays the same either way.
+output: sounddevice
+
 # ------------------------------- Stimuli ----------------------------------- #
 # Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
 # the notebook). All files must share one sampling rate and must not clip.
 # Ids can be numbers or names; they are saved into the results, so prefer
-# descriptive names for a real experiment.
+# descriptive names for a real experiment. Used when `output: sounddevice`.
 SoundDevice:
   1: { file: stimulus_1.wav }
   2: { file: stimulus_2.wav }
   3: { file: stimulus_3.wav }
   4: { file: stimulus_4.wav }
+
+# Used when `output: osc` instead: one OSC message per stimulus id (sent via
+# UDP, no server/receiving side). `args` is optional. `stop_address` is sent
+# on `.stop()` (e.g. when a tile is released/deactivated).
+OSCHandler:
+  ip: "127.0.0.1"
+  port: 9000
+  stop_address: "/whispy/mushra/stop"
+  stimuli:
+    1: { address: "/whispy/mushra/1" }
+    2: { address: "/whispy/mushra/2" }
+    3: { address: "/whispy/mushra/3" }
+    4: { address: "/whispy/mushra/4" }
 
 # ----------------------------- MUSHRA window ------------------------------- #
 # `ui` is read by the DragAndDropMUSHRA window. Colors/fonts come from

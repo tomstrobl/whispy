@@ -10,19 +10,22 @@ be chosen or individual test setups can be compiled from the building blocks.
 
 Available predefined test setups:
 
-- $\underline{ABX} \\$ 
-Simple comparison test to distinguish perceptual differences. A reference signal and a manipulated signal is randomly assigned to A and B and also to X and the participants task is to identify whether A is equal to X or B is equal to X.
+- ### ABX
+    Simple comparison test to distinguish perceptual differences. A reference signal and a manipulated signal is randomly assigned to A and B and also to X and the participants task is to identify whether A is equal to X or B is equal to X.
+    
+- ### MUSHRA (drag and drop)
+    MUltiple Stimuli with Hidden Reference and Anchor - test, a standardized methodology used to evaluate the perceived quality of intermediate-to-high quality audio systems, such as audio codecs, generative speech models, and spatial audio. Defined by the ITU-R BS. 1534 recommendation, it allows listeners to compare multiple audio samples simultaneously against a known reference and rate them on a continuous scale from 0 to 100 (e.g., rate a difference) or -50 to 50 (e.g., lower or higher comparison).
 
-- $\underline{MUSHRA\ (drag\ and\ drop)} \\$
-MUltiple Stimuli with Hidden Reference and Anchor - test, a standardized methodology used to evaluate the perceived quality of intermediate-to-high quality audio systems, such as audio codecs, generative speech models, and spatial audio. Defined by the ITU-R BS. 1534 recommendation, it allows listeners to compare multiple audio samples simultaneously against a known reference and rate them on a continuous scale from 0 to 100 (e.g., rate a difference) or -50 to 50 (e.g., lower or higher comparison).
-In this case (drag-and-drop) the participant can drag and drop the test stimuli into a rating area which allows for a more natural interaction.
+    In this case (drag-and-drop) the participant can drag and drop the test stimuli into a rating area which allows for a more natural interaction.
 
-- $\underline{Staircase\ N-AFC} \\$
-n-AFC (n-Alternative Forced Choice): In every trial, the participant is presented with n options (usually 2, 3, or 4). For example, in a 3-AFC test, the participant is given three stimuli (e.g., three different flavors, or three time intervals) and is "forced" to choose which one is different or more intense, even if they have to guess. This prevents participants from relying on arbitrary "yes/no" criteria.$\\$
-Staircase (Up-Down) Method: This is the adaptive testing algorithm. The test gets harder when the participant gets answers right and easier when they get answers wrong.
+- ### Staircase N-AFC
+    n-AFC (n-Alternative Forced Choice): In every trial, the participant is presented with n options (usually 2, 3, or 4). For example, in a 3-AFC test, the participant is given three stimuli (e.g., three different flavors, or three time intervals) and is "forced" to choose which one is different or more intense, even if they have to guess. This prevents participants from relying on arbitrary "yes/no" criteria.
 
-- $\underline{Scale test} \\$
-Rating test for a given stimulus (e.g., "How rough is this tone?") $\\$
+    
+    Staircase (Up-Down) Method: This is the adaptive testing algorithm. The test gets harder when the participant gets answers right and easier when they get answers wrong.
+
+- ### Scale test
+    Rating test for a given stimulus (e.g., "How rough is this tone?") $\\$
 
 #### *`Every test can be tailored in the respective <test>.yml config-files to meet the individual requirenments.`*
 

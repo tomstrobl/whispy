@@ -5,7 +5,7 @@
 # configured elsewhere is the shared look of the UIs (configs/design.yml).
 #
 # It is read by three consumers, each picking out the keys it needs:
-#   - SoundDevice   -> the `SoundDevice:` block (which WAV plays for each id)
+#   - the stimuli handler -> `SoundDevice:` or `OSCHandler:`, picked by `output:`
 #   - ScaleTest     -> the `ui:` and `questions:` blocks
 #   - the scheduler -> the `experiment:` block (blocks/sections/stimuli)
 #
@@ -16,15 +16,36 @@
 # Edit the values below to design your own experiment; you should not need to
 # touch any Python.
 
+# --------------------------- Output backend --------------------------------- #
+# Which stimuli handler `build_stimuli_handler()` builds: "sounddevice" (play
+# the WAVs below) or "osc" (send an OSC message per stimulus instead - see
+# OSCHandler: below). Switching is just this one key; the ScaleTest window
+# code stays the same either way.
+output: sounddevice
+
 # ------------------------------- Stimuli ----------------------------------- #
 # Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
 # the notebook). All files must share one sampling rate and must not clip.
-# Stimulus ids are written into the results — prefer descriptive names.
+# Stimulus ids are written into the results — prefer descriptive names. Used
+# when `output: sounddevice`.
 SoundDevice:
   smooth_dark:   { file: smooth_dark.wav }
   smooth_bright: { file: smooth_bright.wav }
   rough_dark:    { file: rough_dark.wav }
   rough_bright:  { file: rough_bright.wav }
+
+# Used when `output: osc` instead: one OSC message per stimulus id (sent via
+# UDP, no server/receiving side). `args` is optional. `stop_address` is sent
+# on `.stop()`; omit it if your receiver has no "stop" concept.
+OSCHandler:
+  ip: "127.0.0.1"
+  port: 9000
+  stop_address: "/whispy/scale/stop"
+  stimuli:
+    smooth_dark:   { address: "/whispy/scale/smooth_dark" }
+    smooth_bright: { address: "/whispy/scale/smooth_bright" }
+    rough_dark:    { address: "/whispy/scale/rough_dark" }
+    rough_bright:  { address: "/whispy/scale/rough_bright" }
 
 # ------------------------------ Questions ---------------------------------- #
 # The rating scales stacked below the play button, shown in this order on
