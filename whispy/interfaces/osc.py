@@ -70,7 +70,7 @@ class OSCHandler(StimuliHandler):
 
         cfg = read_config(stimuli)
 
-        if 'OSCHandler' not in cfg:
+        if not isinstance(cfg, dict) or 'OSCHandler' not in cfg:
             raise ValueError("Stimuli are not defined for OSCHandler")
 
         cfg = cfg["OSCHandler"]
