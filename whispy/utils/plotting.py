@@ -12,8 +12,8 @@ class Plotting:
     def plot_staircase(
         self,
         results: pd.DataFrame,
+        threshold: Optional[float] = None,
         title: Optional[str] = None,
-        reversals_for_threshold: int = 6,
     ) -> None:
         """Plot a staircase trace with reversal markers and a threshold line."""
         if not isinstance(results, pd.DataFrame):
@@ -34,10 +34,6 @@ class Plotting:
                 label="Reversal",
             )
 
-        threshold = self._estimate_threshold_level(
-            results,
-            reversals_for_threshold=reversals_for_threshold,
-        )
         if threshold is not None:
             plt.axhline(
                 threshold,
@@ -178,6 +174,80 @@ class Plotting:
         ax.legend(lines1 + lines2, labels1 + labels2, loc="best")
         plt.show()
 
+    def plot_staircase_rt_boxplot(
+        self,
+        results: pd.DataFrame,
+        correctness_col: str = "correct",
+        ax=None,
+    ) -> None:
+        """Boxplot staircase reaction times by response correctness."""
+        if not isinstance(results, pd.DataFrame):
+            raise TypeError("results must be a pandas DataFrame")
+        if correctness_col not in results.columns or "rt" not in results.columns:
+            raise ValueError("results must contain 'correctness' and 'rt' columns")
+
+        if ax is None:
+            _, ax = plt.subplots(figsize=(8, 5))
+
+        values = []
+        labels = []
+        colors = []
+        for correct in [True, False]:
+            subset = results.loc[results[correctness_col].fillna(False).astype(bool) == correct, "rt"]
+            if not subset.empty:
+                values.append(subset.dropna())
+                labels.append("correct" if correct else "incorrect")
+                colors.append("#2ca02c" if correct else "#d62728")
+
+        box = ax.boxplot(values, labels=labels, patch_artist=True)
+        for patch, color in zip(box["boxes"], colors):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.6)
+        for median in box["medians"]:
+            median.set_color("black")
+        ax.set_ylabel("RT (s)")
+        ax.set_title("Staircase RT by correctness")
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        plt.show()
+
+    def plot_staircase_correctness_rt_over_trials(
+        self,
+        results: pd.DataFrame,
+        window: int = 10,
+        ax=None,
+    ) -> None:
+        """Plot rolling correctness and RT over staircase trials."""
+        if not isinstance(results, pd.DataFrame):
+            raise TypeError("results must be a pandas DataFrame")
+        if "correct" not in results.columns or "rt" not in results.columns:
+            raise ValueError("results must contain 'correct' and 'rt' columns")
+
+        if ax is None:
+            _, ax = plt.subplots(figsize=(10, 6))
+
+        plot_df = results.copy()
+        plot_df = plot_df.reset_index(drop=True)
+        plot_df["correct"] = plot_df["correct"].fillna(False).astype(int)
+        plot_df["rt"] = pd.to_numeric(plot_df["rt"], errors="coerce")
+
+        correctness_series = plot_df["correct"].rolling(window=window, min_periods=1).mean()
+        rt_series = plot_df["rt"].rolling(window=window, min_periods=1).mean()
+
+        ax.plot(range(1, len(plot_df) + 1), correctness_series, label="Rolling accuracy")
+        ax2 = ax.twinx()
+        ax2.plot(range(1, len(plot_df) + 1), rt_series, color="tab:red", label="Rolling RT")
+
+        ax.set_xlabel("Trial")
+        ax.set_ylabel("Rolling accuracy")
+        ax2.set_ylabel("Rolling RT (s)")
+        ax.set_title("Staircase correctness and RT over trials")
+        ax.set_ylim(0, 1)
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        lines1, labels1 = ax.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax.legend(lines1 + lines2, labels1 + labels2, loc="best")
+        plt.show()
+
     def plot_mushra_mean_ratings(
         self,
         results: pd.DataFrame,
@@ -252,6 +322,7 @@ class Plotting:
         ax.set_xticks(list(range(len(all_stimuli))))
         ax.set_xticklabels(all_stimuli, rotation=45, ha="right")
         ax.set_ylabel("Rating")
+        ax.set_xlabel("Stimuli (Reference / Test)")
         ax.set_title("MUSHRA mean ratings by block")
         ax.grid(axis="y", linestyle="--", alpha=0.3)
         ax.legend(title="Block")
@@ -315,30 +386,13 @@ class Plotting:
             for patch in box["boxes"]:
                 patch.set_alpha(0.7)
             axis.set_ylabel("Rating")
+            axis.set_xlabel("Stimuli (Reference / Test)")
             axis.set_title(f"MUSHRA rating distribution — {block_label}")
             axis.grid(axis="y", linestyle="--", alpha=0.3)
 
         if fig is not None:
             fig.tight_layout()
         plt.show()
-
-    def _estimate_threshold_level(
-        self,
-        results: pd.DataFrame,
-        reversals_for_threshold: int = 6,
-    ) -> Optional[float]:
-        """Estimate the staircase threshold from the final reversal levels."""
-        if not isinstance(results, pd.DataFrame):
-            return None
-        if "reversal" not in results.columns or "level" not in results.columns:
-            return None
-
-        reversal_levels = results.loc[results["reversal"].fillna(False), "level"]
-        if reversal_levels.empty:
-            return None
-
-        used = reversal_levels.iloc[-max(1, int(reversals_for_threshold)):]
-        return float(used.mean())
 
     def _binomial_ci(self, p: float, n: int, ci: float = 0.95) -> float:
         """Approximate binomial confidence interval half-width."""

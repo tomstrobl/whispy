@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Sequence
+import time
 
 import pandas
 
@@ -176,6 +177,7 @@ class Staircase:
         RuntimeError
             If the staircase has already finished.
         """
+        self._start_time = time.time()
         if self._build_screen is None:
             raise ValueError(
                 "No build_screen callback was provided; build the screen "
@@ -206,6 +208,7 @@ class Staircase:
         """
         if self._finished:
             raise RuntimeError("staircase has finished; cannot update further")
+        self._rt = time.time() - self._start_time
 
         correct = bool(correct)
         self._trial += 1
@@ -248,6 +251,7 @@ class Staircase:
             "correct": correct,
             "step": _STEP_LABEL[step_dir],
             "reversal": is_reversal,
+            "rt": self._rt,
         })
 
         # apply the step, clamped to the available level range
@@ -317,7 +321,7 @@ class Staircase:
         pandas.DataFrame
             One row per trial with columns ``trial``, ``level_index``,
             ``level``, ``correct``, ``step`` (``"up"``/``"down"``/``""``), and
-            ``reversal``.
+            ``reversal``, and ``rt``.
         """
-        columns = ["trial", "level_index", "level", "correct", "step", "reversal"]
+        columns = ["trial", "level_index", "level", "correct", "step", "reversal", "rt"]
         return pandas.DataFrame(self._history, columns=columns)
