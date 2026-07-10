@@ -4,8 +4,7 @@ from typing import Optional
 
 from whispy.utils import read_config
 
-from .stimuli import StimuliHandler, SoundDevice
-from .osc import OSCHandler
+from .stimuli_handlers import StimuliHandler, SoundDevice, OSCHandler
 
 
 def build_stimuli_handler(

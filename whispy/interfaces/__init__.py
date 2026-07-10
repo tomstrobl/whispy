@@ -1,5 +1,4 @@
-from .stimuli import StimuliHandler, SoundDevice
-from .osc import OSCHandler
+from .stimuli_handlers import StimuliHandler, SoundDevice, OSCHandler
 from .factory import build_stimuli_handler
 
 __all__ = [
