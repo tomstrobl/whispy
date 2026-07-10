@@ -20,7 +20,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Sequence
 
-import numpy as np
 import pandas as pd
 
 # Question ids the consent questionnaire uses to build the anonymous id.
@@ -90,57 +89,6 @@ def _unique_path(results_dir: Path, stem: str) -> Path:
     return path
 
 
-def _estimate_threshold_level(
-    results: pd.DataFrame,
-    reversals_for_threshold: int = 6,
-) -> Optional[float]:
-    """Estimate the staircase threshold from the final reversal levels."""
-    if not isinstance(results, pd.DataFrame):
-        return None
-    if "reversal" not in results.columns or "level" not in results.columns:
-        return None
-
-    reversal_levels = results.loc[results["reversal"].fillna(False), "level"]
-    if reversal_levels.empty:
-        return None
-
-    used = reversal_levels.iloc[-reversals_for_threshold:]
-    return float(used.mean())
-
-
-def _approximate_target_level(
-    results: pd.DataFrame,
-    n_up: Optional[int] = None,
-    n_down: Optional[int] = None,
-) -> Optional[float]:
-    """Approximate the staircase target level under the standard up/down rule."""
-    if not isinstance(results, pd.DataFrame) or "level" not in results.columns:
-        return None
-
-    levels = pd.to_numeric(results["level"], errors="coerce").dropna()
-    if levels.empty:
-        return None
-
-    if n_up is None or n_down is None:
-        return None
-    if n_up <= 0 or n_down <= 0:
-        return None
-
-    levels_sorted = np.sort(levels.unique())
-    if len(levels_sorted) < 2:
-        return float(levels_sorted[0])
-
-    p_target = n_up / (n_up + n_down)
-    index = (len(levels_sorted) - 1) * p_target
-    lower = int(np.floor(index))
-    upper = int(np.ceil(index))
-    if lower == upper:
-        return float(levels_sorted[lower])
-
-    frac = index - lower
-    return float(levels_sorted[lower] + (levels_sorted[upper] - levels_sorted[lower]) * frac)
-
-
 def save_results(
     results: pd.DataFrame,
     name: str,
@@ -170,68 +118,4 @@ def save_results(
     results.to_csv(path, index=False)
     return path
 
-def plot_staircase(
-    results: pd.DataFrame,
-    title: Optional[str] = None,
-    reversals_for_threshold: int = 6,
-    show_approx_target: bool = False,
-    n_up: Optional[int] = None,
-    n_down: Optional[int] = None,
-):
-    """Plot a staircase plot of the results.
 
-    Reversal trials are highlighted and the estimated threshold as well as the
-    theoretical target level are shown as horizontal dashed lines when the
-    relevant information is available.
-    """
-    import matplotlib.pyplot as plt
-
-    if not isinstance(results, pd.DataFrame):
-        raise TypeError("results must be a pandas DataFrame")
-
-    x = "trial"
-    y = "level"
-    plt.figure(figsize=(10, 6))
-    plt.plot(results[x], results[y], label="Staircase")
-
-    reversal_mask = results.get("reversal", False).fillna(False)
-    if reversal_mask.any():
-        plt.scatter(
-            results.loc[reversal_mask, x],
-            results.loc[reversal_mask, y],
-            color="red",
-            zorder=3,
-            label="Reversal",
-        )
-
-    threshold = _estimate_threshold_level(
-        results,
-        reversals_for_threshold=reversals_for_threshold,
-    )
-    if threshold is not None:
-        plt.axhline(
-            threshold,
-            color="tab:orange",
-            linestyle="--",
-            linewidth=1.5,
-            label=f"Estimated threshold ({threshold:.2f})",
-        )
-
-    if show_approx_target:
-        target = _approximate_target_level(results, n_up=n_up, n_down=n_down)
-        if target is not None:
-            plt.axhline(
-                target,
-                color="tab:green",
-                linestyle="--",
-                linewidth=1.5,
-                label=f"Approx target ({target:.2f})",
-            )
-
-    plt.xlabel(x)
-    plt.ylabel(y)
-    if title:
-        plt.title(title)
-    #plt.grid()
-    plt.legend()
-    plt.show()
