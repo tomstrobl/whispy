@@ -1,0 +1,84 @@
+# =============================================================================
+# Adaptive N-AFC staircase experiment — single configuration file
+# =============================================================================
+# This one file configures the WHOLE staircase_n_afc experiment. The only thing
+# configured elsewhere is the shared look of the UIs (configs/design.yml).
+#
+# It is read by three consumers, each picking out the keys it needs:
+#   - SoundDevice  -> the `SoundDevice:` block (which WAV plays for each id)
+#   - NAFC window  -> the `test:` and `ui:` blocks
+#   - the notebook -> the `trial:` and `staircase:` blocks
+#
+# Edit the values below to design your own experiment; you should not need to
+# touch any Python.
+
+# ------------------------------- Stimuli ----------------------------------- #
+# Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
+# the notebook). All files must share one sampling rate and must not clip.
+SoundDevice:
+  1: { file: level_01.wav }
+  2: { file: level_02.wav }
+  3: { file: level_03.wav }
+  4: { file: level_04.wav }
+  5: { file: level_05.wav }
+  6: { file: level_06.wav }
+  7: { file: level_07.wav }
+  8: { file: level_08.wav }
+  9: { file: level_09.wav }
+  10: { file: level_10.wav }
+  11: { file: level_11.wav }
+  12: { file: level_12.wav }
+
+# --------------------------- N-AFC window ---------------------------------- #
+# `test`/`ui` are read by the NAFC window. Colors/fonts come from design.yml;
+# anything you set under `ui:` overrides that global theme for this experiment.
+test:
+  n_choices: 3            # number of intervals (must match the trial below)
+  shuffle_choices: true   # randomize button order so position carries no info
+  single_replay: false    # true = each interval plays at most twice (first
+                          # listen + one replay); false = unlimited replays
+  autoplay: false         # true = each trial starts by playing all intervals
+                          # once in button order (counts as the mandatory first
+                          # listen); a click/keypress interrupts the run-through
+  autoplay_gap: 0.3       # seconds of silence between autoplayed intervals
+ui:
+  # The look (window size, fonts, spacings, ...) lives in configs/design.yml;
+  # add any design key here to override it for this experiment only. This
+  # block keeps the wording plus two per-experiment layout overrides.
+  # Share of the free vertical space above the content area (design.yml: 0.6).
+  content_top_share: 0.8
+  # Gap between the submit button and the hint below it (design.yml: 16).
+  submit_hint_spacing: 45
+  submit_hint: "Press the number keys (or click) to hear each interval, \n then press Enter to submit your choice."
+  submit_button_text: "Submit choice"
+  # Trial progress bar ("Trial X of Y") below the submit button, so the
+  # participant knows how many trials are left. The staircase fills in the
+  # numbers itself; Y is staircase.max_trials (the upper bound — a run that
+  # converges via max_reversals stops earlier). The text may use {current},
+  # {total} and {remaining}; its look comes from design.yml.
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
+
+
+# -------------------------------- Trial ------------------------------------ #
+# Defines what one trial looks like (an "odd one out" N-AFC): the non-target
+# intervals all play `standard`, one interval plays the current target level.
+trial:
+  task: "Which interval is the **odd one out**?"   # prompt shown on top
+  standard: 1                                       # the reference stimulus id
+  levels: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]      # target ids, hardest -> easiest
+  block_name: Staircase
+  section_name: 3-AFC
+
+# ----------------------------- Adaptive rule ------------------------------- #
+# Transformed up/down staircase (Levitt, 1971). Step down (harder) after
+# `n_down` correct in a row; step up (easier) after `n_up` wrong in a row.
+#   1-up / 2-down -> ~70.7% correct,  1-up / 3-down -> ~79.4% correct.
+staircase:
+  n_up: 1                    # wrong answers in a row to step up (easier)
+  n_down: 2                  # correct answers in a row to step down (harder)
+  step: 1                    # levels moved per step
+  start_index: -1            # starting level index (-1 = easiest / last level)
+  max_reversals: 6           # stop after this many reversals ...
+  max_trials: 20             # ... or this many trials, whichever comes first
+  reversals_for_threshold: 4 # how many final reversals threshold() averages
