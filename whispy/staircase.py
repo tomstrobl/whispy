@@ -54,6 +54,12 @@ class Staircase:
         (harder). The default is ``2``.
     step : int, optional
         Number of levels moved per step. The default is ``1``.
+    big_step : int, optional
+        Optional larger step size used during the first
+        ``reversals_for_big_step`` reversals. The default is ``None``.
+    reversals_for_big_step : int, optional
+        Number of reversals for which ``big_step`` is used before falling back
+        to ``step``. The default is ``0``.
     start_index : int, optional
         Index into ``levels`` of the first trial. The default is ``0``.
     max_reversals : int, optional
@@ -96,6 +102,8 @@ class Staircase:
         n_up: int = 1,
         n_down: int = 2,
         step: int = 1,
+        big_step: Optional[int] = None,
+        reversals_for_big_step: int = 0,
         start_index: int = 0,
         max_reversals: int = 8,
         max_trials: int = 60,
@@ -112,6 +120,10 @@ class Staircase:
             raise ValueError("n_up and n_down must be >= 1")
         if int(step) < 1:
             raise ValueError("step must be >= 1")
+        if big_step is not None and int(big_step) < 1:
+            raise ValueError("big_step must be >= 1")
+        if int(reversals_for_big_step) < 0:
+            raise ValueError("reversals_for_big_step must be >= 0")
         if int(max_reversals) < 1 or int(max_trials) < 1:
             raise ValueError("max_reversals and max_trials must be >= 1")
         if int(reversals_for_threshold) < 1:
@@ -121,6 +133,8 @@ class Staircase:
         self._n_up = int(n_up)
         self._n_down = int(n_down)
         self._step = int(step)
+        self._big_step = None if big_step is None else int(big_step)
+        self._reversals_for_big_step = int(reversals_for_big_step)
         self._max_reversals = int(max_reversals)
         self._max_trials = int(max_trials)
         self._reversals_for_threshold = int(reversals_for_threshold)
@@ -256,8 +270,17 @@ class Staircase:
 
         # apply the step, clamped to the available level range
         if step_dir != 0:
+            if (
+                self._big_step is not None
+                and self._reversals_for_big_step > 0
+                and len(self._reversals) < self._reversals_for_big_step
+            ):
+                step_size = self._big_step
+            else:
+                step_size = self._step
+
             self._index = max(
-                0, min(len(self._levels) - 1, self._index + step_dir * self._step))
+                0, min(len(self._levels) - 1, self._index + step_dir * step_size))
             self._last_step_dir = step_dir
 
         # stop on whichever criterion is reached first

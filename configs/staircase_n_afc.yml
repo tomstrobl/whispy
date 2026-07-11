@@ -82,3 +82,5 @@ staircase:
   max_reversals: 6           # stop after this many reversals ...
   max_trials: 20             # ... or this many trials, whichever comes first
   reversals_for_threshold: 4 # how many final reversals threshold() averages
+  big_step: 2                # optional: step size for first `big_steps` reversals
+  reversals_for_big_step: 2  # optional: how many reversals to use `big_step` 
