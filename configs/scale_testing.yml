@@ -5,7 +5,7 @@
 # configured elsewhere is the shared look of the UIs (configs/design.yml).
 #
 # It is read by three consumers, each picking out the keys it needs:
-#   - SoundDevice   -> the `SoundDevice:` block (which WAV plays for each id)
+#   - the stimuli handler -> `SoundDevice:` or `OSCHandler:`, picked by `output:`
 #   - ScaleTest     -> the `ui:` and `questions:` blocks
 #   - the scheduler -> the `experiment:` block (blocks/sections/stimuli)
 #
@@ -16,19 +16,58 @@
 # Edit the values below to design your own experiment; you should not need to
 # touch any Python.
 
+# --------------------------- Output backend --------------------------------- #
+# Which stimuli handler `build_stimuli_handler()` builds: "sounddevice" (play
+# the WAVs below) or "osc" (send an OSC message per stimulus instead - see
+# OSCHandler: below). Switching is just this one key; the ScaleTest window
+# code stays the same either way.
+output: sounddevice
+
 # ------------------------------- Stimuli ----------------------------------- #
 # Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
 # the notebook). All files must share one sampling rate and must not clip.
-# Stimulus ids are written into the results — prefer descriptive names.
+# Stimulus ids are written into the results — prefer descriptive names. Used
+# when `output: sounddevice`.
 SoundDevice:
   smooth_dark:   { file: smooth_dark.wav }
   smooth_bright: { file: smooth_bright.wav }
   rough_dark:    { file: rough_dark.wav }
   rough_bright:  { file: rough_bright.wav }
 
+# Used when `output: osc` instead: one OSC message per stimulus id (sent via
+# UDP, no server/receiving side). `args` is optional. `stop_address` is sent
+# on `.stop()`; omit it if your receiver has no "stop" concept.
+OSCHandler:
+  ip: "127.0.0.1"
+  port: 9000
+  stop_address: "/whispy/scale/stop"
+  stimuli:
+    smooth_dark:   { address: "/whispy/scale/smooth_dark" }
+    smooth_bright: { address: "/whispy/scale/smooth_bright" }
+    rough_dark:    { address: "/whispy/scale/rough_dark" }
+    rough_bright:  { address: "/whispy/scale/rough_bright" }
+
 # ------------------------------ Questions ---------------------------------- #
-# The rating scales stacked below the play button, shown in this order on
-# EVERY screen. Each question carries:
+# The rating scales stacked below the play button. You can:
+#
+#   A) Use a GLOBAL questions list (shown on EVERY screen):
+#      questions:
+#        - id: roughness
+#          ...
+#
+#   B) Use PER-STIMULUS questions (each stimulus rated on different scales):
+#      questions:
+#        _default:  # fallback for stimuli without a dedicated list
+#          - id: roughness
+#            ...
+#        smooth_dark:
+#          - id: roughness
+#            ...
+#        smooth_bright:
+#          - id: brightness
+#            ...
+#
+# Each question carries:
 #   id                 -> results column `question` (defaults to q1, q2, ...)
 #   prompt             -> the wording above the scale (markdown)
 #   scale_type         -> free label recorded in the results (e.g. likert,
@@ -45,6 +84,8 @@ SoundDevice:
 #                         PER STEP puts a small label under each button; a
 #                         bipolar_slider takes THREE entries as
 #                         [left, center, right] (center under the zero tick)
+
+# Global questions list: shown on every screen
 questions:
   - id: roughness
     prompt: "How **rough** does the sound feel?"
@@ -70,6 +111,51 @@ questions:
     interaction_method: buttons
     scale_range: [-5, 5]
     labels: ["softer", "sharper"]
+
+# Uncomment below to use PER-STIMULUS questions instead of the global list above.
+# The notebook will look up these per-stimulus definitions and pass them to ScaleTest.
+#
+# per_stimulus_questions:
+#   smooth_dark:
+#     - id: roughness
+#       prompt: "How **rough** does the sound feel?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["smooth", "rough"]
+#   smooth_bright:
+#     - id: brightness
+#       prompt: "How **bright** is the sound?"
+#       scale_type: continuous
+#       interaction_method: slider
+#       scale_range: [0, 100]
+#       labels: ["dark", "bright"]
+#     - id: pleasantness
+#       prompt: "How **pleasant** is the sound?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["very unpleasant", "unpleasant", "neutral", "pleasant", "very pleasant"]
+#     - id: sharpness
+#       prompt: "Compared to a neutral tone, is the sound **softer or sharper**?"
+#       scale_type: bipolar
+#       interaction_method: buttons
+#       scale_range: [-5, 5]
+#       labels: ["softer", "sharper"]
+#   rough_dark:
+#     - id: roughness
+#       prompt: "How **rough** does the sound feel?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["smooth", "rough"]
+#   rough_bright:
+#     - id: roughness
+#       prompt: "How **rough** does the sound feel?"
+#       scale_type: likert
+#       interaction_method: buttons
+#       scale_range: [1, 5]
+#       labels: ["smooth", "rough"]
 
 # ---------------------------- ScaleTest window ------------------------------ #
 # Colors/fonts come from design.yml; anything under `ui:` overrides that

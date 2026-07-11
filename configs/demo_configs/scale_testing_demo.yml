@@ -1,0 +1,131 @@
+# =============================================================================
+# Audience demo - scale testing on movie quotes (per-stimulus questions)
+# =============================================================================
+# Demo variant of configs/scale_testing.yml, used by
+# examples/full_experiment_audience_demo.ipynb. Demonstrates per-stimulus
+# questions: same three consumers, but each stimulus is rated on different
+# scales.
+#
+#   - SoundDevice   -> the `SoundDevice:` block (which WAV plays for each id)
+#   - ScaleTest     -> the `ui:` and `per_stimulus_questions:` blocks
+#   - the scheduler -> the `experiment:` block
+#
+# Three famous movie quotes rated on different scales:
+#   - reservoir_dogs (5 questions): outrage, funniness, tipping, intensity, familiarity
+#   - box_of_chocolates (3 questions): sentimentality, wisdom, agreement
+#   - jack_sparrow (1 question): recognizability
+#
+# This demonstrates that stimuli can be rated independently on different scales.
+
+# ------------------------------- Stimuli ----------------------------------- #
+# WAVs live in examples/demo_stimuli/audience_demo/movie_quotes/.
+SoundDevice:
+  reservoir_dogs:    { file: movie_quotes/reservoir_dogs.wav }     # Reservoir Dogs
+  box_of_chocolates: { file: movie_quotes/box_of_chocolates.wav }  # Forrest Gump
+  jack_sparrow:      { file: movie_quotes/jack_sparrow.wav }       # Pirates of the Caribbean
+
+# ------------------------------ Questions ---------------------------------- #
+# Demonstrate per-stimulus questions: different stimuli rated on different scales.
+# Each stimulus below has its own set of questions, showing that reservoir_dogs
+# gets 5 questions, box_of_chocolates gets 3, and jack_sparrow gets just 1.
+
+# Global fallback (not used here since all stimuli have per_stimulus_questions)
+questions:
+  - id: weirdness
+    prompt: "How **weird** is this quote?"
+    scale_type: likert
+    interaction_method: buttons
+    scale_range: [1, 7]
+    labels: ["not weird at all", "extremely weird"]
+
+# Per-stimulus questions: each stimulus rated on different scales
+per_stimulus_questions:
+  reservoir_dogs:
+    # 5 questions for the Reservoir Dogs tipping scene
+    # ("- I don't tip. - You don't believe in tipping?")
+    - id: outrage
+      prompt: "How **scandalous** is refusing to tip?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 7]
+      labels: ["perfectly fine", "absolutely scandalous"]
+    - id: funniness
+      prompt: "How **funny** is this exchange?"
+      scale_type: continuous
+      interaction_method: slider
+      scale_range: [0, 100]
+      labels: ["not funny", "hilarious"]
+    - id: tipping
+      prompt: "And you? Do you **believe** in tipping?"
+      scale_type: bipolar
+      interaction_method: buttons
+      scale_range: [-5, 5]
+      labels: ["not at all", "absolutely"]
+    - id: intensity
+      prompt: "How **heated** does this exchange feel?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 5]
+      labels: ["calm", "very heated"]
+    - id: familiarity
+      prompt: "How often have you **seen or heard** this scene before?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 5]
+      labels: ["never", "rarely", "sometimes", "often", "all the time"]
+  box_of_chocolates:
+    # 3 questions for the Forrest Gump quote
+    - id: sentimentality
+      prompt: "How **sentimental** does this quote feel?"
+      scale_type: continuous
+      interaction_method: slider
+      scale_range: [0, 100]
+      labels: ["not sentimental", "extremely sentimental"]
+    - id: wisdom
+      prompt: "How much **life wisdom** is in this quote?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 5]
+      labels: ["none at all", "deeply wise"]
+    - id: agreement
+      prompt: "Is life really like a box of chocolates?"
+      scale_type: bipolar
+      interaction_method: buttons
+      scale_range: [-5, 5]
+      labels: ["definitely not", "absolutely"]
+  jack_sparrow:
+    # 1 question for the Jack Sparrow quote (minimal)
+    - id: recognizability
+      prompt: "How **recognizable** is this movie quote?"
+      scale_type: likert
+      interaction_method: buttons
+      scale_range: [1, 7]
+      labels: ["no idea which movie", "instantly recognizable"]
+
+# ---------------------------- ScaleTest window ------------------------------ #
+ui:
+  content_area_size: [70, 90]
+  button_fontsize: 8             # numbers on the scale buttons (design.yml: 16)
+  submit_button_fontsize: 14     # the "Submit ratings" button (design.yml: 16)
+  play_button_text: "► Play"
+  submit_hint: "Press Space (or click Play) to listen, rate every scale, then press Enter to submit."
+  submit_button_text: "Submit ratings"
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
+
+# -------------------------------- Trial ------------------------------------ #
+trial:
+  task: "Listen to the movie quote and rate it on every scale below."
+
+# ------------------------------ Experiment --------------------------------- #
+# Which stimuli are rated (one per screen, order randomized by the scheduler).
+# Three stimuli demonstrate per-stimulus questions:
+#   - reservoir_dogs: 5 questions (outrage, funniness, tipping, intensity, familiarity)
+#   - box_of_chocolates: 3 questions (sentimentality, wisdom, agreement)
+#   - jack_sparrow: 1 question (recognizability)
+experiment:
+  - block:
+      - block_name: movie quotes
+      - section:
+          section_name: famous quotes
+          test: [reservoir_dogs, box_of_chocolates, jack_sparrow]

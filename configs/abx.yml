@@ -5,21 +5,42 @@
 # elsewhere is the shared look of the UIs (configs/design.yml).
 #
 # It is read by three consumers, each picking out the keys it needs:
-#   - SoundDevice  -> the `SoundDevice:` block (which WAV plays for each id)
+#   - the stimuli handler -> `SoundDevice:` or `OSCHandler:`, picked by `output:`
 #   - ABX window   -> the `test:` and `ui:` blocks (passed as `abx_config`)
 #   - the notebook -> the `trial:`, `pairs:` and `experiment:` blocks
 #
 # Edit the values below to design your own experiment; you should not need to
 # touch any Python.
 
+# --------------------------- Output backend --------------------------------- #
+# Which stimuli handler `build_stimuli_handler()` builds: "sounddevice" (play
+# the WAVs below) or "osc" (send an OSC message per stimulus instead - see
+# OSCHandler: below). Switching is just this one key; the notebook and ABX
+# window code stay the same either way.
+output: sounddevice
+
 # ------------------------------- Stimuli ----------------------------------- #
 # Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
 # the notebook). All files must share one sampling rate and must not clip.
+# Used when `output: sounddevice`.
 SoundDevice:
   easy_a: { file: easy_a.wav }
   easy_b: { file: easy_b.wav }
   hard_a: { file: hard_a.wav }
   hard_b: { file: hard_b.wav }
+
+# Used when `output: osc` instead: one OSC message per stimulus id (sent via
+# UDP, no server/receiving side). `args` is optional. `stop_address` is sent
+# on `.stop()`; omit it if your receiver has no "stop" concept.
+OSCHandler:
+  ip: "127.0.0.1"
+  port: 9000
+  stop_address: "/whispy/abx/stop"
+  stimuli:
+    easy_a: { address: "/whispy/abx/easy_a" }
+    easy_b: { address: "/whispy/abx/easy_b" }
+    hard_a: { address: "/whispy/abx/hard_a" }
+    hard_b: { address: "/whispy/abx/hard_b" }
 
 # ---------------------------- ABX window ----------------------------------- #
 # `test`/`ui` are read by the ABX window. Colors/fonts come from design.yml;
