@@ -29,8 +29,10 @@ flowchart TB
     end
 
     subgraph AUD["Interface"]
+        FAC["build_stimuli_handler()<br/>reads output: key"]
         SH["StimuliHandler (ABC)"]
         SD["SoundDevice"]
+        OSC["OSCHandler"]
     end
 
     subgraph RES["Results"]
@@ -44,7 +46,11 @@ flowchart TB
     NB -->|"ABX trials"| AB
     SCH -->|"screen dicts"| MU
     STC -->|"N-AFC trials"| NA
-    SH --> SD
+    NB -->|"build_stimuli_handler(cfg)"| FAC
+    FAC -->|"output: sounddevice"| SD
+    FAC -->|"output: osc"| OSC
+    SD -.-> SH
+    OSC -.-> SH
     UI -->|"play(stimulus)"| SH
     UI -->|"rows / trial"| GR
     GR --> SR
@@ -62,7 +68,7 @@ flowchart TB
     class C1,C2,C3,C4 cfg;
     class SCH,STC orch;
     class MU,NA,AB,QU,IN,PI ui;
-    class SH,SD aud;
+    class SH,SD,FAC,OSC aud;
     class GR,SR res;
     class NB drv;
 
@@ -76,4 +82,4 @@ flowchart TB
 
     %% edges: data flow in grey, the dotted config feeds in soft gold
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
-    linkStyle 9,10,11 stroke:#caa83f,stroke-width:1.4px;
+    linkStyle 13,14,15 stroke:#caa83f,stroke-width:1.4px;
