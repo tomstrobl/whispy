@@ -28,6 +28,7 @@ dependencies = [
     "ipykernel",
     "pandas",
     "pyfar>=0.8.0",
+    "python-osc",
     "PyQt6",
     "pytest",
     "pyyaml",

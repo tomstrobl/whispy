@@ -119,7 +119,9 @@ class ScaleTest(_BaseUIWindow):
     screen : dict, optional
         Trial description. Must carry ``stimulus`` (the stimulus id to rate).
         Optional metadata: ``task``, ``block``, ``section``, ``trial_id``,
-        ``block_name``, ``section_name``, ``progress``.
+        ``block_name``, ``section_name``, ``progress``, ``questions`` (a list
+        of question dicts to use for this stimulus, overriding the config's
+        global questions list).
     stimuli_handler : StimuliHandler, optional
         Handler used to play stimuli. If ``None``, ``SoundDevice()`` is used.
     scale_test_config : str or dict, optional
@@ -175,7 +177,13 @@ class ScaleTest(_BaseUIWindow):
         self._ui_cfg = load_design(cfg.get("ui"))
         self._screen_setting = self._ui_cfg.get("screen")
         self._resolve_config()
-        self._questions = self._parse_questions(cfg.get("questions"))
+        # Parse questions: prioritize per-stimulus questions passed on the screen,
+        # fall back to the config's global questions list.
+        screen_questions = self.screen.get("questions")
+        if screen_questions is not None:
+            self._questions = self._parse_questions(screen_questions)
+        else:
+            self._questions = self._parse_questions(cfg.get("questions"))
 
         # answer / playback state
         self._answers: Dict[str, Optional[int]] = {q.qid: None for q in self._questions}

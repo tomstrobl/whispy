@@ -5,16 +5,24 @@
 # configured elsewhere is the shared look of the UIs (configs/design.yml).
 #
 # It is read by three consumers, each picking out the keys it needs:
-#   - SoundDevice  -> the `SoundDevice:` block (which WAV plays for each id)
+#   - the stimuli handler -> `SoundDevice:` or `OSCHandler:`, picked by `output:`
 #   - NAFC window  -> the `test:` and `ui:` blocks
 #   - the notebook -> the `trial:` and `staircase:` blocks
 #
 # Edit the values below to design your own experiment; you should not need to
 # touch any Python.
 
+# --------------------------- Output backend --------------------------------- #
+# Which stimuli handler `build_stimuli_handler()` builds: "sounddevice" (play
+# the WAVs below) or "osc" (send an OSC message per stimulus instead - see
+# OSCHandler: below). Switching is just this one key; the NAFC window code
+# stays the same either way.
+output: sounddevice
+
 # ------------------------------- Stimuli ----------------------------------- #
 # Map each stimulus id to a WAV file (files live in the `stimuli_dir` passed in
 # the notebook). All files must share one sampling rate and must not clip.
+# Used when `output: sounddevice`.
 SoundDevice:
   1: { file: stimulus_1.wav }
   2: { file: stimulus_2.wav }
@@ -28,6 +36,27 @@ SoundDevice:
   10: { file: stimulus_10.wav }
   11: { file: stimulus_11.wav }
   12: { file: stimulus_12.wav }
+
+# Used when `output: osc` instead: one OSC message per stimulus id (sent via
+# UDP, no server/receiving side). `args` is optional. `stop_address` is sent
+# on `.stop()`; omit it if your receiver has no "stop" concept.
+OSCHandler:
+  ip: "127.0.0.1"
+  port: 9000
+  stop_address: "/whispy/staircase/stop"
+  stimuli:
+    1: { address: "/whispy/staircase/1" }
+    2: { address: "/whispy/staircase/2" }
+    3: { address: "/whispy/staircase/3" }
+    4: { address: "/whispy/staircase/4" }
+    5: { address: "/whispy/staircase/5" }
+    6: { address: "/whispy/staircase/6" }
+    7: { address: "/whispy/staircase/7" }
+    8: { address: "/whispy/staircase/8" }
+    9: { address: "/whispy/staircase/9" }
+    10: { address: "/whispy/staircase/10" }
+    11: { address: "/whispy/staircase/11" }
+    12: { address: "/whispy/staircase/12" }
 
 # --------------------------- N-AFC window ---------------------------------- #
 # `test`/`ui` are read by the NAFC window. Colors/fonts come from design.yml;
@@ -46,7 +75,7 @@ ui:
   # add any design key here to override it for this experiment only. This
   # block keeps the wording plus two per-experiment layout overrides.
   # Share of the free vertical space above the content area (design.yml: 0.6).
-  content_top_share: 0.8
+  content_top_share: 0.9
   # Gap between the submit button and the hint below it (design.yml: 16).
   submit_hint_spacing: 45
   submit_hint: "Press the number keys (or click) to hear each interval, \n then press Enter to submit your choice."

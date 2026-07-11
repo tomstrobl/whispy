@@ -1,5 +1,5 @@
 %% whispy architecture — paste into https://mermaid.live to export PNG/SVG
-%%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"14px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
+%%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"30px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
 
 flowchart TB
     subgraph DRV["Driver — examples/ notebooks"]
@@ -20,12 +20,12 @@ flowchart TB
     end
 
     subgraph UI["UI layer (PyQt6)"]
-        MU["DragAndDropMUSHRA"]
-        NA["NAFC"]
-        AB["ABX"]
         QU["Questionnaire"]
         IN["InfoWindow"]
+        MU["DragAndDropMUSHRA"]
         PI["ParticipantID (legacy)"]
+        NA["NAFC"]
+        AB["ABX"]
     end
 
     subgraph AUD["Interface"]
@@ -38,21 +38,20 @@ flowchart TB
         SR["save_results() → examples/results/*.csv"]
     end
 
+
     NB --> SCH
     NB --> STC
     NB -->|"ABX trials"| AB
     SCH -->|"screen dicts"| MU
     STC -->|"N-AFC trials"| NA
-    UI -->|"play(stimulus)"| SH
     SH --> SD
+    UI -->|"play(stimulus)"| SH
     UI -->|"rows / trial"| GR
     GR --> SR
 
-    CFG -. feeds every layer .-> ORCH
-    CFG -.-> UI
     CFG -.-> AUD
-    C3 -.-> IN
-    C4 -.-> QU
+    CFG -.-> UI 
+    CFG -. feeds every layer .-> ORCH
 
     classDef cfg fill:#E9C46A,stroke:#C9A227,stroke-width:1.5px,color:#5a4708;
     classDef orch fill:#E76F51,stroke:#c0492f,stroke-width:1.5px,color:#fff;
@@ -77,4 +76,4 @@ flowchart TB
 
     %% edges: data flow in grey, the dotted config feeds in soft gold
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
-    linkStyle 9,10,11,12,13 stroke:#caa83f,stroke-width:1.4px;
+    linkStyle 9,10,11 stroke:#caa83f,stroke-width:1.4px;

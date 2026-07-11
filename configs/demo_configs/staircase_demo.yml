@@ -1,0 +1,70 @@
+# =============================================================================
+# Audience demo - adaptive 2-AFC frequency-discrimination staircase
+# =============================================================================
+# Demo variant of configs/staircase_n_afc.yml, used by
+# examples/full_experiment_audience_demo.ipynb. Same three consumers:
+#   - SoundDevice  -> the `SoundDevice:` block (which WAV plays for each id)
+#   - NAFC window  -> the `test:` and `ui:` blocks
+#   - the notebook -> the `trial:` and `staircase:` blocks
+#
+# The task: one interval plays the 1000 Hz standard, the other a higher tone.
+# The staircase starts at +100 Hz (1100 Hz, easy) and narrows toward 1000 Hz
+# while the participant keeps hearing the difference. Capped at 14 trials so
+# the block stays under ~4 minutes in a live presentation.
+
+# ------------------------------- Stimuli ----------------------------------- #
+# The target ids are the frequency offset from the standard in Hz, so the
+# staircase's threshold() reports the just-noticeable difference directly in
+# Hz. WAVs live in examples/demo_stimuli/audience_demo/ (regenerate with
+# generate_audience_demo_stimuli.py).
+SoundDevice:
+  0:   { file: tone_standard.wav }    # 1000 Hz reference
+  2:   { file: tone_plus_2hz.wav }    # 1002 Hz (hardest)
+  4:   { file: tone_plus_4hz.wav }
+  8:   { file: tone_plus_8hz.wav }
+  15:  { file: tone_plus_15hz.wav }
+  25:  { file: tone_plus_25hz.wav }
+  40:  { file: tone_plus_40hz.wav }
+  60:  { file: tone_plus_60hz.wav }
+  100: { file: tone_plus_100hz.wav }  # 1100 Hz (easiest, starting level)
+
+# --------------------------- N-AFC window ---------------------------------- #
+test:
+  n_choices: 2            # 2-AFC: one standard interval, one target interval
+  shuffle_choices: true   # randomize button order so position carries no info
+  single_replay: false    # unlimited replays (keep the demo forgiving)
+  autoplay: false          # each trial starts by playing both intervals once -
+                          # keeps a live demo moving without extra clicks
+  autoplay_gap: 0.3       # seconds of silence between autoplayed intervals
+ui:
+  content_top_share: 0.8
+  submit_hint_spacing: 45
+  submit_hint: "Both tones play automatically. Replay with keys 1/2 (or click), \n pick the HIGHER tone, then press Enter to submit."
+  submit_button_text: "Submit choice"
+  # "Trial X of Y" progress bar; Y is staircase.max_trials (the upper bound).
+  show_progress: true
+  progress_text: "Trial {current} of {total}"
+
+# -------------------------------- Trial ------------------------------------ #
+# One trial: one interval plays `standard`, the other the current target
+# level; the participant picks the higher-pitched interval.
+trial:
+  task: "Which of the two tones is **higher** in pitch?"
+  standard: 0                          # the 1000 Hz reference id
+  levels: [2, 4, 8, 15, 25, 40, 60, 100]  # target ids (= Hz offset), hardest -> easiest
+  block_name: Audience demo
+  section_name: 2-AFC frequency
+
+# ----------------------------- Adaptive rule ------------------------------- #
+# 1-up/2-down (~70.7% correct). max_trials caps the demo at 14 trials
+# (~2-3 minutes with 2 s tones); a run that collects max_reversals reversals
+# first stops even earlier. step: 2 moves two levels at a time so the short
+# run can actually descend from the easy start into the hard levels.
+staircase:
+  n_up: 1
+  n_down: 2
+  step: 2
+  start_index: -1            # start at the easiest (last) level: +100 Hz
+  max_reversals: 6
+  max_trials: 14
+  reversals_for_threshold: 4

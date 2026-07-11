@@ -1,0 +1,29 @@
+# "Welcome" screen for the audience demo
+# (examples/full_experiment_audience_demo.ipynb). Demo variant of
+# configs/welcome.yml - shown once before anything else.
+#
+# The look (colors, fonts, button styling) is inherited from the global theme
+# in configs/design.yml so it matches the listening tests.
+
+ui:
+  # The message shown to the audience. Markdown is supported.
+  message: |
+    # Welcome to the whispy live demo!
+
+    You are about to take part in a **real perceptual listening experiment** -
+    exactly the kind whispy is built to run.
+
+    In the next 6-10 minutes you will:
+
+    1. give (mock) consent and receive an **anonymous participant ID**
+    2. hunt for your **pitch-discrimination threshold** in an adaptive test
+    3. play a quick round of **ABX** 
+    4. rate some **questionable sounds** on very serious scientific scales
+
+    Everything you see is driven by small YAML config files - no code was
+    edited to build this experiment.
+
+    Click **Continue** when you are ready to begin.
+  # Show the screen fullscreen (matches the experiment windows). Set to false
+  # for a small centered popup.
+  fullscreen: true
