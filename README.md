@@ -164,11 +164,11 @@ flowchart TB
 
 The ABX-test screen:
 
-<img src="/images/ABX_test_screen.png" width="500" alt="Welcome screen">
+<img src="/images/ABX_test_screen.png" width="450" alt="ABX Test Screen">
 
 The drag-and-drop-MUSHRA-test screen:
 
-<img src="/images/d_a_d_MUSHRA_screen.png" width="500" alt="Welcome screen">
+<img src="/images/d_a_d_MUSHRA_screen.png" width="450" alt="Drag-and-drop-MUSHRA Test Screen">
 
 ## Authors and acknowledgement
 
