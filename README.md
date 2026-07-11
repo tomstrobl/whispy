@@ -11,7 +11,7 @@ be chosen or individual test setups can be compiled from the building blocks.
 Available predefined test setups:
 
 - ### ABX
-    Simple comparison test to distinguish perceptual differences. A reference signal and a manipulated signal is randomly assigned to A and B and also to X and the participants task is to identify whether A is equal to X or B is equal to X.
+    Simple comparison test to distinguish perceptual differences. A reference signal and a manipulated signal is randomly assigned to A and B and also to X and the participant's task is to identify whether A is equal to X or B is equal to X.
     
 - ### MUSHRA (drag and drop)
     MUltiple Stimuli with Hidden Reference and Anchor - test, a standardized methodology used to evaluate the perceived quality of intermediate-to-high quality audio systems, such as audio codecs, generative speech models, and spatial audio. Defined by the ITU-R BS. 1534 recommendation, it allows listeners to compare multiple audio samples simultaneously against a known reference and rate them on a continuous scale from 0 to 100 (e.g., rate a difference) or -50 to 50 (e.g., lower or higher comparison).
@@ -19,15 +19,15 @@ Available predefined test setups:
     In this case (drag-and-drop) the participant can drag and drop the test stimuli into a rating area which allows for a more natural interaction.
 
 - ### Staircase N-AFC
-    n-AFC (n-Alternative Forced Choice): In every trial, the participant is presented with n options (usually 2, 3, or 4). For example, in a 3-AFC test, the participant is given three stimuli (e.g., three different flavors, or three time intervals) and is "forced" to choose which one is different or more intense, even if they have to guess. This prevents participants from relying on arbitrary "yes/no" criteria.
+    N-AFC (N-Alternative Forced Choice): In every trial, the participant is presented with N options (usually 2, 3, or 4). For example, in a 3-AFC test, the participant is given three stimuli (e.g., three different flavors, or three time intervals) and is "forced" to choose which one is different or more intense, even if they have to guess. This prevents participants from relying on arbitrary "yes/no" criteria.
 
     
     Staircase (Up-Down) Method: This is the adaptive testing algorithm. The test gets harder when the participant gets answers right and easier when they get answers wrong.
 
 - ### Scale test
-    Rating test for a given stimulus (e.g., "How rough is this tone?") $\\$
+    Rating test for a given stimulus (e.g., "How rough is this tone?")
 
-#### *`Every test can be tailored in the respective <test>.yml config-files to meet the individual requirenments.`*
+#### *`Every test can be tailored in the respective <test>.yml config-files to meet the individual requirements.`*
 
 
 ## Installation
@@ -43,12 +43,12 @@ Next, run:
 pip install -e .
 ```
 in your terminal to install all required packages. After this you can open the 
-jupyter notebooks in your prefered IDE and the whispy-blocks are executable.
+jupyter notebooks in your preferred IDE and the whispy-blocks are executable.
 
 ### Requirements
 
 works with:
-- python verions >= 3.13.13 
+- python versions >= 3.13.13 
 - anaconda >= 22.9.0
 
 ## Usage
@@ -74,7 +74,7 @@ instructions for smooth use.
 A jupyter-notebook (the *driver*) reads one self-contained YAML config, an *orchestrator*
 turns it into a sequence of screens, a *UI* presents each screen and plays its
 stimuli through the audio *interface*, and every screen's answers are collected 
-into a results table, combined with a participants ID.
+into a results table, combined with a participant's ID.
 
 ```mermaid
 %%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"14px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
