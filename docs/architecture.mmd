@@ -41,12 +41,13 @@ flowchart TB
     end
 
 
+    NB -->|"build_stimuli_handler(cfg)"| FAC
     NB --> SCH
     NB --> STC
     NB -->|"ABX trials"| AB
+    
     SCH -->|"screen dicts"| MU
     STC -->|"N-AFC trials"| NA
-    NB -->|"build_stimuli_handler(cfg)"| FAC
     FAC -->|"output: sounddevice"| SD
     FAC -->|"output: osc"| OSC
     SD -.-> SH
@@ -55,9 +56,9 @@ flowchart TB
     UI -->|"rows / trial"| GR
     GR --> SR
 
-    CFG -.-> AUD
-    CFG -.-> UI 
+    CFG -.-> AUD    
     CFG -. feeds every layer .-> ORCH
+    CFG -.-> UI 
 
     classDef cfg fill:#E9C46A,stroke:#C9A227,stroke-width:1.5px,color:#5a4708;
     classDef orch fill:#E76F51,stroke:#c0492f,stroke-width:1.5px,color:#fff;
