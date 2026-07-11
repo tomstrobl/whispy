@@ -77,7 +77,8 @@ stimuli through the audio *interface*, and every screen's answers are collected
 into a results table, combined with a participant's ID.
 
 ```mermaid
-%%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"14px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
+%%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"30px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
+
 flowchart TB
     subgraph DRV["Driver — examples/ notebooks"]
         NB["building_block_*  ·  full_experiment_*"]
@@ -97,17 +98,19 @@ flowchart TB
     end
 
     subgraph UI["UI layer (PyQt6)"]
-        MU["DragAndDropMUSHRA"]
-        NA["NAFC"]
-        AB["ABX"]
         QU["Questionnaire"]
         IN["InfoWindow"]
+        MU["DragAndDropMUSHRA"]
         PI["ParticipantID (legacy)"]
+        NA["NAFC"]
+        AB["ABX"]
     end
 
     subgraph AUD["Interface"]
+        FAC["build_stimuli_handler()<br/>reads output: key"]
         SH["StimuliHandler (ABC)"]
         SD["SoundDevice"]
+        OSC["OSCHandler"]
     end
 
     subgraph RES["Results"]
@@ -115,19 +118,25 @@ flowchart TB
         SR["save_results() → examples/results/*.csv"]
     end
 
+
+    NB -->|"build_stimuli_handler(cfg)"| FAC
     NB --> SCH
     NB --> STC
     NB -->|"ABX trials"| AB
+    
     SCH -->|"screen dicts"| MU
     STC -->|"N-AFC trials"| NA
-    SH --> SD
+    FAC -->|"output: sounddevice"| SD
+    FAC -->|"output: osc"| OSC
+    SD -.-> SH
+    OSC -.-> SH
     UI -->|"play(stimulus)"| SH
     UI -->|"rows / trial"| GR
     GR --> SR
 
-    CFG -.-> AUD
-    CFG -.-> UI 
+    CFG -.-> AUD    
     CFG -. feeds every layer .-> ORCH
+    CFG -.-> UI 
 
     classDef cfg fill:#E9C46A,stroke:#C9A227,stroke-width:1.5px,color:#5a4708;
     classDef orch fill:#E76F51,stroke:#c0492f,stroke-width:1.5px,color:#fff;
@@ -138,7 +147,7 @@ flowchart TB
     class C1,C2,C3,C4 cfg;
     class SCH,STC orch;
     class MU,NA,AB,QU,IN,PI ui;
-    class SH,SD aud;
+    class SH,SD,FAC,OSC aud;
     class GR,SR res;
     class NB drv;
 
@@ -152,7 +161,7 @@ flowchart TB
 
     %% edges: data flow in grey, the dotted config feeds in soft gold
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
-    linkStyle 9,10,11 stroke:#caa83f,stroke-width:1.4px;
+    linkStyle 13,14,15 stroke:#caa83f,stroke-width:1.4px;
 ```
 
 > The same diagram lives in [`docs/architecture.mmd`](docs/architecture.mmd) —
