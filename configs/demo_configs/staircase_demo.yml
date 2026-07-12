@@ -68,3 +68,5 @@ staircase:
   max_reversals: 6
   max_trials: 14
   reversals_for_threshold: 4
+  big_step: 2
+  reversals_for_big_step: 2

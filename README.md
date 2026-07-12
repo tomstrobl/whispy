@@ -77,6 +77,7 @@ stimuli through the audio *interface*, and every screen's answers are collected
 into a results table, combined with a participant's ID.
 
 ```mermaid
+%% whispy architecture — paste into https://mermaid.live to export PNG/SVG
 %%{init: {"theme":"base","fontFamily":"Arial","themeVariables":{"fontFamily":"Arial","fontSize":"30px","lineColor":"#6b7280"},"flowchart":{"curve":"basis","nodeSpacing":80,"rankSpacing":110,"padding":18,"htmlLabels":false,"useMaxWidth":true}}}%%
 
 flowchart TB
@@ -162,6 +163,7 @@ flowchart TB
     %% edges: data flow in grey, the dotted config feeds in soft gold
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
     linkStyle 13,14,15 stroke:#caa83f,stroke-width:1.4px;
+
 ```
 
 > The same diagram lives in [`docs/architecture.mmd`](docs/architecture.mmd) —
