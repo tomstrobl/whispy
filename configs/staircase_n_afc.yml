@@ -109,5 +109,7 @@ staircase:
   step: 1                    # levels moved per step
   start_index: -1            # starting level index (-1 = easiest / last level)
   max_reversals: 6           # stop after this many reversals ...
-  max_trials: 3             # ... or this many trials, whichever comes first
+  max_trials: 20             # ... or this many trials, whichever comes first
   reversals_for_threshold: 4 # how many final reversals threshold() averages
+  big_step: 2                # optional: step size for first `big_steps` reversals
+  reversals_for_big_step: 2  # optional: how many reversals to use `big_step` for constant step size reversals_for_big_step = 0

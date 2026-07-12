@@ -120,10 +120,21 @@ experiment:
           attribute: difference
           reference: 1
           test: [2, 3]
+      - section:
+          section_name: Section 3
+          attribute: difference
+          reference: 1
+          test: [2, 3]
+
   - block:
       - block_name: Block 2
       - section:
-          section_name: Section 3
+          section_name: Section 4
+          attribute: tone_color_bright-dark
+          reference: 1
+          test: [2, 3]
+      - section:
+          section_name: Section 5
           attribute: tone_color_bright-dark
           reference: 1
           test: [2, 3]

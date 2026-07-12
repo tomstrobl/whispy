@@ -6,6 +6,7 @@ from whispy.interfaces import StimuliHandler, SoundDevice
 from whispy.utils import load_design, read_config
 from whispy.utils._utils import format_markdown
 
+import time
 import pandas
 import os
 from dataclasses import dataclass
@@ -223,6 +224,8 @@ class DragAndDropMUSHRA(_BaseUIWindow):
         if reference:
             self._install_key_handling()
 
+        self._start_time = time.time()  # record the start time for reaction time measurement
+
         # Block code execution outside this class until Continue is clicked
         if blocking:
             self.wait_until_closed()
@@ -319,6 +322,8 @@ class DragAndDropMUSHRA(_BaseUIWindow):
 
             self.drag_area.view.deactivate_active_button()
 
+            self._rt = time.time() - self._start_time
+
             # Quit the blocking loop so the caller regains control.
             # The window stays open; caller must call .close() explicitly.
             self.unblock()
@@ -358,13 +363,14 @@ class DragAndDropMUSHRA(_BaseUIWindow):
         if results is None:
             # create empty dataframe with columns from the screen metadata
             results = pandas.DataFrame(
-                columns=list(screen_meta.keys()) + ['rating'])
+                columns=list(screen_meta.keys()) + ['rating'] + ['rt'])
 
         # fill data frame in long format (one row per test condition)
         for t in self.screen["test"]:
             row = dict(screen_meta)
             row["test"] = t
             row["rating"] = ratings[t]
+            row["rt"] = self._rt
             results.loc[len(results)] = row
 
         return results
