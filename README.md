@@ -180,7 +180,7 @@ flowchart TB
 
     %% edges: data flow in grey, the dotted config feeds in soft gold
     linkStyle default stroke:#6b7280,stroke-width:1.6px;
-    linkStyle 13,14,15 stroke:#caa83f,stroke-width:1.4px;
+    linkStyle 16,17,18 stroke:#caa83f,stroke-width:1.4px;
 ```
 
 > The same diagram lives in [`docs/architecture.mmd`](docs/architecture.mmd) —
