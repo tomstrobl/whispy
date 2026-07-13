@@ -1,7 +1,0 @@
-block,section,reference,test,block_changed,section_changed,attribute,block_name,section_name,rating,timestamp
-0,0,1,2,True,True,difference,Der Block,Section 1,0.09885931558935361,2026-06-27 22:02:10.785084
-0,0,1,3,True,True,difference,Der Block,Section 1,0.049429657794676805,2026-06-27 22:02:10.786621
-0,1,1,2,False,True,difference,Der Block,Section 2,0.13783269961977188,2026-06-27 22:02:13.699640
-0,1,1,3,False,True,difference,Der Block,Section 2,0.49619771863117873,2026-06-27 22:02:13.699640
-1,0,1,2,True,False,tone_color_bright-dark,Block 2,Section 3,-0.8193916349809887,2026-06-27 22:02:17.392342
-1,0,1,3,True,False,tone_color_bright-dark,Block 2,Section 3,-0.40304182509505704,2026-06-27 22:02:17.396753
