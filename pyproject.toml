@@ -37,3 +37,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["whispy*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
