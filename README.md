@@ -219,6 +219,12 @@ The drag-and-drop-MUSHRA-test screen:
 
 <img src="docs/images/d_a_d_MUSHRA_screen.png" width="450" alt="Drag-and-drop-MUSHRA Test Screen">
 
+## Development
+
+Run the test suite with `pytest` from the repo root. It runs fully headless
+(Qt offscreen, audio playback stubbed), so no display or sound device is
+needed - it also works on CI runners.
+
 ## Authors and acknowledgement
 
 - Brinkmann, Fabian
