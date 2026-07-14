@@ -253,9 +253,15 @@ Use the `full_experiment_<test>.ipynb` notebook. It runs, in order:
    initials + a birthday digit → `HPo1`). No name is ever stored. The ID is
    kept in memory for the rest of the notebook and is baked into the *names*
    of all files saved for this participant.
-3. **The test itself** - one window per trial/screen; each cell blocks until
-   the participant finishes.
+3. **The test itself** - every trial/screen swaps its content into the same
+   window; each cell blocks until the participant finishes.
 4. **Thank-you screen** - edit `configs/thanks.yml`.
+
+All four steps share **one fullscreen window**: the welcome cell opens it
+(`host = ExperimentHost()`) and the thank-you cell closes it, and every
+screen in between is drawn inside it - so the participant never sees your
+desktop, not even for a split second between two screens. If a cell fails
+halfway through, close the window by running `host.close()` in a new cell.
 
 **Checklist per participant:**
 
@@ -310,6 +316,9 @@ By design - participants must finish the screen first. During development,
 interrupt or restart the notebook kernel (VS Code: the ⏹/restart buttons at
 the top of the notebook), and the window disappears. For quick testing you
 can also construct UIs with `debug=True`, which re-enables the ✕ button.
+In the full-experiment notebooks the shared window stays open between cells
+on purpose; it is closed by the thank-you cell, and after an error you can
+always close it by running `host.close()` in a new cell.
 
 **`ValueError` when the notebook loads the stimuli.**
 Read the message - it tells you exactly which rule from section 8 was broken

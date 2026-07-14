@@ -102,6 +102,7 @@ flowchart TB
     end
 
     subgraph UI["UI layer (PyQt6)"]
+        EH["ExperimentHost<br/>(one shared window per experiment)"]
         QU["Questionnaire"]
         IN["InfoWindow"]
         MU["DragAndDropMUSHRA"]
@@ -165,7 +166,7 @@ flowchart TB
 
     class C1,C2,C3,C4 cfg;
     class SCH,STC orch;
-    class MU,NA,AB,ST,QU,IN,PI ui;
+    class MU,NA,AB,ST,QU,IN,PI,EH ui;
     class SH,SD,FAC,OSC aud;
     class GR,SR res;
     class NB drv;
