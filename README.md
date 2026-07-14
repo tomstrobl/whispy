@@ -31,7 +31,8 @@ Available predefined test setups:
 - ### Scale test
     Rating test for a given stimulus (e.g., "How rough is this tone?"), answered on one or more Likert-button or slider scales stacked below a single play button.
 
-Additionally, **questionnaires** can be added anywhere in an experiment: fully config-driven surveys with free-text, numeric, single-choice and multiple-choice questions, including follow-up questions that only appear depending on earlier answers. The predefined ones (see [`configs/questionnaires/`](configs/questionnaires/)) are a consent form - which also builds the anonymous participant ID used in the result file names - and a general questionnaire about the participant and the listening setup.
+- ### Questionnaire
+    Not a listening test, but can be added anywhere in an experiment: fully config-driven surveys with free-text, numeric, single-choice and multiple-choice questions, including follow-up questions that only appear depending on earlier answers. The predefined ones (see [`configs/questionnaires/`](configs/questionnaires/)) are a consent form - which also builds the anonymous participant ID used in the result file names - and a general questionnaire about the participant and the listening setup.
 
 > **Config-driven:** every test can be tailored in its `configs/<test>.yml`
 > file - wording, stimuli, scales, trial plan - without touching any Python.
