@@ -65,6 +65,7 @@ All windows in `whispy/ui/*` (`InfoWindow`, `ParticipantID`, `Questionnaire`, `D
 ## Audio / stimulus rules
 
 - `whispy.interfaces.StimuliHandler` is an ABC with `play(stimulus)` / `stop(stimulus=None)`.
+- Every test UI stops ongoing playback when a trial ends: `_BaseUIWindow._stop_stimuli_playback()` (failsafe — a raising `stop()` never blocks trial end; UIs without a `stimuli_handler` are a no-op) is called from the four test UIs' `unblock()` on submit/continue and from `closeEvent` when a window actually closes, so no stimulus from a finished trial (e.g. a looping `SoundDevice` stimulus) keeps playing into the next screen or past the end of the experiment.
 - `SoundDevice` (the default handler) loads audio via `pyfar.io.read_audio()`, rejects clipping (`max(abs(sample)) >= 1`), and requires all loaded stimuli to share one sampling rate (set as `sd.default.samplerate`).
 - `OSCHandler` sends-only (no OSC server/receiving): `play(stimulus)` sends the OSC message (`address` + optional `args`) configured for that stimulus id under `OSCHandler.stimuli`; `stop()` sends the optional `stop_address`/`stop_args` message, or does nothing if `stop_address` is unset (an OSC trigger often has no "stop" counterpart). `ip`/`port` default to `127.0.0.1`/`9000`, overridable in the config or via constructor kwargs. Built on `python-osc` (`pythonosc.udp_client.SimpleUDPClient`).
 
