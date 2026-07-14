@@ -288,7 +288,11 @@ class Staircase:
                 or self._trial >= self._max_trials):
             self._finished = True
 
-    def run(self, run_trial: Callable[[Dict[str, Any]], bool]) -> pandas.DataFrame:
+    def run(
+        self,
+        run_trial: Callable[[Dict[str, Any]], bool],
+        after_trial: Optional[Callable[[pandas.DataFrame], Any]] = None,
+    ) -> pandas.DataFrame:
         """Run the staircase to completion using a trial callback.
 
         Parameters
@@ -297,6 +301,12 @@ class Staircase:
             Function called once per trial as ``run_trial(screen) -> bool``,
             where ``screen`` is produced by ``build_screen`` and the return
             value is whether the response was correct.
+        after_trial : callable, optional
+            Called after every completed trial as ``after_trial(results)``
+            with the trial history so far (as returned by
+            :meth:`get_results`) — e.g. pass a
+            ``whispy.utils.ResultsAutosaver``'s ``save`` for crash-safe
+            incremental saving.
 
         Returns
         -------
@@ -307,6 +317,8 @@ class Staircase:
             screen = self.next_screen()
             correct = run_trial(screen)
             self.update(correct)
+            if after_trial is not None:
+                after_trial(self.get_results())
         return self.get_results()
 
     # --------------------------------------------------------------- results

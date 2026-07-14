@@ -276,13 +276,19 @@ is completed, so a stray click on ✕ won't lose data.
 
 ## 10. Where your results end up
 
-Every notebook ends with a call to `save_results(...)`, which writes a CSV
-file into **`examples/results/`**. Files are **never overwritten** - a
-number is appended if the name already exists - and every filename carries a
-timestamp:
+Every experiment writes a CSV file into **`examples/results/`**. Files are
+**never overwritten** - a number is appended if the name already exists -
+and every filename carries a timestamp:
 
 - with a participant ID: `abx_HPo1_20260707-143000.csv`
 - without one (building blocks run standalone): `abx_0001_20260707-143000.csv`
+
+In the **full-experiment notebooks** the test's CSV is written
+**incrementally**: the run cell rewrites the file after every completed
+trial, so even if the computer dies mid-session every finished trial is
+already on disk (at most the trial in progress is lost). The "save" cell at
+the end then only reports the file's path. The building blocks call
+`save_results(...)` once at the end instead.
 
 A CSV is a plain table: open it in Excel, or in Python with
 `pandas.read_csv(...)`. One row per trial (ABX, N-AFC) or per rating
