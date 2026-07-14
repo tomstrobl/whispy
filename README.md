@@ -8,8 +8,8 @@ all driven by YAML configuration.
 The tests run in jupyter notebooks and either predefined full experiments can 
 be chosen or individual test setups can be compiled from the building blocks. 
 
-> 📑 **Presentation:** for a quick visual introduction to the project, see the
-> [slide deck (PDF)](docs/AbschlussPraes_PyAk.pdf).
+> 📑 **Presentation:** for a quick visual introduction to the project, see our
+> final presentation [slide deck (PDF, in German)](docs/AbschlussPraes_PyAk.pdf).
 
 Available predefined test setups:
 
@@ -195,11 +195,11 @@ flowchart TB
 
 The ABX-test screen:
 
-<img src="/images/ABX_test_screen.png" width="450" alt="ABX Test Screen">
+<img src="docs/images/ABX_test_screen.png" width="450" alt="ABX Test Screen">
 
 The drag-and-drop-MUSHRA-test screen:
 
-<img src="/images/d_a_d_MUSHRA_screen.png" width="450" alt="Drag-and-drop-MUSHRA Test Screen">
+<img src="docs/images/d_a_d_MUSHRA_screen.png" width="450" alt="Drag-and-drop-MUSHRA Test Screen">
 
 ## Authors and acknowledgement
 
