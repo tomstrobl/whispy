@@ -8,6 +8,9 @@ all driven by YAML configuration.
 The tests run in jupyter notebooks and either predefined full experiments can 
 be chosen or individual test setups can be compiled from the building blocks. 
 
+> 📑 **Presentation:** for a quick visual introduction to the project, see the
+> [slide deck (PDF)](docs/AbschlussPraes_PyAk.pdf).
+
 Available predefined test setups:
 
 - ### ABX
