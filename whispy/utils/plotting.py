@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import textwrap
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
@@ -13,12 +14,12 @@ class Plotting:
 
     def read_results(
         self,
-        results: Union[str, Path, pd.DataFrame],
-        kind: Optional[str] = None,
+        results: Union[str, Path, pd.DataFrame],  # CSV path, Path object, or an already-loaded DataFrame
+        kind: Optional[str] = None,               # experiment family ("staircase", "abx", "mushra"); auto-detected from columns if None
     ) -> pd.DataFrame:
         """Load CSV results or normalize an existing DataFrame for plotting."""
         if isinstance(results, pd.DataFrame):
-            plot_df = results.copy()
+            plot_df = results.copy()  # never mutate the caller's DataFrame
         else:
             path = Path(results)
             if not path.exists():
@@ -26,10 +27,11 @@ class Plotting:
             plot_df = pd.read_csv(path)
 
         if kind is None:
-            kind = self._infer_result_kind(plot_df)
+            kind = self._infer_result_kind(plot_df)  # guess the experiment type from the columns present
 
         kind = str(kind).lower()
         if kind in {"staircase", "staircase_n_afc", "n_afc", "nafc"}:
+            # normalize column-name variants so downstream plot functions can rely on fixed names
             if "correct_bool" not in plot_df.columns and "correct" in plot_df.columns:
                 plot_df = plot_df.copy()
                 plot_df["correct_bool"] = plot_df["correct"].fillna(False).astype(bool)
@@ -47,19 +49,20 @@ class Plotting:
         if kind in {"mushra", "drag_and_drop_mushra", "drag_and_drop"}:
             plot_df = plot_df.copy()
             if "rt" in plot_df.columns:
-                plot_df["rt"] = pd.to_numeric(plot_df["rt"], errors="coerce")
+                plot_df["rt"] = pd.to_numeric(plot_df["rt"], errors="coerce")  # force numeric, invalid entries -> NaN
             if "block" not in plot_df.columns and "block_name" in plot_df.columns:
                 plot_df["block"] = plot_df["block_name"]
             if "stimulus" not in plot_df.columns:
                 if "reference" in plot_df.columns and "test" in plot_df.columns:
+                    # build a human-readable stimulus label out of the reference/test pair
                     plot_df["stimulus"] = plot_df[["reference", "test"]].astype(str).agg(
                         lambda s: f"{s['reference']} / {s['test']}", axis=1
                     )
             return plot_df
 
-        return plot_df
+        return plot_df  # unrecognized kind: hand the DataFrame back unmodified
 
-    def _infer_result_kind(self, results: pd.DataFrame) -> str:
+    def _infer_result_kind(self, results: pd.DataFrame) -> str:  # results: raw DataFrame to inspect
         """Infer the experiment family from the available columns."""
         columns = set(results.columns)
         if {"trial", "level", "correct", "reversal"}.issubset(columns):
@@ -72,10 +75,10 @@ class Plotting:
 
     def save_plot(
         self,
-        fig=None,
-        name: str = "plot",
-        results_dir: str = 'results',
-        dpi: int = 300,
+        fig=None,                                    # figure to save; defaults to the current active figure (plt.gcf())
+        name: str = "plot",                          # filename stem; a timestamp is appended so repeated runs don't overwrite each other
+        results_dir: str = 'results',                # base directory; the PNG is written to "<results_dir>/plots/"
+        dpi: int = 300,                              # resolution of the saved PNG
     ) -> Optional[Path]:
         """Save the current figure to a plots folder inside results_dir when requested."""
         if fig is None:
@@ -87,28 +90,41 @@ class Plotting:
 
         folder = Path(results_dir) / "plots"
         folder.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")  # keeps every saved plot uniquely named
         path = folder / f"{name}_{timestamp}.png"
-        fig.savefig(path, dpi=dpi, bbox_inches="tight")
+        fig.savefig(path, dpi=dpi)
         return path
 
     def _add_caption(
         self,
-        ax=None,
-        fig=None,
-        caption_text: Optional[str] = None,
+        ax=None,                          # axis to attach the caption to (used to find the parent figure if fig is not given)
+        fig=None,                         # figure to attach the caption to directly; takes priority over ax
+        caption_text: Optional[str] = None,  # the caption string itself; nothing is drawn if this is falsy
+        wrap_width: int = 100,            # max characters per line before wrapping; keeps a long caption from widening the saved figure
     ) -> None:
-        """Add a caption to the current figure when requested."""
+        """Add an explanatory caption below the current figure when requested.
+
+        The caption is wrapped onto multiple lines instead of being drawn as one long
+        line, so it never becomes wider than the figure itself -- otherwise
+        bbox_inches="tight" (used in save_plot) would expand the saved PNG to fit the
+        full unwrapped text, making captioned plots wider than uncaptioned ones.
+        """
         if not caption_text:
             return
         target_fig = fig or (ax.figure if ax is not None else plt.gcf())
         if target_fig is None:
             return
-        target_fig.subplots_adjust(bottom=0.22)
+
+        wrapped_text = textwrap.fill(caption_text, width=wrap_width)
+        n_lines = wrapped_text.count("\n") + 1
+        # grow the bottom margin with the number of wrapped lines so longer captions
+        # still have room, but cap it so the plot area never shrinks too much
+        bottom_margin = min(0.12 + 0.045 * n_lines, 0.4)
+        target_fig.subplots_adjust(bottom=bottom_margin)
         target_fig.text(
             0.5,
             0.01,
-            caption_text,
+            wrapped_text,
             ha="center",
             va="bottom",
             fontsize=9,
@@ -118,10 +134,10 @@ class Plotting:
 
     def _resolve_reference_value(
         self,
-        group: pd.DataFrame,
-        reference_value: Optional[float] = None,
-        config_path: Optional[Union[str, Path]] = None,
-        group_label: Optional[str] = None,
+        group: pd.DataFrame,                                  # the (already-filtered) rows to search for an explicit reference/neutral value
+        reference_value: Optional[float] = None,              # explicit override; used as-is if provided, skipping all lookups below
+        config_path: Optional[Union[str, Path]] = None,       # optional YAML config to fall back on if no value is found in the data
+        group_label: Optional[str] = None,                    # attribute name used to look up "attributes.<name>.neutral_value" in the config
     ) -> Optional[float]:
         """Try to recover a reference/neutral rating from a grouped DataFrame or config."""
         if reference_value is not None:
@@ -158,17 +174,18 @@ class Plotting:
                                     if neutral_value is not None:
                                         return float(neutral_value)
             except Exception:
-                pass
+                pass  # config missing/unreadable/malformed -> fall through to the default below
 
-        return 0.0
+        return 0.0  # last-resort default when nothing else is available
 
     def plot_staircase(
         self,
-        results: pd.DataFrame,
-        threshold: Optional[float] = None,
-        title: Optional[str] = None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # staircase trial-level results; needs "trial", "level", and optionally "reversal" columns
+        threshold: Optional[float] = None,                     # estimated threshold; drawn as a dashed horizontal line if given
+        title: Optional[str] = None,                           # optional custom plot title (overrides no title, not the caption)
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Plot a staircase trace with reversal markers and a threshold line."""
         if not isinstance(results, pd.DataFrame):
@@ -203,18 +220,29 @@ class Plotting:
         if title:
             plt.title(title)
         plt.legend()
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=plt.gca(),
+                caption_text=(
+                    "Stimulus level presented on each trial. Red dots mark reversals "
+                    "(points where the staircase direction switches from up to down or vice versa); "
+                    "the dashed line, if shown, is the threshold estimated from the stable reversals."
+                ),
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "staircase")
         plt.show()
 
     def plot_abx_accuracy_by_section(
         self,
-        results: pd.DataFrame,
-        group_col: str = "section_name",
-        condition_col: str = "block_name",
-        ci: float = 0.95,
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # ABX trial-level results; needs "correct_bool" and the grouping columns below
+        group_col: str = "section_name",                       # column defining the finer-grained grouping (e.g. easy/hard section)
+        condition_col: str = "block_name",                     # column defining the coarser condition/block; combined with group_col for the x-axis label
+        ci: float = 0.95,                                      # confidence level for the error bars (0.95 -> z=1.96, anything else -> z=1.645)
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Plot ABX accuracy per section/condition with confidence intervals."""
         if not isinstance(results, pd.DataFrame):
@@ -236,7 +264,7 @@ class Plotting:
         for label, group in plot_df.groupby("group_label", dropna=False):
             n = len(group)
             p = float(group["correct_bool"].mean())
-            ci_half = self._binomial_ci(p, n, ci)
+            ci_half = self._binomial_ci(p, n, ci)  # half-width of the confidence interval
             summary.append({"label": label, "accuracy": p, "ci_half": ci_half, "n": n})
 
         summary_df = pd.DataFrame(summary)
@@ -251,21 +279,31 @@ class Plotting:
             alpha=0.85,
         )
         ax.set_xticks(list(x))
-        ax.set_xticklabels(summary_df["label"], rotation=45, ha="right")
+        ax.set_xticklabels(summary_df["label"], ha="right")
         ax.set_ylabel("Accuracy")
         ax.set_ylim(0, 1)
         ax.set_title("ABX accuracy by section/condition")
         ax.grid(axis="y", linestyle="--", alpha=0.3)
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=ax,
+                caption_text=(
+                    f"Proportion of correct responses per condition, with error bars showing the "
+                    f"{int(ci * 100)}% confidence interval (Wald approximation from binomial variance, n per bar noted in the data)."
+                ),
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "abx_accuracy_by_section")
         plt.show()
 
     def plot_abx_rt_boxplot(
         self,
-        results: pd.DataFrame,
-        correctness_col: str = "correct_bool",
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # ABX trial-level results; needs correctness_col and "rt"
+        correctness_col: str = "correct_bool",                 # column of correct/incorrect booleans to split the boxplot by
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Boxplot ABX reaction times by response correctness."""
         if not isinstance(results, pd.DataFrame):
@@ -286,6 +324,7 @@ class Plotting:
                 labels.append("correct" if correct else "incorrect")
                 colors.append("#2ca02c" if correct else "#d62728")
 
+        # showfliers left at its default (True): points beyond 1.5x IQR are drawn as separate outlier markers
         box = ax.boxplot(values, labels=labels, patch_artist=True)
         for patch, color in zip(box["boxes"], colors):
             patch.set_facecolor(color)
@@ -295,16 +334,27 @@ class Plotting:
         ax.set_ylabel("RT (s)")
         ax.set_title("ABX RT by correctness")
         ax.grid(axis="y", linestyle="--", alpha=0.3)
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=ax,
+                caption_text=(
+                    "Reaction time distribution split by response correctness. The box spans the "
+                    "interquartile range (IQR) with the median line; whiskers extend to 1.5x IQR; "
+                    "individual circles beyond the whiskers are outlier trials."
+                ),
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "abx_rt_boxplot")
         plt.show()
 
     def plot_abx_correctness_rt_over_trials(
         self,
-        results: pd.DataFrame,
-        window: int = 10,
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # ABX trial-level results, in presentation order; needs "correct_bool" and "rt"
+        window: int = 10,                                      # size of the rolling window (in trials) used to smooth both series
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Plot rolling correctness and RT over trial order."""
         if not isinstance(results, pd.DataFrame):
@@ -324,7 +374,7 @@ class Plotting:
         rt_series = plot_df["rt"].rolling(window=window, min_periods=1).mean()
 
         ax.plot(range(1, len(plot_df) + 1), correctness_series, label="Rolling accuracy")
-        ax2 = ax.twinx()
+        ax2 = ax.twinx()  # second y-axis so accuracy (0-1) and RT (seconds) can share the same x-axis cleanly
         ax2.plot(range(1, len(plot_df) + 1), rt_series, color="tab:red", label="Rolling RT")
 
         ax.set_xlabel("Trial")
@@ -336,16 +386,26 @@ class Plotting:
         lines1, labels1 = ax.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax.legend(lines1 + lines2, labels1 + labels2, loc="best")
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=ax,
+                caption_text=(
+                    f"Rolling average (window = {window} trials) of response accuracy (left axis) and "
+                    f"reaction time (right axis) across trial order, useful for spotting learning or fatigue effects."
+                ),
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "abx_correctness_rt_over_trials")
         plt.show()
 
     def plot_staircase_rt_boxplot(
         self,
-        results: pd.DataFrame,
-        correctness_col: str = "correct",
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # staircase trial-level results; needs correctness_col and "rt"
+        correctness_col: str = "correct",                      # column of correct/incorrect booleans to split the boxplot by
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Boxplot staircase reaction times by response correctness."""
         if not isinstance(results, pd.DataFrame):
@@ -366,6 +426,7 @@ class Plotting:
                 labels.append("correct" if correct else "incorrect")
                 colors.append("#2ca02c" if correct else "#d62728")
 
+        # showfliers left at its default (True): points beyond 1.5x IQR are drawn as separate outlier markers
         box = ax.boxplot(values, labels=labels, patch_artist=True)
         for patch, color in zip(box["boxes"], colors):
             patch.set_facecolor(color)
@@ -375,16 +436,27 @@ class Plotting:
         ax.set_ylabel("RT (s)")
         ax.set_title("Staircase RT by correctness")
         ax.grid(axis="y", linestyle="--", alpha=0.3)
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=ax,
+                caption_text=(
+                    "Reaction time distribution split by response correctness. The box spans the "
+                    "interquartile range (IQR) with the median line; whiskers extend to 1.5x IQR; "
+                    "individual circles beyond the whiskers are outlier trials."
+                ),
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "staircase_rt_boxplot")
         plt.show()
 
     def plot_staircase_correctness_rt_over_trials(
         self,
-        results: pd.DataFrame,
-        window: int = 10,
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # staircase trial-level results, in presentation order; needs "correct" and "rt"
+        window: int = 10,                                      # size of the rolling window (in trials) used to smooth both series
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Plot rolling correctness and RT over staircase trials."""
         if not isinstance(results, pd.DataFrame):
@@ -404,7 +476,7 @@ class Plotting:
         rt_series = plot_df["rt"].rolling(window=window, min_periods=1).mean()
 
         ax.plot(range(1, len(plot_df) + 1), correctness_series, label="Rolling accuracy")
-        ax2 = ax.twinx()
+        ax2 = ax.twinx()  # second y-axis so accuracy (0-1) and RT (seconds) can share the same x-axis cleanly
         ax2.plot(range(1, len(plot_df) + 1), rt_series, color="tab:red", label="Rolling RT")
 
         ax.set_xlabel("Trial")
@@ -416,16 +488,26 @@ class Plotting:
         lines1, labels1 = ax.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax.legend(lines1 + lines2, labels1 + labels2, loc="best")
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=ax,
+                caption_text=(
+                    f"Rolling average (window = {window} trials) of response accuracy (left axis) and "
+                    f"reaction time (right axis) across the staircase's trial order."
+                ),
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "staircase_correctness_rt_over_trials")
         plt.show()
 
     def plot_mushra_rt_boxplot(
         self,
-        results: pd.DataFrame,
-        block_col: Optional[str] = None,
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # MUSHRA trial-level results or a path/DataFrame accepted by read_results
+        block_col: Optional[str] = None,                       # column to split boxes by; falls back to "block"/"block_name", or a single "all" group
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Boxplot MUSHRA reaction times by block."""
         plot_df = self.read_results(results, kind="mushra")
@@ -441,7 +523,7 @@ class Plotting:
             elif "block_name" in plot_df.columns:
                 block_col = "block_name"
             else:
-                plot_df["block"] = "all"
+                plot_df["block"] = "all"  # no block info available: treat everything as one group
                 block_col = "block"
 
         values = []
@@ -454,6 +536,8 @@ class Plotting:
                 labels.append(str(block_value))
                 colors.append(plt.cm.Set2.colors[len(colors) % len(plt.cm.Set2.colors)])
 
+        # showfliers=False: outlier trials are not drawn as separate markers here, since only
+        # the aggregate per-block distribution (not individual trials) is being shown
         box = ax.boxplot(values, labels=labels, patch_artist=True, showfliers=False)
         for patch, color in zip(box["boxes"], colors):
             patch.set_facecolor(color)
@@ -463,16 +547,27 @@ class Plotting:
         ax.set_ylabel("RT (s)")
         ax.set_title("MUSHRA RT by block")
         ax.grid(axis="y", linestyle="--", alpha=0.3)
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=ax,
+                caption_text=(
+                    "Reaction time distribution per block. The box spans the interquartile range (IQR) "
+                    "with the median line; whiskers extend to 1.5x IQR. Outlier markers are suppressed "
+                    "here, so extreme individual trials are folded into the whisker range."
+                ),
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "mushra_rt_boxplot")
         plt.show()
 
     def plot_mushra_rt_over_trials(
         self,
-        results: pd.DataFrame,
-        window: int = 10,
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
+        results: pd.DataFrame,                                 # MUSHRA trial-level results or a path/DataFrame accepted by read_results
+        window: int = 10,                                      # size of the rolling window (in trials) used to smooth the RT series
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
     ) -> None:
         """Plot rolling MUSHRA reaction times over the trial order."""
         plot_df = self.read_results(results, kind="mushra")
@@ -493,23 +588,29 @@ class Plotting:
         ax.set_title("MUSHRA RT over trials")
         ax.grid(axis="y", linestyle="--", alpha=0.3)
         ax.legend(loc="best")
+        plt.tight_layout()
+        if caption_bool:
+            self._add_caption(
+                ax=ax,
+                caption_text=f"Rolling average (window = {window} trials) of MUSHRA reaction times across trial order.",
+            )
         self.save_plot(results_dir=results_dir, name=plot_name or "mushra_rt_over_trials")
         plt.show()
 
     def plot_mushra_mean_ratings(
         self,
-        results: pd.DataFrame,
-        stimulus_col: Optional[str] = None,
-        rating_col: str = "rating",
-        attribute_col: Optional[str] = None,
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
-        caption_bool: bool = False,
-        reference_value: Optional[float] = None,
-        config_path: Optional[Union[str, Path]] = None,
+        results: pd.DataFrame,                                 # MUSHRA trial-level results; needs rating_col and either stimulus_col or reference/test columns
+        stimulus_col: Optional[str] = None,                    # column identifying each test stimulus; derived from reference/test if not given
+        rating_col: str = "rating",                            # column holding the numeric rating
+        attribute_col: Optional[str] = None,                   # column identifying the rated attribute; falls back to a single "all" group
+        ax=None,                                               # existing axis to draw into; a new figure/axis is created if None
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the plot
+        reference_value: Optional[float] = None,               # explicit reference/neutral rating; overrides data- and config-based lookup
+        config_path: Optional[Union[str, Path]] = None,        # optional YAML config used to look up a reference value per attribute
     ) -> None:
-        """Plot block-wise MUSHRA means and the underlying trial-level ratings."""
+        """Plot attribute-wise MUSHRA means and the underlying trial-level ratings."""
         if not isinstance(results, pd.DataFrame):
             raise TypeError("results must be a pandas DataFrame")
         if rating_col not in results.columns:
@@ -526,6 +627,7 @@ class Plotting:
             if "stimulus" in plot_df.columns:
                 stimulus_col = "stimulus"
             elif "test" in plot_df.columns and "reference" in plot_df.columns:
+                # collapse reference/test columns into a single stimulus label, keyed on the test value
                 plot_df["stimulus"] = plot_df[["reference", "test"]].astype(str).agg(lambda s: f"{s['test']}", axis=1)
                 stimulus_col = "stimulus"
             else:
@@ -537,7 +639,7 @@ class Plotting:
             elif "attribute_name" in plot_df.columns:
                 attribute_col = "attribute_name"
             else:
-                plot_df["attribute"] = "all"
+                plot_df["attribute"] = "all"  # no attribute info available: treat everything as one group
                 attribute_col = "attribute"
 
         # Group the data by attribute and draw one line per attribute.
@@ -565,7 +667,7 @@ class Plotting:
             # Individual trial ratings are shown as semi-transparent dots.
             for stimulus in stimuli:
                 subset = group.loc[group[stimulus_col].astype(str) == stimulus, rating_col]
-                jitter = 0.02 * (idx % 2) - 0.01
+                jitter = 0.02 * (idx % 2) - 0.01  # small horizontal offset so overlapping attributes don't sit exactly on top of each other
                 ax.scatter([x_positions[stimulus] + jitter] * len(subset), subset, color=color, alpha=0.45, s=25)
 
             # One line per attribute, with the attribute mean per stimulus.
@@ -593,6 +695,7 @@ class Plotting:
         ax.set_xlabel("Test stimulus")
         ax.set_title("MUSHRA mean ratings by attribute")
         ax.grid(axis="y", linestyle="--", alpha=0.3)
+        plt.tight_layout()
         handles, labels = ax.get_legend_handles_labels()
         if handles and labels:
             ax.legend(title="Attribute")
@@ -601,25 +704,28 @@ class Plotting:
         if caption_bool:
             self._add_caption(
                 ax=ax,
-                caption_text="Mean ratings per test stimulus and grouped by attribute. The dashed line shows the reference rating.",
+                caption_text=(
+                    "Mean rating per test stimulus, one line per attribute; small dots are the underlying "
+                    "individual trial ratings. Dashed lines show each attribute's reference rating."
+                ),
             )
         self.save_plot(results_dir=results_dir, name=plot_name or "mushra_mean_ratings")
         plt.show()
 
     def plot_mushra_summary_distribution(
         self,
-        results: pd.DataFrame,
-        stimulus_col: Optional[str] = None,
-        rating_col: str = "rating",
-        attribute_col: Optional[str] = None,
-        ax=None,
-        results_dir: Optional[Union[str, Path]] = None,
-        plot_name: Optional[str] = None,
-        caption_bool: bool = False,
-        reference_value: Optional[float] = None,
-        config_path: Optional[Union[str, Path]] = None,
+        results: pd.DataFrame,                                 # MUSHRA trial-level results; needs rating_col and either stimulus_col or reference/test columns
+        stimulus_col: Optional[str] = None,                    # column identifying each test stimulus; derived from reference/test if not given
+        rating_col: str = "rating",                            # column holding the numeric rating
+        attribute_col: Optional[str] = None,                   # column identifying the rated attribute; one subplot is drawn per attribute
+        ax=None,                                               # existing axis to draw into (single-attribute case only); ignored if there are multiple attributes
+        results_dir: Optional[Union[str, Path]] = None,        # base directory to save into (see save_plot)
+        plot_name: Optional[str] = None,                       # filename stem for the saved PNG
+        caption_bool: bool = True,                             # if True, adds an explanatory caption below the figure
+        reference_value: Optional[float] = None,               # explicit reference/neutral rating; overrides data- and config-based lookup
+        config_path: Optional[Union[str, Path]] = None,        # optional YAML config used to look up a reference value per attribute
     ) -> None:
-        """Plot a classic MUSHRA summary plot with one subplot per block."""
+        """Plot a classic MUSHRA summary plot with one subplot per attribute."""
         if not isinstance(results, pd.DataFrame):
             raise TypeError("results must be a pandas DataFrame")
         if rating_col not in results.columns:
@@ -665,7 +771,9 @@ class Plotting:
                 for stimulus in sorted(group[stimulus_col].astype(str).unique())
             ]
             labels = [str(stimulus) for stimulus in sorted(group[stimulus_col].astype(str).unique())]
-            box = axis.boxplot(values, labels=labels, patch_artist=True)
+            # showfliers=False: every individual rating is already drawn as a jittered dot below,
+            # so the default boxplot outlier markers would just duplicate those same points
+            box = axis.boxplot(values, labels=labels, patch_artist=True, showfliers=False)
             for patch in box["boxes"]:
                 patch.set_alpha(0.7)
 
@@ -673,7 +781,7 @@ class Plotting:
                 subset = group.loc[group[stimulus_col].astype(str) == stimulus, rating_col].dropna()
                 if subset.empty:
                     continue
-                jitter = 0.02 * (i % 2) - 0.01
+                jitter = 0.02 * (i % 2) - 0.01  # alternate a small offset so adjacent stimuli's dots don't overlap
                 axis.scatter([i + jitter] * len(subset), subset, color="0.25", alpha=0.45, s=25)
 
             reference_line_value = self._resolve_reference_value(
@@ -695,28 +803,45 @@ class Plotting:
             axis.set_xlabel("Test stimulus")
             axis.set_title(f"MUSHRA rating distribution (Attribute: {attribute_label})")
             axis.grid(axis="y", linestyle="--", alpha=0.3)
-        
+
         plt.legend()
+        plt.tight_layout()
         if fig is not None:
-           # fig.tight_layout(rect=(0, 0.05, 1, 1))
+           # fig.tight_layout(rect=(0, 0.05, 1, 1))  
             if caption_bool:
                 self._add_caption(
                     fig=fig,
-                    caption_text="Boxplots per test stimulus. The dashed line shows the reference rating. There is a subplot for every attribute",
+                    caption_text=(
+                        "One boxplot per test stimulus per attribute (one subplot per attribute). "
+                        "The box spans the interquartile range (IQR) with the median line; whiskers extend "
+                        "to 1.5x IQR. All individual trial ratings are shown as jittered dots, so outliers "
+                        "are the dots sitting beyond the whiskers rather than a separate marker style. "
+                        "The dashed line shows the reference rating."
+                    ),
                 )
         else:
             if caption_bool:
                 self._add_caption(
                     ax=ax,
-                    caption_text="Boxplots per test stimulus. The dashed line shows the reference rating. There is a subplot for every attribute",
+                    caption_text=(
+                        "Boxplot per test stimulus for this attribute. The box spans the interquartile range "
+                        "(IQR) with the median line; whiskers extend to 1.5x IQR. All individual trial ratings "
+                        "are shown as jittered dots, so outliers are the dots sitting beyond the whiskers. "
+                        "The dashed line shows the reference rating."
+                    ),
                 )
-        self.save_plot(fig=fig ,results_dir=results_dir, name=plot_name or "mushra_summary_distribution")
+        self.save_plot(fig=fig, results_dir=results_dir, name=plot_name or "mushra_summary_distribution")
         plt.show()
 
-    def _binomial_ci(self, p: float, n: int, ci: float = 0.95) -> float:
-        """Approximate binomial confidence interval half-width."""
+    def _binomial_ci(
+        self,
+        p: float,             # observed proportion correct (between 0 and 1)
+        n: int,                # number of trials the proportion is based on
+        ci: float = 0.95,      # confidence level; 0.95 uses z=1.96, anything else uses z=1.645 (~90%)
+    ) -> float:
+        """Approximate binomial confidence interval half-width (Wald approximation)."""
         if n <= 0:
             return 0.0
         z = 1.96 if ci >= 0.95 else 1.645
-        se = (p * (1 - p) / n) ** 0.5
+        se = (p * (1 - p) / n) ** 0.5  # standard error of a proportion
         return z * se

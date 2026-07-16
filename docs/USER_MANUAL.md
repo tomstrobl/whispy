@@ -18,9 +18,10 @@ experience with the codebase is required, and only minimal Python knowledge
 8. [Using your own audio files](#8-using-your-own-audio-files)
 9. [Running a real experiment with participants](#9-running-a-real-experiment-with-participants)
 10. [Where your results end up](#10-where-your-results-end-up)
-11. [Changing the look and the wording](#11-changing-the-look-and-the-wording)
-12. [Troubleshooting](#12-troubleshooting)
-13. [Glossary](#13-glossary)
+11. [Plotting your results](#11-plotting-your-results)
+12. [Changing the look and the wording](#12-changing-the-look-and-the-wording)
+13. [Troubleshooting](#13-troubleshooting)
+14. [Glossary](#14-glossary)
 
 ---
 
@@ -128,7 +129,7 @@ whispy/
 │   ├── building_block_<test>.ipynb   (minimal: just the test + saving)
 │   ├── full_experiment_<test>.ipynb  (welcome → consent → test → thank-you)
 │   ├── demo_stimuli/                 (example WAVs for each demo)
-│   └── results/                      (your saved CSV files land here)
+│   ├── results/                      (your saved CSV files/png plots land here)
 └── whispy/             ← the Python package itself (you normally never touch it)
 ```
 
@@ -284,7 +285,39 @@ A CSV is a plain table: open it in Excel, or in Python with
 stimulus ids, the answer, whether it was correct (where applicable), and the
 response time `rt` in seconds.
 
-## 11. Changing the look and the wording
+## 11. Plotting your results
+
+Plots are generated separately from the results CSVs, via the `Plotting`
+class. By default they're saved as **`.png`** files into
+**`examples/results/plots/`** - same non-overwriting behavior as the result
+CSVs (a timestamp is appended to the filename), but note that the
+**participant ID is not carried into the plot filename**, only into the
+result CSV's.
+
+The plotting functions expect a pandas `DataFrame` as input. If you're
+working from a saved results CSV instead of a live DataFrame, use
+`Plotting().read_results(path_or_dataframe)` first.
+
+Available plot functions, one per experiment type:
+
+- **Staircase:** `plot_staircase` (trial-by-trial level trace with
+  reversals and threshold line), `plot_staircase_rt_boxplot` (response time
+  by correctness), `plot_staircase_correctness_rt_over_trials` (rolling
+  accuracy and RT over trial order)
+- **ABX:** `plot_abx_accuracy_by_section` (accuracy per section/condition
+  with confidence intervals), `plot_abx_rt_boxplot` (response time by
+  correctness), `plot_abx_correctness_rt_over_trials` (rolling accuracy and
+  RT over trial order)
+- **MUSHRA:** `plot_mushra_summary_distribution` (boxplot per stimulus, one
+  subplot per attribute), `plot_mushra_rt_boxplot` (response time by
+  block), `plot_mushra_rt_over_trials` (rolling RT over trial order),
+  `plot_mushra_mean_ratings` (mean rating per stimulus and
+  attribute)
+
+Every plot function also accepts `caption_bool` (on by default) to print a
+short explanation of what's shown directly beneath the plot.
+
+## 12. Changing the look and the wording
 
 - **Wording** (the task question, button labels, hints, welcome/thank-you
   text) lives in each experiment's config under `ui:`, or in
@@ -303,7 +336,7 @@ response time `rt` in seconds.
   `show_progress: true` in its `ui:` block; the wording is set with
   `progress_text`.
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 **A test window is open and I can't close it.**
 By design - participants must finish the screen first. During development,
@@ -344,7 +377,7 @@ It's probably *waiting* - the test cells block until the window is
 completed. Look for an open whispy window (possibly on another monitor or
 behind other windows).
 
-## 13. Glossary
+## 14. Glossary
 
 - **Stimulus** - one sound (a WAV file) played to the participant, referred
   to by its short **stimulus id** from the config.
