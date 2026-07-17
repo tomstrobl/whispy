@@ -52,7 +52,7 @@ ui:
   # configs/design.yml; add any design key here to override it for this
   # experiment only. This block keeps the wording and per-experiment layout.
   # ABX uses a narrower content area than the design.yml default.
-  content_area_size: [60, 80]
+  content_area_size: [75, 75]
   # Label above the A/B/X playback buttons.
   listen_label: "Listen:"
   # Label above the A/B answer buttons.

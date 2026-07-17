@@ -15,6 +15,7 @@ deliberately no cross-notebook state file — the id is just an in-memory value.
 
 from __future__ import annotations
 
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -89,13 +90,12 @@ def _unique_path(results_dir: Path, stem: str) -> Path:
     return path
 
 
-def save_results(
-    results: pd.DataFrame,
+def _resolve_results_path(
     name: str,
-    results_dir: str = "results",
-    participant_id: Optional[str] = None,
+    results_dir: str,
+    participant_id: Optional[str],
 ) -> Path:
-    """Save a results table to a CSV and return its path.
+    """Resolve the result-CSV path shared by every saving entry point.
 
     The file name always carries a ``{timestamp}``:
 
@@ -114,8 +114,60 @@ def save_results(
     else:
         stem = f"{name}_{_next_number(folder, name)}_{timestamp}"
 
-    path = _unique_path(folder, stem)
+    return _unique_path(folder, stem)
+
+
+def save_results(
+    results: pd.DataFrame,
+    name: str,
+    results_dir: str = "results",
+    participant_id: Optional[str] = None,
+) -> Path:
+    """Save a results table to a CSV and return its path.
+
+    See :func:`_resolve_results_path` for the naming scheme (timestamp plus
+    participant id or fallback number; existing files are never overwritten).
+    For crash-safe incremental saving during a run loop use
+    :class:`ResultsAutosaver` instead.
+    """
+    path = _resolve_results_path(name, results_dir, participant_id)
     results.to_csv(path, index=False)
     return path
+
+
+class ResultsAutosaver:
+    """Crash-safe incremental saving of a running results table.
+
+    Construct once right before a run loop and call :meth:`save` with the
+    accumulated results after every trial. Each call rewrites one stable CSV
+    atomically (written to a temp file first, then moved into place), so an
+    interrupted run — however the kernel dies — leaves a complete, readable
+    file holding every finished trial; at most the trial in progress is lost.
+
+    The target ``path`` is resolved once at construction with the same naming
+    scheme as :func:`save_results` (and reserved immediately, so a competing
+    construction cannot claim it) and simply *is* the run's results file:
+    after the loop there is nothing left to save. Re-running the loop cell
+    constructs a new autosaver and therefore starts a new file, never
+    touching an earlier run's data.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        results_dir: str = "results",
+        participant_id: Optional[str] = None,
+    ) -> None:
+        self.path = _resolve_results_path(name, results_dir, participant_id)
+        self.path.touch()
+
+    def save(self, results: pd.DataFrame) -> Path:
+        """Atomically (re)write the accumulated results; returns the path."""
+        if not isinstance(results, pd.DataFrame) or results.empty:
+            return self.path  # nothing to persist yet — failsafe mid-loop
+        tmp = self.path.with_name(self.path.name + ".tmp")
+        results.to_csv(tmp, index=False)
+        os.replace(tmp, self.path)
+        return self.path
 
 

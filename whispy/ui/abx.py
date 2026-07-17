@@ -624,8 +624,9 @@ class ABX(_BaseUIWindow):
         return False
 
     def unblock(self) -> None:  # type: ignore[override]
-        """Remove key handling for this trial, then release the blocking loop."""
+        """Stop playback and key handling for this trial, then release the loop."""
         self._stop_play_timer()
+        self._stop_stimuli_playback()
         self._remove_key_handling()
         super().unblock()
 

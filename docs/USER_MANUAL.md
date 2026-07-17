@@ -254,9 +254,15 @@ Use the `full_experiment_<test>.ipynb` notebook. It runs, in order:
    initials + a birthday digit → `HPo1`). No name is ever stored. The ID is
    kept in memory for the rest of the notebook and is baked into the *names*
    of all files saved for this participant.
-3. **The test itself** - one window per trial/screen; each cell blocks until
-   the participant finishes.
+3. **The test itself** - every trial/screen swaps its content into the same
+   window; each cell blocks until the participant finishes.
 4. **Thank-you screen** - edit `configs/thanks.yml`.
+
+All four steps share **one fullscreen window**: the welcome cell opens it
+(`host = ExperimentHost()`) and the thank-you cell closes it, and every
+screen in between is drawn inside it - so the participant never sees your
+desktop, not even for a split second between two screens. If a cell fails
+halfway through, close the window by running `host.close()` in a new cell.
 
 **Checklist per participant:**
 
@@ -271,13 +277,19 @@ is completed, so a stray click on ✕ won't lose data.
 
 ## 10. Where your results end up
 
-Every notebook ends with a call to `save_results(...)`, which writes a CSV
-file into **`examples/results/`**. Files are **never overwritten** - a
-number is appended if the name already exists - and every filename carries a
-timestamp:
+Every experiment writes a CSV file into **`examples/results/`**. Files are
+**never overwritten** - a number is appended if the name already exists -
+and every filename carries a timestamp:
 
 - with a participant ID: `abx_HPo1_20260707-143000.csv`
 - without one (building blocks run standalone): `abx_0001_20260707-143000.csv`
+
+In the **full-experiment notebooks** the test's CSV is written
+**incrementally**: the run cell rewrites the file after every completed
+trial, so even if the computer dies mid-session every finished trial is
+already on disk (at most the trial in progress is lost). The "save" cell at
+the end then only reports the file's path. The building blocks call
+`save_results(...)` once at the end instead.
 
 A CSV is a plain table: open it in Excel, or in Python with
 `pandas.read_csv(...)`. One row per trial (ABX, N-AFC) or per rating
@@ -294,11 +306,10 @@ CSVs (a timestamp is appended to the filename), but note that the
 **participant ID is not carried into the plot filename**, only into the
 result CSV's.
 
-The plotting functions expect a pandas `DataFrame` as input. If you're
-working from a saved results CSV instead of a live DataFrame, use
-`Plotting().read_results(path_or_dataframe)` first.
+The plotting functions can handle a pandas `DataFrame` or the CSV (or a path)
+as input.
 
-Available plot functions, one per experiment type:
+Available plot functions per experiment type:
 
 - **Staircase:** `plot_staircase` (trial-by-trial level trace with
   reversals and threshold line), `plot_staircase_rt_boxplot` (response time
@@ -315,7 +326,8 @@ Available plot functions, one per experiment type:
   attribute)
 
 Every plot function also accepts `caption_bool` (on by default) to print a
-short explanation of what's shown directly beneath the plot.
+short explanation of what's shown directly beneath the plot 
+("plot_...(results, caption_bool=False)" to  turn it off).
 
 ## 12. Changing the look and the wording
 
@@ -343,6 +355,9 @@ By design - participants must finish the screen first. During development,
 interrupt or restart the notebook kernel (VS Code: the ⏹/restart buttons at
 the top of the notebook), and the window disappears. For quick testing you
 can also construct UIs with `debug=True`, which re-enables the ✕ button.
+In the full-experiment notebooks the shared window stays open between cells
+on purpose; it is closed by the thank-you cell, and after an error you can
+always close it by running `host.close()` in a new cell.
 
 **`ValueError` when the notebook loads the stimuli.**
 Read the message - it tells you exactly which rule from section 8 was broken

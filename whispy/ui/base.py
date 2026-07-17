@@ -437,6 +437,21 @@ class _BaseUIWindow(QMainWindow):
         if self._wait_loop is not None and self._wait_loop.isRunning():
             self._wait_loop.quit()
 
+    def _stop_stimuli_playback(self) -> None:
+        """Stop ongoing stimulus playback, if this UI has a handler (failsafe).
+
+        Called when a trial ends (the test UIs' ``unblock()``) and when the
+        window actually closes, so no stimulus from a finished trial keeps
+        playing into the next screen or past the end of the experiment.
+        """
+        handler = getattr(self, "stimuli_handler", None)
+        if handler is None:
+            return
+        try:
+            handler.stop()
+        except Exception:
+            pass
+
     def close(self) -> None:  # type: ignore[override]
         """Close the host OS window. Must be called explicitly by the caller."""
         self._host._allow_close = True
@@ -448,6 +463,7 @@ class _BaseUIWindow(QMainWindow):
             event.ignore()
             return
 
+        self._stop_stimuli_playback()
         if self._active_child_loop is not None and self._active_child_loop.isRunning():
             self._active_child_loop.quit()
         if self._wait_loop is not None and self._wait_loop.isRunning():

@@ -1,3 +1,4 @@
+from .experiment_host import ExperimentHost
 from .info_window import InfoWindow
 from .participant_id import ParticipantID
 from .questionnaire import Questionnaire
@@ -7,6 +8,7 @@ from .abx import ABX
 from .scale_testing import ScaleTest
 
 __all__ = [
+    'ExperimentHost',
     'InfoWindow',
     'ParticipantID',
     'Questionnaire',
